@@ -16,6 +16,7 @@ const deviceRoutes = require('./routes/devices');
 const cameraRoutes = require('./routes/cameras');
 const taskRoutes = require('./routes/tasks');
 const automatizeRoutes = require('./routes/automatize');
+const espRoutes = require('./routes/esp');
 
 const app = express();
 
@@ -45,6 +46,7 @@ app.use('/api/devices', deviceRoutes);
 app.use('/api/cameras', cameraRoutes);
 app.use('/api/tasks', taskRoutes);
 app.use('/api/automatize', automatizeRoutes);
+app.use('/api', espRoutes); // Ruta pública para ESP32
 
 // Ruta de prueba
 app.get('/api/health', (req, res) => {

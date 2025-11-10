@@ -20,6 +20,20 @@ const RoomSchema = new mongoose.Schema({
         ref: 'Usuario',
         required: [true, 'La habitación debe pertenecer a un usuario']
     },
+    // IP del ESP32 que controla esta habitación
+    ip: {
+        type: String,
+        trim: true,
+        default: '',
+        validate: {
+            validator: function(v) {
+                if (!v) return true; // Permitir vacío
+                // Validar formato IP
+                return /^(\d{1,3}\.){3}\d{1,3}$/.test(v);
+            },
+            message: 'Por favor ingrese una dirección IP válida (ej. 192.168.0.28)'
+        }
+    },
     // Estadísticas y configuración
     configuracion: {
         mostrarEnDashboard: {

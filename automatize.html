@@ -65,25 +65,7 @@
         <div class="row">
             <h1 class="heading">Automatización</h1>
         </div>
-        <div class="row d-flex justify-content-between" id="task-section">
-            <div class="col-lg-10 col-sm-10" onclick="getName()">
-                <div>
-                    <img src="images/Bag-Suitcase-4--Streamline-Flex.png">
-                </div>
-
-                <div class="text">
-                    <h2 id="taskname">Tarea 1</h2>
-                    <p id="taskfunction">Encender foco</p>
-                </div>
-            </div>
-
-            <div class="col-lg-2 col-sm-2">
-                <label class="switch">
-                    <input type="checkbox">
-                    <span class="slider round"></span>
-                </label>
-            </div>
-        </div>
+        <!-- Las tareas se cargarán dinámicamente aquí -->
         <div class="row" id="add" onclick="location.href ='newtask.html';">
             <div class="add-image">
                 <img src="images/Copy-2--Streamline-Flex.png">
@@ -140,13 +122,102 @@
     <script src="js/navbar.js"></script>
     <script>
         requireAuth();
-    </script>
 
-    <script>
-        function getName(){
-            var taskname = document.getElementById("taskname").textContent;
-            window.location.href = "taskinfo.html?taskname="+taskname;
+        // Cargar automatizaciones dinámicamente
+        async function loadAutomatizations() {
+            try {
+                const response = await fetchWithAuth(`${API_URL}/automatize`);
+                const data = await response.json();
+
+                if (data.success && data.data.length > 0) {
+                    const container = document.getElementById('main-container-automatize');
+
+                    // Limpiar el contenedor (excepto breadcrumb y heading)
+                    const tasksContainer = container.querySelector('#task-section');
+                    if (tasksContainer) {
+                        tasksContainer.remove();
+                    }
+
+                    // Agregar cada automatización
+                    data.data.forEach((auto, index) => {
+                        // Obtener información de la acción
+                        let descripcion = 'Sin acción';
+                        if (auto.acciones && auto.acciones.length > 0) {
+                            const accion = auto.acciones[0];
+                            const dispositivo = accion.dispositivo?.nombre || 'Dispositivo';
+                            const accionText = accion.accion === 'encender' ? 'Encender' :
+                                             accion.accion === 'apagar' ? 'Apagar' :
+                                             accion.accion;
+                            descripcion = `${accionText} ${dispositivo}`;
+
+                            // Agregar información del horario si existe
+                            if (auto.trigger?.horario?.hora) {
+                                descripcion += ` a las ${auto.trigger.horario.hora}`;
+                            }
+                        }
+
+                        const taskSection = document.createElement('div');
+                        taskSection.className = 'row d-flex justify-content-between';
+                        taskSection.id = 'task-section';
+                        taskSection.style.cursor = 'pointer';
+
+                        taskSection.innerHTML = `
+                            <div class="col-lg-10 col-sm-10" onclick="window.location.href='taskinfo.html?taskId=${auto._id}&taskname=${encodeURIComponent(auto.nombre)}'">
+                                <div>
+                                    <img src="images/Bag-Suitcase-4--Streamline-Flex.png">
+                                </div>
+                                <div class="text">
+                                    <h2>${auto.nombre}</h2>
+                                    <p>${descripcion}</p>
+                                </div>
+                            </div>
+                            <div class="col-lg-2 col-sm-2">
+                                <label class="switch">
+                                    <input type="checkbox" ${auto.activa ? 'checked' : ''}
+                                           onchange="toggleAutomation('${auto._id}', this.checked)">
+                                    <span class="slider round"></span>
+                                </label>
+                            </div>
+                        `;
+
+                        // Insertar antes del botón "Agregar tarea"
+                        const addButton = container.querySelector('#add');
+                        container.insertBefore(taskSection, addButton);
+                    });
+                }
+            } catch (error) {
+                console.error('Error al cargar automatizaciones:', error);
+            }
         }
+
+        // Toggle automatización
+        async function toggleAutomation(id, isActive) {
+            try {
+                const response = await fetchWithAuth(`${API_URL}/automatize/${id}/toggle`, {
+                    method: 'PUT'
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    console.log(`Automatización ${isActive ? 'activada' : 'desactivada'}`);
+                } else {
+                    alert(data.message || 'Error al cambiar estado de la automatización');
+                    // Revertir el toggle si falló
+                    const checkbox = event.target;
+                    checkbox.checked = !isActive;
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                alert('Error al conectar con el servidor');
+                // Revertir el toggle si falló
+                const checkbox = event.target;
+                checkbox.checked = !isActive;
+            }
+        }
+
+        // Cargar cuando la página esté lista
+        document.addEventListener('DOMContentLoaded', loadAutomatizations);
     </script>
 </body>
 </html>

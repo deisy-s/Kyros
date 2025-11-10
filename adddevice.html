@@ -82,21 +82,21 @@
                         data-mdb-ripple-init
                         aria-expanded="false"
                     >
+                        Seleccionar tipo
                     </button>
                     <ul class="dropdown-menu w-100" id="tableMenu" aria-labelledby="dropdownMenuButton">
-                        <li><a class="dropdown-item" href="#">Alarma</a></li>
-                        <li><a class="dropdown-item" href="#">Cámara</a></li>
-                        <li><a class="dropdown-item" href="#">Foco</a></li>
-                        <li><a class="dropdown-item" href="#">Sensor de humo y gas</a></li>
-                        <li><a class="dropdown-item" href="#">Sensor de movimiento</a></li>
-                        <li><a class="dropdown-item" href="#">Sensor de temperatura y humedad</a></li>
-                        <li><a class="dropdown-item" href="#">Ventilador</a></li>
+                        <li><a class="dropdown-item" href="#" data-type="luz">Luz</a></li>
+                        <li><a class="dropdown-item" href="#" data-type="temperatura">Temperatura</a></li>
+                        <li><a class="dropdown-item" href="#" data-type="actuador">Actuador</a></li>
+                        <li><a class="dropdown-item" href="#" data-type="camara">Cámara</a></li>
                     </ul>
                 </div>
                 <h3>Nombre de dispositivo</h3>
-                <input type="text" id="user-input" name="deviceName">
-                <h3>Conexión</h3>
-                <input type="text" id="user-input" name="conection">
+                <input type="text" id="deviceNameInput" name="deviceName">
+                <h3 id="pinLabel">Pin del dispositivo</h3>
+                <input type="number" id="pinInput" name="pin" placeholder="Ej: 17">
+                <h3 id="connectionLabel" style="display: none;">URL de conexión (Cámara)</h3>
+                <input type="text" id="connectionInput" name="conection" style="display: none;">
 
                 <button class="button-login">Guardar</button>
             </div>
@@ -182,37 +182,42 @@
     <script>
         let selectedDeviceType = '';
         const dropdownItems = document.querySelectorAll('#tableMenu .dropdown-item');
+        const pinLabel = document.getElementById('pinLabel');
+        const pinInput = document.getElementById('pinInput');
+        const connectionLabel = document.getElementById('connectionLabel');
+        const connectionInput = document.getElementById('connectionInput');
 
+        // Manejar selección de tipo de dispositivo
         dropdownItems.forEach(item => {
             item.addEventListener('click', (e) => {
                 e.preventDefault();
                 const dropdownButton = document.querySelector('#dropdownMenuButton');
                 dropdownButton.textContent = item.textContent;
-                selectedDeviceType = item.textContent;
+                selectedDeviceType = item.getAttribute('data-type');
+
+                // Mostrar/ocultar campos según el tipo
+                if (selectedDeviceType === 'camara') {
+                    pinLabel.style.display = 'none';
+                    pinInput.style.display = 'none';
+                    connectionLabel.style.display = 'block';
+                    connectionInput.style.display = 'block';
+                } else {
+                    pinLabel.style.display = 'block';
+                    pinInput.style.display = 'block';
+                    connectionLabel.style.display = 'none';
+                    connectionInput.style.display = 'none';
+                }
             });
         });
 
-        // Mapeo de nombres de dispositivos a tipos del backend
-        const deviceTypeMap = {
-            'Alarma': 'sensor',
-            'Foco': 'luz',
-            'Sensor de humo y gas': 'sensor',
-            'Sensor de movimiento': 'sensor',
-            'Sensor de temperatura y humedad': 'sensor',
-            'Ventilador': 'luz'
-        };
-
         // Add device functionality
         const saveButton = document.querySelector('.button-login');
-        const inputs = document.querySelectorAll('#user-input');
-        const deviceNameInput = inputs[0];
-        const connectionInput = inputs[1];
+        const deviceNameInput = document.getElementById('deviceNameInput');
 
         saveButton.addEventListener('click', async (e) => {
             e.preventDefault();
 
             const deviceName = deviceNameInput.value.trim();
-            const connection = connectionInput.value.trim();
 
             if (!selectedDeviceType) {
                 alert('Por favor seleccione el tipo de dispositivo');
@@ -226,7 +231,9 @@
 
             try {
                 // Si es cámara, usar endpoint de cámaras
-                if (selectedDeviceType === 'Cámara') {
+                if (selectedDeviceType === 'camara') {
+                    const connection = connectionInput.value.trim();
+
                     const cameraData = {
                         nombre: deviceName,
                         descripcion: '',
@@ -257,17 +264,28 @@
                         alert(data.message || 'Error al crear la cámara');
                     }
                 } else {
-                    // Para dispositivos normales
-                    const tipo = deviceTypeMap[selectedDeviceType] || 'luz';
+                    // Para dispositivos normales (luz, temperatura, actuador)
+                    const pin = parseInt(pinInput.value);
+
+                    if (!pin || pin < 0) {
+                        alert('Por favor ingrese un número de pin válido');
+                        return;
+                    }
+
+                    const deviceData = {
+                        nombre: deviceName,
+                        tipo: selectedDeviceType,
+                        habitacion: roomId,
+                        pin: pin,
+                        estado: {
+                            encendido: false,
+                            valor: 0
+                        }
+                    };
 
                     const response = await fetchWithAuth(`${API_URL}/devices`, {
                         method: 'POST',
-                        body: JSON.stringify({
-                            nombre: deviceName,
-                            tipo: tipo,
-                            habitacion: roomId,
-                            estado: false
-                        })
+                        body: JSON.stringify(deviceData)
                     });
 
                     const data = await response.json();

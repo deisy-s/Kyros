@@ -82,21 +82,18 @@
                         data-mdb-ripple-init
                         aria-expanded="false"
                     >
+                        Seleccionar tipo
                     </button>
                     <ul class="dropdown-menu w-100" id="tableMenu" aria-labelledby="dropdownMenuButton">
-                        <li><a class="dropdown-item" href="#">Alarma</a></li>
-                        <li><a class="dropdown-item" href="#">Cámara</a></li>
-                        <li><a class="dropdown-item" href="#">Foco</a></li>
-                        <li><a class="dropdown-item" href="#">Sensor de humo y gas</a></li>
-                        <li><a class="dropdown-item" href="#">Sensor de movimiento</a></li>
-                        <li><a class="dropdown-item" href="#">Sensor de temperatura y humedad</a></li>
-                        <li><a class="dropdown-item" href="#">Ventilador</a></li>
+                        <li><a class="dropdown-item" href="#" data-type="luz">Luz</a></li>
+                        <li><a class="dropdown-item" href="#" data-type="temperatura">Temperatura</a></li>
+                        <li><a class="dropdown-item" href="#" data-type="actuador">Actuador</a></li>
                     </ul>
                 </div>
                 <h3>Nombre de dispositivo</h3>
-                <input type="text" id="userinput" name="deviceName">
-                <h3>Conexión</h3>
-                <input type="text" id="user-input" name="conection">
+                <input type="text" id="deviceNameInput" name="deviceName">
+                <h3>Pin del dispositivo</h3>
+                <input type="number" id="pinInput" name="pin" placeholder="Ej: 17">
 
                 <button class="button-login">Guardar</button>
                 <button class="button-delete mt-1">Eliminar</button>
@@ -185,37 +182,25 @@
     <script>
         let selectedDeviceType = '';
         const dropdownItems = document.querySelectorAll('#tableMenu .dropdown-item');
+        const deviceNameInput = document.getElementById('deviceNameInput');
+        const pinInput = document.getElementById('pinInput');
 
+        // Manejar selección de tipo de dispositivo
         dropdownItems.forEach(item => {
             item.addEventListener('click', (e) => {
                 e.preventDefault();
                 const dropdownButton = document.querySelector('#dropdownMenuButton');
                 dropdownButton.textContent = item.textContent;
-                selectedDeviceType = item.textContent;
+                selectedDeviceType = item.getAttribute('data-type');
             });
         });
 
-        // Mapeo de nombres de dispositivos a tipos del backend
-        const deviceTypeMap = {
-            'Alarma': 'sensor',
-            'Foco': 'luz',
-            'Sensor de humo y gas': 'sensor',
-            'Sensor de movimiento': 'sensor',
-            'Sensor de temperatura y humedad': 'sensor',
-            'Ventilador': 'luz'
+        // Mapeo de tipos para mostrar en UI
+        const typeDisplayMap = {
+            'luz': 'Luz',
+            'temperatura': 'Temperatura',
+            'actuador': 'Actuador'
         };
-
-        // Mapeo inverso para el dropdown
-        const reverseDeviceTypeMap = {
-            'sensor': 'Sensor de movimiento',
-            'luz': 'Foco'
-        };
-
-        // Edit device functionality
-        const saveButton = document.querySelector('.button-login');
-        const deleteButton = document.querySelector('.button-delete');
-        const deviceNameInput = document.querySelector('input[name="deviceName"]');
-        const connectionInput = document.querySelector('input[name="conection"]');
 
         // Cargar datos del dispositivo
         async function loadDeviceData() {
@@ -232,12 +217,14 @@
 
                 if (response.ok && data.success) {
                     const device = data.data;
+
+                    // Cargar datos en los campos
                     deviceNameInput.value = device.nombre;
-                    connectionInput.value = device.conexion || '';
+                    pinInput.value = device.pin || '';
 
                     // Establecer el tipo en el dropdown
-                    const displayType = reverseDeviceTypeMap[device.tipo] || device.tipo;
-                    selectedDeviceType = displayType;
+                    selectedDeviceType = device.tipo;
+                    const displayType = typeDisplayMap[device.tipo] || device.tipo;
                     document.getElementById('dropdownMenuButton').textContent = displayType;
                 } else {
                     alert('Error al cargar los datos del dispositivo');
@@ -245,10 +232,14 @@
                 }
             } catch (error) {
                 console.error('Error:', error);
-                alert('Error al cargar los datos');
+                alert('Error al cargar los datos del dispositivo');
                 window.location.href = `devices.html?roomId=${roomId}&roomname=${roomname}`;
             }
         }
+
+        // Edit device functionality
+        const saveButton = document.querySelector('.button-login');
+        const deleteButton = document.querySelector('.button-delete');
 
         // Guardar cambios (UPDATE)
         saveButton.addEventListener('click', async (e) => {
@@ -256,7 +247,7 @@
 
             const deviceId = getParameterByName('deviceId');
             const deviceName = deviceNameInput.value.trim();
-            const connection = connectionInput.value.trim();
+            const pin = parseInt(pinInput.value);
 
             if (!selectedDeviceType) {
                 alert('Por favor seleccione el tipo de dispositivo');
@@ -268,52 +259,30 @@
                 return;
             }
 
+            if (!pin || pin < 0) {
+                alert('Por favor ingrese un número de pin válido');
+                return;
+            }
+
             try {
-                // Si es cámara, usar endpoint de cámaras
-                if (selectedDeviceType === 'Cámara') {
-                    const cameraData = {
-                        nombre: deviceName,
-                        descripcion: '',
-                        streaming: {
-                            urlPrincipal: connection || 'rtsp://example.com/stream',
-                            tipo: 'rtsp'
-                        }
-                    };
+                const deviceData = {
+                    nombre: deviceName,
+                    tipo: selectedDeviceType,
+                    pin: pin
+                };
 
-                    const response = await fetchWithAuth(`${API_URL}/cameras/${deviceId}`, {
-                        method: 'PUT',
-                        body: JSON.stringify(cameraData)
-                    });
+                const response = await fetchWithAuth(`${API_URL}/devices/${deviceId}`, {
+                    method: 'PUT',
+                    body: JSON.stringify(deviceData)
+                });
 
-                    const data = await response.json();
+                const data = await response.json();
 
-                    if (response.ok) {
-                        alert('Cámara actualizada exitosamente');
-                        window.location.href = `devices.html?roomId=${roomId}&roomname=${roomname}`;
-                    } else {
-                        alert(data.message || 'Error al actualizar la cámara');
-                    }
+                if (response.ok) {
+                    alert('Dispositivo actualizado exitosamente');
+                    window.location.href = `devices.html?roomId=${roomId}&roomname=${roomname}`;
                 } else {
-                    // Para dispositivos normales
-                    const tipo = deviceTypeMap[selectedDeviceType] || 'luz';
-
-                    const response = await fetchWithAuth(`${API_URL}/devices/${deviceId}`, {
-                        method: 'PUT',
-                        body: JSON.stringify({
-                            nombre: deviceName,
-                            tipo: tipo,
-                            conexion: connection
-                        })
-                    });
-
-                    const data = await response.json();
-
-                    if (response.ok) {
-                        alert('Dispositivo actualizado exitosamente');
-                        window.location.href = `devices.html?roomId=${roomId}&roomname=${roomname}`;
-                    } else {
-                        alert(data.message || 'Error al actualizar el dispositivo');
-                    }
+                    alert(data.message || 'Error al actualizar el dispositivo');
                 }
             } catch (error) {
                 console.error('Error:', error);

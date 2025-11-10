@@ -91,27 +91,24 @@ Note: The root `package.json` references Parcel bundler for potential Chart.js i
 
 ## Architecture
 
-### Backend (database/connect.js)
+### Backend (database/server.js)
+
+**MVC Pattern**:
+- `models/` - Mongoose schemas for MongoDB collections
+- `controllers/` - Business logic for each resource
+- `routes/` - Express route definitions
+- `middleware/` - Auth protection and error handling
+- `config/` - Database connection setup
 
 **MongoDB Connection**:
-- Uses MongoDB Atlas cluster
-- Database collection: `kyros`
-- Connection string is hardcoded (should be moved to .env)
-
-**User Schema** (lines 22-36):
-- `nombre`, `email`, `password` (required fields)
-- `tipo` (default: 'estudiante')
-- `assignedBus` (nullable)
-- `estudiante` subdocument with `matricula`, `rutaPreferida`, `searchHistory`
-
-**API Endpoints**:
-- `POST /api/register` - User registration with duplicate email checking
-- `POST /api/login` - User authentication (plain password comparison)
-- `GET /` - Serves the main application (currently points to 'responsive.html')
+- Uses MongoDB Atlas cluster via `config/database.js`
+- Database: `kyros` with 7 collections
+- Connection string managed via `.env` file (MONGODB_URI)
 
 **Static File Serving**:
-- Serves all HTML, CSS, and image files from parent directory
-- Uses `serve-static` and `path.join(__dirname, '..')` to serve root files
+- Serves all HTML, CSS, and image files from parent directory (`..`)
+- Default route `/` serves `index.html`
+- All frontend pages explicitly mapped in server.js (lines 68-89)
 
 ### Frontend Pages
 
@@ -122,10 +119,12 @@ Note: The root `package.json` references Parcel bundler for potential Chart.js i
 
 **Authenticated Pages**:
 - `rooms.html` - Room management interface
+- `roomedit.html` - Edit room details
+- `addroom.html` - Create new rooms
 - `devices.html` - Device listing and control
 - `deviceinfo.html` - Detailed device information
+- `deviceedit.html` - Edit device details
 - `adddevice.html` - Add new IoT devices
-- `addroom.html` - Create new rooms
 - `security.html` - Security monitoring and alerts
 - `automatize.html` - Task automation rules
 - `addtask.html`, `newtask.html`, `taskdata.html`, `taskinfo.html` - Task management
@@ -151,7 +150,8 @@ Note: The root `package.json` references Parcel bundler for potential Chart.js i
 **Client-Side JavaScript**:
 - Forms use inline JavaScript or Bootstrap components
 - No frontend framework (React, Vue, etc.) - uses vanilla JS
-- Password visibility toggle in login.html (lines 162-170)
+- Authentication currently NOT integrated with JWT backend (needs migration)
+- Most data is currently hardcoded or mock data (needs API integration)
 
 **Naming Conventions**:
 - Spanish is used throughout (comments, variable names, UI text)
@@ -196,6 +196,15 @@ Note: The root `package.json` references Parcel bundler for potential Chart.js i
 - `PUT /:id/toggle` - Encender/apagar dispositivo
 - `GET /:id/data` - Obtener datos históricos/telemetría
 
+**Cámaras** (`/api/cameras`):
+- Ver `database/routes/cameras.js` para endpoints disponibles
+
+**Tareas** (`/api/tasks`):
+- Ver `database/routes/tasks.js` para endpoints disponibles
+
+**Automatización** (`/api/automatize`):
+- Ver `database/routes/automatize.js` para endpoints disponibles
+
 ### Modelos de Datos Completos
 
 **7 Colecciones MongoDB**:
@@ -212,22 +221,26 @@ Note: The root `package.json` references Parcel bundler for potential Chart.js i
 - `.env.example` - Plantilla de configuración
 - Todos los endpoints documentados con ejemplos
 
-## Próximos Pasos para Desarrollo
+## Estado Actual del Proyecto
 
-### Completar Backend
-- [ ] Crear controladores para `Camera`, `Task`, `Automatize`
-- [ ] Agregar rutas para estos módulos
-- [ ] Implementar websockets para actualizaciones en tiempo real
+### Backend Completado
+- ✅ Controladores para `Auth`, `Room`, `Device`, `Camera`, `Task`, `Automatize`
+- ✅ Rutas para todos los módulos principales
+- ✅ Autenticación JWT implementada
+- ✅ Manejo de errores centralizado
 
-### Integrar Frontend
-- [ ] Actualizar páginas HTML para usar el nuevo API
-- [ ] Implementar manejo de tokens JWT en el cliente
-- [ ] Agregar llamadas fetch() a los endpoints
+### Próximos Pasos
 
-### Mejoras Adicionales
-- [ ] Paginación en endpoints GET
-- [ ] Rate limiting para seguridad
-- [ ] Logging con Winston o Morgan
-- [ ] Tests unitarios e integración
-- [ ] Documentación con Swagger/OpenAPI
-- [ ] Configurar CORS específico en producción
+**Integración Frontend**:
+- Actualizar páginas HTML para usar el nuevo API REST
+- Implementar manejo de tokens JWT en el cliente (almacenamiento, envío en headers)
+- Migrar de hardcoded data a llamadas fetch() a los endpoints
+
+**Mejoras Adicionales**:
+- Websockets para actualizaciones en tiempo real de dispositivos
+- Paginación en endpoints GET de listados
+- Rate limiting para seguridad (express-rate-limit)
+- Logging estructurado con Winston o Morgan
+- Tests unitarios e integración (Jest/Mocha)
+- Documentación interactiva con Swagger/OpenAPI
+- Configurar CORS específico para producción

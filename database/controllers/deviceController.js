@@ -193,9 +193,10 @@ exports.toggleDevice = async (req, res, next) => {
             });
         }
 
-        // Toggle estado
-        device.estado.encendido = !device.estado.encendido;
-        device.estado.ultimaConexion = Date.now();
+        // Toggle estado (solo para luz y actuador)
+        if (device.tipo === 'luz' || device.tipo === 'actuador') {
+            device.estado.encendido = !device.estado.encendido;
+        }
 
         await device.save();
 

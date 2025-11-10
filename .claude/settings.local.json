@@ -11,7 +11,10 @@
       "Bash(netstat:*)",
       "Bash(findstr:*)",
       "Bash(dir:*)",
-      "Bash(del .\\nul)"
+      "Bash(del .\\nul)",
+      "Bash(npm run dev:*)",
+      "Bash(python -m json.tool:*)",
+      "Bash(C:UsersjluisDownloadsKyros2.0taskinfo.html)"
     ],
     "deny": [],
     "ask": []

@@ -71,8 +71,23 @@
             <div class="col-lg-5" id="leftCol-taskinfo">
                 <h3>Nombre de tarea</h3>
                 <input type="text" id="userinput" name="taskName">
-                <h3>Nombre de dispositivo</h3>
-                <input type="text" id="user-input" name="deviceName" readonly>
+                <h3>Dispositivo</h3>
+                <div class="dropdown">
+                    <button
+                        class="btn btn-primary dropdown-toggle w-100"
+                        data-bs-toggle="dropdown"
+                        type="button"
+                        id="dropdownMenuButton"
+                        data-mdb-dropdown-init
+                        data-mdb-ripple-init
+                        aria-expanded="false"
+                    >
+                        Seleccionar dispositivo
+                    </button>
+                    <ul class="dropdown-menu w-100" id="tableMenu" aria-labelledby="dropdownMenuButton">
+                        <li><a class="dropdown-item" href="#">Cargando...</a></li>
+                    </ul>
+                </div>
                 <button class="button-login mt-4">Guardar</button>
                 <button class="button-delete mt-1">Eliminar</button>
             </div>
@@ -118,7 +133,27 @@
                         required />
                     </div>
                 </div>
-                <div class="light" style="display: block;">
+                <div class="actuador" style="display: none;">
+                    <div class="timeOnActuador d-flex">
+                        <h3>Encender a la(s)</h3>
+                        <input
+                        type="time"
+                        id="turnOnTimeActuador"
+                        min="00:00"
+                        max="24:00"
+                        required />
+                    </div>
+                    <div class="timeOffActuador d-flex">
+                        <h3>Apagar a la(s)</h3>
+                        <input
+                        type="time"
+                        id="turnOffTimeActuador"
+                        min="00:00"
+                        max="24:00"
+                        required />
+                    </div>
+                </div>
+                <div class="light" style="display: none;">
                     <div class="timeOnLight d-flex">
                         <h3>Encender a la(s)</h3>
                         <input
@@ -204,6 +239,8 @@
         // Proteger la página
         requireAuth();
 
+        // API_URL ya está definido en js/auth.js
+
         function getParameterByName(name) {
             var url = window.location.href;
             name = name.replace(/[\[\]]/g, "\\$&");
@@ -214,57 +251,214 @@
         }
 
         const taskId = getParameterByName('taskId');
-        const deviceId = getParameterByName('deviceId');
-        const devicename = getParameterByName('devicename');
-
-        function displayRoomName() {
-            var taskname = getParameterByName('taskname');
-            document.getElementById("taskName").innerHTML = taskname;
-            document.getElementById("taskRoute").innerHTML = taskname;
-            document.getElementById("userinput").setAttribute('value', taskname);
-            document.querySelector('input[name="deviceName"]').value = devicename || '';
-        }
-
-        displayRoomName();
+        let selectedDeviceId = null;
+        let selectedDeviceType = null;
+        let currentAutomatization = null;
 
         const saveButton = document.querySelector('.button-login');
         const deleteButton = document.querySelector('.button-delete');
         const taskNameInput = document.querySelector('input[name="taskName"]');
 
-        // Cargar datos de la tarea
-        async function loadTaskData() {
-            if (!taskId) return;
+        // Función para mostrar el formulario correcto según el tipo de dispositivo
+        function showFormForDeviceType(tipo) {
+            const lightDiv = document.querySelector('.light');
+            const fanDiv = document.querySelector('.fan');
+            const alarmDiv = document.querySelector('.alarm');
+            const actuadorDiv = document.querySelector('.actuador');
 
+            // Ocultar todos
+            lightDiv.style.display = 'none';
+            fanDiv.style.display = 'none';
+            alarmDiv.style.display = 'none';
+            actuadorDiv.style.display = 'none';
+
+            // Mostrar el correcto según el tipo
+            if (tipo === 'luz') {
+                lightDiv.style.display = 'block';
+            } else if (tipo === 'temperatura') {
+                fanDiv.style.display = 'block';
+            } else if (tipo === 'actuador') {
+                actuadorDiv.style.display = 'block';
+            } else {
+                // Por defecto, mostrar luz
+                lightDiv.style.display = 'block';
+            }
+        }
+
+        // Cargar dispositivos disponibles
+        async function loadDevices(currentDeviceType) {
             try {
-                const response = await fetchWithAuth(`${API_URL}/tasks/${taskId}`);
+                const response = await fetchWithAuth(`${API_URL}/devices`);
                 const data = await response.json();
 
-                if (response.ok && data.success) {
-                    const task = data.data;
-                    taskNameInput.value = task.nombre;
+                if (data.success) {
+                    const dropdown = document.getElementById('tableMenu');
+                    const dropdownButton = document.getElementById('dropdownMenuButton');
 
-                    // Cargar programación si existe
-                    if (task.programacion && task.programacion.hora) {
-                        const hora = task.programacion.hora;
-                        document.getElementById('turnOnTime').value = hora;
-                        document.getElementById('turnOffTime').value = hora;
+                    dropdown.innerHTML = '';
+
+                    // Filtrar solo dispositivos del mismo tipo
+                    const filteredDevices = currentDeviceType
+                        ? data.data.filter(d => d.tipo === currentDeviceType)
+                        : data.data;
+
+                    if (filteredDevices.length === 0) {
+                        dropdown.innerHTML = '<li><a class="dropdown-item disabled" href="#">No hay dispositivos del mismo tipo</a></li>';
+                        return;
                     }
 
-                    // Cargar parámetros de acciones si existen
-                    if (task.acciones && task.acciones.length > 0) {
-                        const accion = task.acciones[0];
-                        if (accion.parametros) {
-                            if (accion.parametros.temperatura) {
-                                const tempInputOn = document.getElementById('turnOnTemp');
-                                const tempInputOff = document.getElementById('turnOffTemp');
-                                if (tempInputOn) tempInputOn.value = accion.parametros.temperatura;
-                                if (tempInputOff) tempInputOff.value = accion.parametros.temperatura;
+                    // Agregar dispositivos al dropdown
+                    filteredDevices.forEach(device => {
+                        const li = document.createElement('li');
+                        const a = document.createElement('a');
+                        a.className = 'dropdown-item';
+                        a.href = '#';
+                        a.textContent = `${device.nombre} (${device.tipo})`;
+                        a.onclick = () => {
+                            selectedDeviceId = device._id;
+                            selectedDeviceType = device.tipo;
+                            dropdownButton.textContent = device.nombre;
+                            showFormForDeviceType(device.tipo);
+                        };
+                        li.appendChild(a);
+                        dropdown.appendChild(li);
+                    });
+                }
+            } catch (error) {
+                console.error('Error al cargar dispositivos:', error);
+            }
+        }
+
+        // Cargar datos de la automatización
+        async function loadTaskData() {
+            if (!taskId) {
+                console.error('No se proporcionó taskId en la URL');
+                alert('Error: No se especificó qué automatización cargar. Por favor, accede desde la página de Automatización.');
+                window.location.href = 'automatize.html';
+                return;
+            }
+
+            console.log('Cargando automatización con ID:', taskId);
+
+            try {
+                const response = await fetchWithAuth(`${API_URL}/automatize/${taskId}`);
+                const data = await response.json();
+
+                console.log('Respuesta del servidor:', data);
+
+                if (response.ok && data.success) {
+                    currentAutomatization = data.data;
+                    const auto = currentAutomatization;
+
+                    // Mostrar nombre
+                    const taskname = auto.nombre;
+                    document.getElementById("taskName").innerHTML = taskname;
+                    document.getElementById("taskRoute").innerHTML = taskname;
+                    taskNameInput.value = taskname;
+
+                    // Obtener información del dispositivo
+                    if (auto.acciones && auto.acciones.length > 0) {
+                        const dispositivo = auto.acciones[0].dispositivo;
+                        console.log('Dispositivo:', dispositivo);
+
+                        selectedDeviceId = dispositivo._id;
+                        selectedDeviceType = dispositivo.tipo;
+
+                        // Mostrar dispositivo en dropdown
+                        const dropdownButton = document.getElementById('dropdownMenuButton');
+                        dropdownButton.textContent = dispositivo.nombre;
+
+                        console.log(`Mostrando dispositivo: ${dispositivo.nombre} (tipo: ${dispositivo.tipo})`);
+
+                        // Cargar dispositivos del mismo tipo
+                        await loadDevices(dispositivo.tipo);
+
+                        // Mostrar formulario correcto
+                        showFormForDeviceType(dispositivo.tipo);
+                        console.log(`Formulario para tipo "${dispositivo.tipo}" mostrado`);
+                    }
+
+                    // Cargar horario si existe
+                    if (auto.trigger && auto.trigger.horario && auto.trigger.horario.hora) {
+                        const hora = auto.trigger.horario.hora;
+                        console.log(`Cargando horario: ${hora} para tipo ${selectedDeviceType}`);
+
+                        // Llenar campos según el tipo
+                        if (selectedDeviceType === 'actuador') {
+                            document.getElementById('turnOnTimeActuador').value = hora;
+                            console.log('Horario asignado al campo de actuador (encender)');
+
+                            // Cargar hora de apagado desde parametros
+                            if (auto.acciones && auto.acciones.length > 0) {
+                                const parametros = auto.acciones[0].parametros;
+                                if (parametros && parametros.horaApagar) {
+                                    const turnOffTimeActuador = document.getElementById('turnOffTimeActuador');
+                                    if (turnOffTimeActuador) {
+                                        turnOffTimeActuador.value = parametros.horaApagar;
+                                        console.log(`Horario asignado al campo de actuador (apagar): ${parametros.horaApagar}`);
+                                    }
+                                }
+                            }
+                        } else if (selectedDeviceType === 'luz') {
+                            const turnOnTimeLight = document.querySelector('.light #turnOnTime');
+                            if (turnOnTimeLight) {
+                                turnOnTimeLight.value = hora;
+                                console.log('Horario asignado al campo de luz (encender)');
+                            }
+
+                            // Cargar hora de apagado desde parametros
+                            if (auto.acciones && auto.acciones.length > 0) {
+                                const parametros = auto.acciones[0].parametros;
+                                if (parametros && parametros.horaApagar) {
+                                    const turnOffTimeLight = document.querySelector('.light #turnOffTime');
+                                    if (turnOffTimeLight) {
+                                        turnOffTimeLight.value = parametros.horaApagar;
+                                        console.log(`Horario asignado al campo de luz (apagar): ${parametros.horaApagar}`);
+                                    }
+                                }
+                            }
+                        } else if (selectedDeviceType === 'temperatura') {
+                            document.getElementById('turnOnTime').value = hora;
+                            console.log('Horario asignado al campo de temperatura (encender)');
+
+                            // Cargar parámetros adicionales desde parametros
+                            if (auto.acciones && auto.acciones.length > 0) {
+                                const parametros = auto.acciones[0].parametros;
+                                if (parametros) {
+                                    // Hora de apagado
+                                    if (parametros.horaApagar) {
+                                        const turnOffTime = document.getElementById('turnOffTime');
+                                        if (turnOffTime) {
+                                            turnOffTime.value = parametros.horaApagar;
+                                            console.log(`Hora de apagado: ${parametros.horaApagar}`);
+                                        }
+                                    }
+                                    // Temperatura de encendido
+                                    if (parametros.temperaturaEncender) {
+                                        const turnOnTemp = document.getElementById('turnOnTemp');
+                                        if (turnOnTemp) {
+                                            turnOnTemp.value = parametros.temperaturaEncender;
+                                            console.log(`Temperatura encender: ${parametros.temperaturaEncender}°C`);
+                                        }
+                                    }
+                                    // Temperatura de apagado
+                                    if (parametros.temperaturaApagar) {
+                                        const turnOffTemp = document.getElementById('turnOffTemp');
+                                        if (turnOffTemp) {
+                                            turnOffTemp.value = parametros.temperaturaApagar;
+                                            console.log(`Temperatura apagar: ${parametros.temperaturaApagar}°C`);
+                                        }
+                                    }
+                                }
                             }
                         }
                     }
+
+                    console.log('✅ Automatización cargada exitosamente');
                 }
             } catch (error) {
-                console.error('Error al cargar tarea:', error);
+                console.error('Error al cargar automatización:', error);
+                alert('Error al cargar la automatización');
             }
         }
 
@@ -275,101 +469,101 @@
             const taskName = taskNameInput.value.trim();
 
             if (!taskName) {
-                alert('Por favor ingrese el nombre de la tarea');
+                alert('Por favor ingrese el nombre de la automatización');
+                return;
+            }
+
+            if (!selectedDeviceId) {
+                alert('Por favor seleccione un dispositivo');
                 return;
             }
 
             try {
-                // Recopilar datos del formulario
                 const taskData = {
                     nombre: taskName,
-                    tipo: 'programada',
-                    acciones: []
-                };
-
-                // Si hay un dispositivo seleccionado
-                if (deviceId) {
-                    // Obtener los valores de los inputs según el tipo visible
-                    const lightDiv = document.querySelector('.light');
-                    const fanDiv = document.querySelector('.fan');
-                    const alarmDiv = document.querySelector('.alarm');
-
-                    let accion = {
-                        dispositivo: deviceId,
-                        accion: 'toggle',
+                    descripcion: '',
+                    activa: currentAutomatization?.activa !== undefined ? currentAutomatization.activa : true,
+                    trigger: {
+                        tipo: 'horario',
+                        horario: {
+                            dias: [0, 1, 2, 3, 4, 5, 6]
+                        }
+                    },
+                    acciones: [{
+                        dispositivo: selectedDeviceId,
+                        accion: 'encender',
                         parametros: {},
                         orden: 0
-                    };
+                    }]
+                };
 
-                    // Si es luz
-                    if (lightDiv && lightDiv.style.display !== 'none') {
-                        const turnOnTime = document.querySelector('.light #turnOnTime').value;
-                        const turnOffTime = document.querySelector('.light #turnOffTime').value;
+                // Obtener horario según el tipo
+                const lightDiv = document.querySelector('.light');
+                const fanDiv = document.querySelector('.fan');
+                const actuadorDiv = document.querySelector('.actuador');
 
-                        if (turnOnTime) {
-                            taskData.programacion = {
-                                tipo: 'diaria',
-                                hora: turnOnTime
-                            };
-                        }
+                if (actuadorDiv && actuadorDiv.style.display !== 'none') {
+                    const turnOnTime = document.getElementById('turnOnTimeActuador').value;
+                    const turnOffTime = document.getElementById('turnOffTimeActuador').value;
 
-                        accion.accion = 'encender';
-                    }
-                    // Si es ventilador
-                    else if (fanDiv && fanDiv.style.display !== 'none') {
-                        const turnOnTime = document.getElementById('turnOnTime').value;
-                        const turnOnTemp = document.getElementById('turnOnTemp').value;
-
-                        if (turnOnTime) {
-                            taskData.programacion = {
-                                tipo: 'diaria',
-                                hora: turnOnTime
-                            };
-                        }
-
-                        if (turnOnTemp) {
-                            accion.parametros.temperatura = parseFloat(turnOnTemp);
-                        }
-                    }
-                    // Si es alarma
-                    else if (alarmDiv && alarmDiv.style.display !== 'none') {
-                        const turnOn = document.getElementById('turnOn').value;
-
-                        if (turnOn) {
-                            taskData.programacion = {
-                                tipo: 'diaria',
-                                hora: turnOn
-                            };
-                        }
-
-                        accion.accion = 'encender';
+                    if (turnOnTime) {
+                        taskData.trigger.horario.hora = turnOnTime;
                     }
 
-                    taskData.acciones.push(accion);
+                    // Guardar hora de apagado en parametros
+                    if (turnOffTime) {
+                        taskData.acciones[0].parametros = {
+                            horaApagar: turnOffTime
+                        };
+                    }
+                } else if (lightDiv && lightDiv.style.display !== 'none') {
+                    const turnOnTime = document.querySelector('.light #turnOnTime').value;
+                    const turnOffTime = document.querySelector('.light #turnOffTime').value;
+
+                    if (turnOnTime) {
+                        taskData.trigger.horario.hora = turnOnTime;
+                    }
+
+                    // Guardar hora de apagado en parametros
+                    if (turnOffTime) {
+                        taskData.acciones[0].parametros = {
+                            horaApagar: turnOffTime
+                        };
+                    }
+                } else if (fanDiv && fanDiv.style.display !== 'none') {
+                    const turnOnTime = document.getElementById('turnOnTime').value;
+                    const turnOffTime = document.getElementById('turnOffTime').value;
+                    const turnOnTemp = document.getElementById('turnOnTemp').value;
+                    const turnOffTemp = document.getElementById('turnOffTemp').value;
+
+                    if (turnOnTime) {
+                        taskData.trigger.horario.hora = turnOnTime;
+                    }
+
+                    // Guardar parámetros adicionales
+                    const parametros = {};
+                    if (turnOffTime) parametros.horaApagar = turnOffTime;
+                    if (turnOnTemp) parametros.temperaturaEncender = parseFloat(turnOnTemp);
+                    if (turnOffTemp) parametros.temperaturaApagar = parseFloat(turnOffTemp);
+
+                    if (Object.keys(parametros).length > 0) {
+                        taskData.acciones[0].parametros = parametros;
+                    }
                 }
 
-                let response;
-                if (taskId) {
-                    // Actualizar tarea existente
-                    response = await fetchWithAuth(`${API_URL}/tasks/${taskId}`, {
-                        method: 'PUT',
-                        body: JSON.stringify(taskData)
-                    });
-                } else {
-                    // Crear nueva tarea
-                    response = await fetchWithAuth(`${API_URL}/tasks`, {
-                        method: 'POST',
-                        body: JSON.stringify(taskData)
-                    });
-                }
+                // Actualizar automatización existente
+                const response = await fetchWithAuth(`${API_URL}/automatize/${taskId}`, {
+                    method: 'PUT',
+                    body: JSON.stringify(taskData)
+                });
 
                 const data = await response.json();
 
                 if (response.ok) {
-                    alert(taskId ? 'Tarea actualizada exitosamente' : 'Tarea creada exitosamente');
+                    alert('Automatización actualizada exitosamente');
                     window.location.href = 'automatize.html';
                 } else {
-                    alert(data.message || 'Error al guardar la tarea');
+                    alert(data.message || 'Error al actualizar la automatización');
                 }
             } catch (error) {
                 console.error('Error:', error);
@@ -377,31 +571,31 @@
             }
         });
 
-        // Eliminar tarea (DELETE)
+        // Eliminar automatización (DELETE)
         deleteButton.addEventListener('click', async (e) => {
             e.preventDefault();
 
             if (!taskId) {
-                alert('No se puede eliminar una tarea que no existe');
+                alert('No se puede eliminar una automatización que no existe');
                 return;
             }
 
-            if (!confirm('¿Está seguro de que desea eliminar esta tarea? Esta acción no se puede deshacer.')) {
+            if (!confirm('¿Está seguro de que desea eliminar esta automatización? Esta acción no se puede deshacer.')) {
                 return;
             }
 
             try {
-                const response = await fetchWithAuth(`${API_URL}/tasks/${taskId}`, {
+                const response = await fetchWithAuth(`${API_URL}/automatize/${taskId}`, {
                     method: 'DELETE'
                 });
 
                 const data = await response.json();
 
                 if (response.ok) {
-                    alert('Tarea eliminada exitosamente');
+                    alert('Automatización eliminada exitosamente');
                     window.location.href = 'automatize.html';
                 } else {
-                    alert(data.message || 'Error al eliminar la tarea');
+                    alert(data.message || 'Error al eliminar la automatización');
                 }
             } catch (error) {
                 console.error('Error:', error);
