@@ -9,6 +9,8 @@
     <!-- Bootstrap CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-sRIl4kxILFvY47J16cr9ZwB07vP4J8+LH7qKQnuqkuIAvNWLzeN8tE5YBujZqJLB" crossorigin="anonymous">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.3.0/font/bootstrap-icons.css" />
+    <!-- Font Awesome para iconos -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <!-- CSS -->
     <link rel="stylesheet" href="style.css">
 </head>
@@ -70,12 +72,12 @@
                 
                 <button class="button-login">Crear Cuenta</button>
 
-                <p id="sep">o iniciar con</p>
+                <p id="sep">o registrarse con</p>
 
                 <div class="login-icon">
-                    <a href="#"><svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" transform="rotate(0 0 0)">
-                            <path d="M21.5939 11.0792H12.3209V13.8256H18.9768C18.6214 17.6382 15.5196 19.286 12.5148 19.286C8.70223 19.286 5.30969 16.3135 5.30969 12.0162C5.30969 7.88057 8.54068 4.74651 12.5148 4.74651C15.5519 4.74651 17.3936 6.71741 17.3936 6.71741L19.2676 4.74651C19.2676 4.74651 16.7474 2.00016 12.3856 2.00016C6.6344 1.96785 2.24023 6.78203 2.24023 11.9839C2.24023 17.0243 6.37592 22 12.4825 22C17.8783 22 21.7554 18.349 21.7554 12.8886C21.7877 11.7578 21.5939 11.0792 21.5939 11.0792Z"/>
-                        </svg>
+                    <a href="/api/auth/google" class="btn btn-outline-danger w-100" style="display: flex; align-items: center; justify-content: center; gap: 10px;">
+                        <i class="fab fa-google"></i>
+                        <span>Registrarse con Google</span>
                     </a>
                 </div>
 
@@ -179,6 +181,32 @@
         // Si ya está autenticado, redirigir a rooms
         if (isAuthenticated()) {
             window.location.href = 'rooms.html';
+        }
+
+        // Verificar si viene de Google OAuth (callback)
+        const urlParams = new URLSearchParams(window.location.search);
+        const token = urlParams.get('token');
+        const googleAuth = urlParams.get('googleAuth');
+        const error = urlParams.get('error');
+
+        if (token && googleAuth === 'success') {
+            // Guardar token en localStorage
+            saveToken(token);
+
+            // Limpiar URL (quitar parámetros)
+            window.history.replaceState({}, document.title, "/register.html");
+
+            // Redirigir a rooms
+            window.location.href = '/rooms.html';
+        } else if (error) {
+            // Mostrar error de autenticación de Google
+            const errorMessages = {
+                'google_auth_failed': 'Error al registrarse con Google. Intente de nuevo.',
+                'token_generation_failed': 'Error al generar token. Contacte al administrador.'
+            };
+            alert(errorMessages[error] || 'Error desconocido');
+            // Limpiar URL
+            window.history.replaceState({}, document.title, "/register.html");
         }
 
         const registerButton = document.querySelector('.button-login');
