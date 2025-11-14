@@ -806,6 +806,775 @@ Usuario (User)
 
 ---
 
+## 15. SIMPLIFICACIÓN DEL MODELO DE DISPOSITIVOS Y CARGA DINÁMICA
+
+### 15.1 Simplificación del Modelo Device.js
+
+#### **Problema Anterior:**
+El modelo `Device.js` tenía muchos campos que no se utilizaban en la aplicación, lo que hacía el código más complejo y difícil de mantener.
+
+#### **Cambios Realizados:**
+Se **eliminaron campos innecesarios** y se simplificó a solo los campos esenciales:
+
+**Antes (modelo complejo):**
+```javascript
+{
+  nombre: String,
+  tipo: String,
+  habitacion: ObjectId,
+  usuario: ObjectId,
+  estado: Boolean,
+  conexion: String,           // ❌ Eliminado
+  estado_bateria: Number,     // ❌ Eliminado
+  configuracion: Object,      // ❌ Eliminado
+  ultimaActividad: Date,      // ❌ Eliminado
+  // ... muchos otros campos
+}
+```
+
+**Después (modelo simplificado):**
+```javascript
+{
+  nombre: String,             // Nombre del dispositivo
+  tipo: String,               // 'luz', 'temperatura', 'actuador', 'camara'
+  habitacion: ObjectId,       // Referencia a la habitación
+  usuario: ObjectId,          // Dueño del dispositivo
+  pin: Number,                // Pin GPIO del ESP32 (nuevo campo)
+  estado: Boolean             // true = encendido, false = apagado
+}
+```
+
+#### **Nuevos Tipos de Dispositivos Estandarizados:**
+- `luz` - Focos, lámparas
+- `temperatura` - Sensores de temperatura/humedad
+- `actuador` - Ventiladores, motores, relés
+- `camara` - Cámaras de seguridad (se manejan en colección separada)
+
+#### **Campo Nuevo: `pin`**
+- Número del pin GPIO en el ESP32 (ej: 17, 23, 25)
+- Esencial para que el ESP32 sepa qué pin controlar
+- Requerido para dispositivos físicos (no para cámaras)
+
+### 15.2 Simplificación del Modelo Room.js
+
+#### **Campo Nuevo: `ip`**
+Se agregó el campo `ip` para almacenar la dirección IP del ESP32 asignado a cada habitación:
+
+```javascript
+{
+  nombre: String,
+  descripcion: String,
+  usuario: ObjectId,
+  icono: String,
+  ip: String                  // IP del ESP32 (ej: "192.168.0.28")
+}
+```
+
+**Uso:**
+- Permite identificar qué ESP32 controla cada habitación
+- Se usa en el endpoint `/api/esp-config/:habitacionId` para dispositivos IoT
+
+### 15.3 Carga Dinámica de Dispositivos
+
+#### **Archivos Modificados:**
+- `deviceedit.html` - Editar dispositivo
+- `adddevice.html` - Agregar dispositivo
+
+#### **Cambios en la Interfaz:**
+
+**Antes:**
+- Dropdown con tipos hardcodeados: "Alarma", "Cámara", "Foco", "Sensor de humo", etc.
+- Campos: Nombre, Conexión (sin uso real)
+
+**Después:**
+- Dropdown simplificado con tipos estándar: "Luz", "Temperatura", "Actuador", "Cámara"
+- Campos: Nombre, **Pin del dispositivo** (número)
+- Validación: Solo cámaras usan "URL de conexión", el resto usa "Pin"
+
+**Código del dropdown (adddevice.html):**
+```html
+<ul class="dropdown-menu w-100" id="tableMenu">
+    <li><a class="dropdown-item" href="#" data-type="luz">Luz</a></li>
+    <li><a class="dropdown-item" href="#" data-type="temperatura">Temperatura</a></li>
+    <li><a class="dropdown-item" href="#" data-type="actuador">Actuador</a></li>
+    <li><a class="dropdown-item" href="#" data-type="camara">Cámara</a></li>
+</ul>
+```
+
+**JavaScript - Cambio de campos según tipo:**
+```javascript
+if (selectedDeviceType === 'camara') {
+    // Mostrar campo de URL de conexión
+    pinInput.style.display = 'none';
+    connectionInput.style.display = 'block';
+} else {
+    // Mostrar campo de Pin
+    pinInput.style.display = 'block';
+    connectionInput.style.display = 'none';
+}
+```
+
+#### **Funciones de Carga y Guardado:**
+
+**deviceedit.html - Cargar datos (línea 216):**
+```javascript
+async function loadDeviceData() {
+    const response = await fetchWithAuth(`${API_URL}/devices/${deviceId}`);
+    const device = data.data;
+
+    // Cargar en los campos
+    deviceNameInput.value = device.nombre;
+    pinInput.value = device.pin || '';
+    selectedDeviceType = device.tipo;
+
+    // Mostrar en dropdown
+    const displayType = typeDisplayMap[device.tipo] || device.tipo;
+    document.getElementById('dropdownMenuButton').textContent = displayType;
+}
+```
+
+**deviceedit.html - Guardar cambios (línea 250):**
+```javascript
+// PUT a /api/devices/:id
+await fetchWithAuth(`${API_URL}/devices/${deviceId}`, {
+    method: 'PUT',
+    body: JSON.stringify({
+        nombre: deviceName,
+        tipo: selectedDeviceType,
+        pin: parseInt(pinValue),
+        habitacion: device.habitacion
+    })
+});
+```
+
+### 15.4 Carga Dinámica de Tareas/Automatizaciones
+
+#### **Archivos Modificados:**
+- `automatize.html` - Lista de automatizaciones
+- `taskinfo.html` - Editar automatización
+- `addtask.html` - Crear automatización
+
+#### **automatize.html - Carga Dinámica (línea 122):**
+
+**Antes:**
+- HTML estático con una tarea hardcodeada
+- No se actualizaba con datos reales
+
+**Después:**
+- Carga todas las automatizaciones desde `/api/automatize`
+- Renderiza dinámicamente cada automatización
+- Switch funcional para activar/desactivar
+
+**Código de carga:**
+```javascript
+async function loadAutomatizations() {
+    const response = await fetchWithAuth(`${API_URL}/automatize`);
+    const data = await response.json();
+
+    if (data.success && data.data.length > 0) {
+        data.data.forEach((auto, index) => {
+            // Obtener descripción de la acción
+            let descripcion = 'Sin acción';
+            if (auto.acciones && auto.acciones.length > 0) {
+                const accion = auto.acciones[0];
+                const dispositivo = accion.dispositivo?.nombre || 'Dispositivo';
+                const accionText = accion.accion === 'encender' ? 'Encender' :
+                                 accion.accion === 'apagar' ? 'Apagar' :
+                                 accion.accion;
+                descripcion = `${accionText} ${dispositivo}`;
+
+                // Agregar horario si existe
+                if (auto.trigger?.horario?.hora) {
+                    descripcion += ` a las ${auto.trigger.horario.hora}`;
+                }
+            }
+
+            // Crear elemento HTML
+            const taskSection = document.createElement('div');
+            taskSection.innerHTML = `
+                <div class="col-lg-10 col-sm-10" onclick="...">
+                    <img src="images/Bag-Suitcase-4--Streamline-Flex.png">
+                    <h2>${auto.nombre}</h2>
+                    <p>${descripcion}</p>
+                </div>
+                <div class="col-lg-2 col-sm-2">
+                    <label class="switch">
+                        <input type="checkbox" ${auto.activa ? 'checked' : ''}
+                               onchange="toggleAutomation('${auto._id}', this.checked)">
+                        <span class="slider round"></span>
+                    </label>
+                </div>
+            `;
+
+            // Insertar en el DOM
+            container.insertBefore(taskSection, addButton);
+        });
+    }
+}
+```
+
+**Función de toggle (activar/desactivar):**
+```javascript
+async function toggleAutomation(automationId, isActive) {
+    await fetchWithAuth(`${API_URL}/automatize/${automationId}`, {
+        method: 'PUT',
+        body: JSON.stringify({ activa: isActive })
+    });
+}
+```
+
+#### **taskinfo.html - Edición de Automatizaciones:**
+
+**Cambios importantes:**
+1. **Dropdown de dispositivos dinámico** (antes era input de solo lectura)
+2. **Carga de datos de la automatización** desde API
+3. **Formularios específicos por tipo de dispositivo** (luz, temperatura, actuador)
+
+**Función showFormForDeviceType (línea 251):**
+```javascript
+function showFormForDeviceType(tipo) {
+    // Ocultar todos los formularios
+    lightDiv.style.display = 'none';
+    fanDiv.style.display = 'none';
+    alarmDiv.style.display = 'none';
+    actuadorDiv.style.display = 'none';
+
+    // Mostrar el formulario correcto
+    if (tipo === 'luz') {
+        lightDiv.style.display = 'block';
+    } else if (tipo === 'temperatura') {
+        fanDiv.style.display = 'block';
+    } else if (tipo === 'actuador') {
+        actuadorDiv.style.display = 'block';
+    }
+}
+```
+
+**Carga de dispositivos disponibles (línea 251):**
+```javascript
+async function loadDevices(currentDeviceType) {
+    const response = await fetchWithAuth(`${API_URL}/devices`);
+    const data = await response.json();
+
+    if (data.success) {
+        const dropdown = document.getElementById('tableMenu');
+
+        // Filtrar solo dispositivos del mismo tipo
+        const filteredDevices = currentDeviceType
+            ? data.data.filter(d => d.tipo === currentDeviceType)
+            : data.data;
+
+        // Agregar al dropdown
+        filteredDevices.forEach(device => {
+            const li = document.createElement('li');
+            const a = document.createElement('a');
+            a.textContent = `${device.nombre} (${device.tipo})`;
+            a.onclick = () => {
+                selectedDeviceId = device._id;
+                selectedDeviceType = device.tipo;
+                showFormForDeviceType(device.tipo);
+            };
+            li.appendChild(a);
+            dropdown.appendChild(li);
+        });
+    }
+}
+```
+
+**Carga de datos de la automatización:**
+```javascript
+async function loadAutomatizationData() {
+    const response = await fetchWithAuth(`${API_URL}/automatize/${taskId}`);
+    const auto = await response.json();
+
+    if (auto.success) {
+        // Cargar nombre
+        taskNameInput.value = auto.data.nombre;
+
+        // Cargar dispositivo y mostrar formulario correcto
+        if (auto.data.acciones && auto.data.acciones.length > 0) {
+            const dispositivo = auto.data.acciones[0].dispositivo;
+            selectedDeviceId = dispositivo._id;
+            selectedDeviceType = dispositivo.tipo;
+            showFormForDeviceType(dispositivo.tipo);
+
+            // Cargar horarios según el tipo
+            if (auto.data.trigger?.horario?.hora) {
+                document.getElementById('turnOnTimeActuador').value =
+                    auto.data.trigger.horario.hora;
+            }
+            // ... etc
+        }
+    }
+}
+```
+
+#### **addtask.html - Creación de Tareas:**
+
+**Mejoras implementadas:**
+1. **Detección automática del tipo de dispositivo**
+2. **Formularios dinámicos** según tipo (luz/temperatura/actuador)
+3. **Guardado con estructura correcta** para el modelo Automatize
+
+**Código de guardado (línea 416):**
+```javascript
+const taskData = {
+    nombre: taskName,
+    descripcion: '',
+    activa: true,
+    trigger: {
+        tipo: 'horario'
+    },
+    acciones: []
+};
+
+// Configurar según tipo de dispositivo
+if (selectedDeviceType === 'actuador') {
+    const turnOnTime = document.getElementById('turnOnTimeActuador').value;
+    const turnOffTime = document.getElementById('turnOffTimeActuador').value;
+
+    taskData.trigger.horario = {
+        dias: [0, 1, 2, 3, 4, 5, 6],
+        hora: turnOnTime
+    };
+
+    taskData.acciones = [{
+        dispositivo: selectedDeviceId,
+        accion: 'encender',
+        parametros: {
+            horaApagar: turnOffTime
+        }
+    }];
+} else if (selectedDeviceType === 'luz') {
+    // Lógica para luces
+    // ...
+} // etc...
+
+// POST a /api/automatize
+await fetchWithAuth(`${API_URL}/automatize`, {
+    method: 'POST',
+    body: JSON.stringify(taskData)
+});
+```
+
+### 15.5 Beneficios de estos Cambios
+
+#### **Para el Desarrollo:**
+1. ✅ **Código más limpio** - Menos campos innecesarios
+2. ✅ **Más fácil de mantener** - Estructura clara y consistente
+3. ✅ **Mejor organización** - Tipos estandarizados
+4. ✅ **Menos bugs** - Validación más simple
+
+#### **Para el Usuario:**
+1. ✅ **Interfaz más clara** - Menos opciones confusas
+2. ✅ **Más rápido** - Carga dinámica de datos reales
+3. ✅ **Actualización en tiempo real** - Los cambios se reflejan inmediatamente
+4. ✅ **Menos errores** - Validación mejorada
+
+#### **Para el ESP32:**
+1. ✅ **Campo `pin` directo** - Sabe exactamente qué GPIO usar
+2. ✅ **Endpoint optimizado** - `/api/esp-config/:habitacionId` devuelve solo lo necesario
+3. ✅ **Tipos estándar** - Lógica simplificada (luz/temperatura/actuador)
+
+### 15.6 Migración de Datos
+
+**IMPORTANTE:** Si ya existen dispositivos en la base de datos sin el campo `pin`:
+
+**Script de migración (ejemplo):**
+```javascript
+// Agregar pin a dispositivos existentes
+db.devices.updateMany(
+    { pin: { $exists: false }, tipo: { $ne: 'camara' } },
+    { $set: { pin: 0 } }
+);
+```
+
+**Recomendación:**
+- Dispositivos antiguos deben editarse manualmente para agregar el pin correcto
+- O eliminar y volver a crear con la nueva estructura
+
+### 15.7 Documentación para Usuario Final
+
+#### **Sección Sugerida para el Manual:**
+
+**"Gestión de Dispositivos - Configuración de Pin"**
+
+1. **¿Qué es el Pin del dispositivo?**
+   - Es el número del pin GPIO en el ESP32 donde está conectado el dispositivo
+   - Ejemplo: Si conectaste un foco al pin 17 del ESP32, debes ingresar "17"
+
+2. **¿Cómo saber qué pin usar?**
+   - Consulta el diagrama de tu ESP32
+   - Verifica la conexión física del dispositivo
+   - Pregunta al técnico que instaló el sistema
+
+3. **Tipos de dispositivos:**
+   - **Luz**: Focos, lámparas, tiras LED
+   - **Temperatura**: Sensores DHT11, DHT22, DS18B20
+   - **Actuador**: Ventiladores, motores, relés genéricos
+   - **Cámara**: Cámaras de vigilancia (no usa pin, usa URL)
+
+---
+
+## 16. AUTENTICACIÓN CON GOOGLE OAUTH 2.0
+
+### 16.1 ¿Qué es Google OAuth?
+
+**OAuth 2.0** es un protocolo de autorización que permite a los usuarios iniciar sesión usando sus cuentas de Google, sin necesidad de crear una contraseña específica para KYROS.
+
+**Ventajas para el usuario:**
+- No necesita recordar otra contraseña
+- Inicio de sesión más rápido (un solo clic)
+- Mayor seguridad (usa la autenticación de Google)
+- Si ya tiene sesión en Google, es automático
+
+### 16.2 Tecnologías Utilizadas
+
+| Librería | Versión | Propósito |
+|----------|---------|-----------|
+| **passport** | ^0.7.0 | Framework de autenticación para Node.js |
+| **passport-google-oauth20** | ^2.0.0 | Estrategia de Google OAuth 2.0 |
+| **express-session** | ^1.18.0 | Manejo de sesiones en Express |
+
+### 16.3 Archivos Modificados/Creados
+
+#### **Nuevos Archivos:**
+```
+database/config/passport.js    # Configuración de Passport.js con Google OAuth
+```
+
+#### **Archivos Modificados:**
+```
+database/models/User.js        # Agregado: googleId, authProvider
+database/server.js             # Inicialización de Passport y sesiones
+database/routes/auth.js        # Rutas /google y /google/callback
+database/.env                  # Variables GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET
+login.html                     # Botón de Google + manejo de callback
+register.html                  # Botón de Google + manejo de callback
+```
+
+### 16.4 Configuración del Backend
+
+#### **A) Modelo de Usuario Actualizado (User.js)**
+
+Se agregaron dos campos nuevos:
+
+```javascript
+googleId: {
+    type: String,
+    unique: true,
+    sparse: true          // Permite null, solo usuarios de Google lo tienen
+},
+authProvider: {
+    type: String,
+    enum: ['local', 'google'],
+    default: 'local'      // 'local' = email/password, 'google' = Google OAuth
+}
+```
+
+**Cambio importante en el campo password:**
+```javascript
+password: {
+    type: String,
+    required: function() {
+        // Solo requerido si es usuario local (no Google)
+        return this.authProvider === 'local';
+    },
+    minlength: [6, 'La contraseña debe tener al menos 6 caracteres'],
+    select: false
+}
+```
+
+#### **B) Configuración de Passport (config/passport.js)**
+
+**Estrategia de Google:**
+```javascript
+passport.use(new GoogleStrategy({
+    clientID: process.env.GOOGLE_CLIENT_ID,
+    clientSecret: process.env.GOOGLE_CLIENT_SECRET,
+    callbackURL: process.env.GOOGLE_CALLBACK_URL
+}))
+```
+
+**Funcionalidades implementadas:**
+1. **Buscar usuario existente por googleId**
+   - Si existe, inicia sesión automáticamente
+
+2. **Vincular cuenta existente**
+   - Si un usuario ya se registró con email/password y luego usa Google
+   - Sistema detecta el email duplicado y vincula ambas cuentas
+
+3. **Crear nuevo usuario**
+   - Si es la primera vez que usa Google
+   - Crea cuenta automáticamente con datos de Google
+
+#### **C) Nuevas Rutas de Autenticación (routes/auth.js)**
+
+**Ruta 1: Iniciar OAuth**
+```javascript
+GET /api/auth/google
+```
+- Redirige al usuario a la página de login de Google
+- Solicita permisos: profile, email
+
+**Ruta 2: Callback de Google**
+```javascript
+GET /api/auth/google/callback
+```
+- Google redirige aquí después de la autenticación
+- Si exitoso: Genera JWT y redirige a login.html con token
+- Si falla: Redirige a login.html con mensaje de error
+
+#### **D) Variables de Entorno (.env)**
+
+**Nuevas variables agregadas:**
+```bash
+# Google OAuth Configuration
+GOOGLE_CLIENT_ID=tu-client-id.apps.googleusercontent.com
+GOOGLE_CLIENT_SECRET=GOCSPX-tu-client-secret
+GOOGLE_CALLBACK_URL=http://localhost:3000/api/auth/google/callback
+
+# Session Configuration
+SESSION_SECRET=clave-secreta-para-sesiones
+```
+
+### 16.5 Configuración de Google Cloud Console
+
+#### **Paso 1: Crear Proyecto**
+1. Ir a: https://console.cloud.google.com
+2. Crear nuevo proyecto: "Kyros Smart Home"
+3. Esperar a que se cree
+
+#### **Paso 2: Configurar Pantalla de Consentimiento**
+1. APIs y servicios → Pantalla de consentimiento de OAuth
+2. Tipo: **Externo**
+3. Datos requeridos:
+   - Nombre de la aplicación: "Kyros Smart Home"
+   - Correo de asistencia: (correo del desarrollador)
+   - Correo del desarrollador: (correo del desarrollador)
+4. Guardar y continuar
+
+#### **Paso 3: Crear Credenciales OAuth 2.0**
+1. APIs y servicios → Credenciales
+2. Crear credenciales → ID de cliente de OAuth
+3. Tipo: **Aplicación web**
+4. Nombre: "Kyros Web Client"
+5. **URIs de redireccionamiento autorizados:**
+   ```
+   http://localhost:3000/api/auth/google/callback
+   ```
+   (En producción, cambiar a la URL real)
+6. Crear y copiar:
+   - Client ID
+   - Client Secret
+
+#### **Paso 4: Agregar a .env**
+```bash
+GOOGLE_CLIENT_ID=el-client-id-copiado
+GOOGLE_CLIENT_SECRET=el-client-secret-copiado
+```
+
+### 16.6 Cambios en el Frontend
+
+#### **A) Botón de Google (login.html y register.html)**
+
+**HTML del botón:**
+```html
+<div class="login-icon">
+    <a href="/api/auth/google">
+        <svg viewBox="0 0 24 24" fill="none">
+            <!-- SVG de la G de Google -->
+        </svg>
+    </a>
+</div>
+```
+
+**Características:**
+- Mantiene el diseño original (botón cuadrado con SVG)
+- Al hacer clic, redirige a `/api/auth/google`
+- No requiere JavaScript adicional para iniciar el flujo
+
+#### **B) Manejo del Callback (JavaScript)**
+
+**Script agregado en login.html y register.html:**
+```javascript
+// Verificar si viene de Google OAuth
+const urlParams = new URLSearchParams(window.location.search);
+const token = urlParams.get('token');
+const googleAuth = urlParams.get('googleAuth');
+const error = urlParams.get('error');
+
+if (token && googleAuth === 'success') {
+    // Guardar token en localStorage
+    saveToken(token);
+
+    // Limpiar URL
+    window.history.replaceState({}, document.title, "/login.html");
+
+    // Redirigir a rooms
+    window.location.href = '/rooms.html';
+}
+```
+
+### 16.7 Flujo Completo de Autenticación con Google
+
+#### **Diagrama del Flujo:**
+
+```
+1. Usuario hace clic en botón de Google
+   ↓
+2. Frontend redirige a: /api/auth/google
+   ↓
+3. Backend (Passport) redirige a Google
+   ↓
+4. Usuario inicia sesión en Google
+   ↓
+5. Usuario acepta permisos (profile, email)
+   ↓
+6. Google redirige a: /api/auth/google/callback
+   ↓
+7. Backend verifica con Google que el usuario es válido
+   ↓
+8. Backend busca o crea usuario en MongoDB
+   ↓
+9. Backend genera token JWT
+   ↓
+10. Backend redirige a: /login.html?token=XXX&googleAuth=success
+   ↓
+11. Frontend detecta token en URL
+   ↓
+12. Frontend guarda token en localStorage
+   ↓
+13. Frontend redirige a /rooms.html
+   ↓
+14. Usuario está autenticado
+```
+
+#### **Casos Especiales:**
+
+**Caso 1: Usuario nuevo con Google**
+- Google devuelve: nombre, email, googleId
+- Sistema crea usuario con authProvider='google'
+- No requiere contraseña
+
+**Caso 2: Usuario existente (email/password) usa Google**
+- Sistema detecta email duplicado
+- Vincula cuenta agregando googleId al usuario existente
+- Ahora puede usar ambos métodos de login
+
+**Caso 3: Usuario con Google quiere usar email/password**
+- No puede, debe usar Google para iniciar sesión
+- authProvider='google' no permite login tradicional
+
+### 16.8 Seguridad
+
+#### **Protecciones Implementadas:**
+
+1. **Validación de Google**
+   - Solo Google puede completar el callback
+   - Passport verifica la autenticidad del token de Google
+
+2. **Sesiones Seguras**
+   - `express-session` con secret aleatorio
+   - Cookies con configuración segura en producción
+
+3. **Vinculación de Cuentas**
+   - Si email ya existe, vincula en lugar de duplicar
+   - Previene múltiples cuentas con el mismo email
+
+4. **Tokens JWT**
+   - Mismo sistema de tokens que autenticación local
+   - Válidos por 7 días
+   - Almacenados en localStorage del navegador
+
+### 16.9 Diferencias entre Usuarios Locales y Google
+
+| Característica | Usuario Local | Usuario Google |
+|----------------|---------------|----------------|
+| **authProvider** | 'local' | 'google' |
+| **password** | Requerido (hash bcrypt) | No tiene |
+| **googleId** | null | ID de Google |
+| **email** | Ingresado manualmente | De cuenta Google |
+| **nombre** | Ingresado manualmente | De perfil Google |
+| **Login** | Email + contraseña | Botón de Google |
+
+### 16.10 Mensajes de Error
+
+| Error | Cuándo Ocurre | Solución |
+|-------|---------------|----------|
+| `google_auth_failed` | Google rechaza autenticación | Usuario canceló o cuenta no válida |
+| `token_generation_failed` | Error al crear JWT | Error del servidor, contactar soporte |
+| `Invalid credentials` | No aplica a Google | Solo para login tradicional |
+
+### 16.11 Consideraciones para Producción
+
+#### **Cambios Necesarios:**
+
+1. **URL de Callback en Google Cloud Console:**
+   ```
+   Desarrollo: http://localhost:3000/api/auth/google/callback
+   Producción: https://tudominio.com/api/auth/google/callback
+   ```
+
+2. **Variable GOOGLE_CALLBACK_URL (.env):**
+   ```bash
+   # Producción
+   GOOGLE_CALLBACK_URL=https://tudominio.com/api/auth/google/callback
+   ```
+
+3. **Configuración de Sesión Segura (server.js):**
+   ```javascript
+   cookie: {
+       secure: true,    // Requiere HTTPS
+       httpOnly: true,
+       sameSite: 'strict'
+   }
+   ```
+
+4. **Verificación de Dominio en Google:**
+   - Agregar dominio de producción en Google Cloud Console
+   - Publicar la aplicación OAuth (sacarla de modo desarrollo)
+
+### 16.12 Pruebas de Funcionalidad
+
+#### **Checklist de Pruebas:**
+
+- [ ] Usuario puede hacer clic en botón de Google
+- [ ] Redirige correctamente a página de Google
+- [ ] Después de autenticación, vuelve a la aplicación
+- [ ] Token se guarda en localStorage
+- [ ] Usuario puede acceder a páginas protegidas
+- [ ] Si cierra sesión y vuelve a usar Google, funciona
+- [ ] Si usuario ya existe con email/password, vincula correctamente
+- [ ] Errores se manejan correctamente (sin crashes)
+
+### 16.13 Documentación para Usuario Final
+
+#### **Sección Sugerida para el Manual:**
+
+**"Inicio de Sesión con Google"**
+
+1. **¿Qué es?**
+   - Forma rápida de acceder a KYROS usando tu cuenta de Google
+   - No necesitas crear una contraseña adicional
+
+2. **¿Cómo usarlo?**
+   - En la página de login, haz clic en el botón con la "G" de Google
+   - Inicia sesión en Google (si no lo has hecho)
+   - Acepta los permisos solicitados
+   - Serás redirigido automáticamente a KYROS
+
+3. **¿Es seguro?**
+   - Sí, usamos el sistema de autenticación oficial de Google
+   - KYROS no tiene acceso a tu contraseña de Google
+   - Solo recibimos tu nombre y correo electrónico
+
+4. **¿Puedo usar mi email de Google con contraseña también?**
+   - Si ya te registraste con email/password y luego usas Google, ambas cuentas se vincularán automáticamente
+   - Podrás usar cualquiera de los dos métodos para iniciar sesión
+
+---
+
 **Fecha de creación:** Noviembre 2025
 **Versión del sistema:** 2.0
-**Última actualización:** Commit de conexión de botones frontend-backend
+**Última actualización:** Implementación de Google OAuth 2.0
