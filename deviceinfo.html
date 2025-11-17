@@ -141,6 +141,9 @@
     <!-- Bootstrap JavaScript -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js" integrity="sha384-FKyoEForCGlyvwx9Hj09JcYn3nv7wiPVlz7YYwJrWVcXK/BmnVDxM+D2scQbITxI" crossorigin="anonymous"></script>
 
+    <!-- SweetAlert Javascript -->
+    <script src="https://unpkg.com/sweetalert/dist/sweetalert.min.js"></script>
+
     <!-- Auth utility -->
     <script src="js/auth.js"></script>
     <script src="js/navbar.js"></script>
@@ -204,7 +207,7 @@
 
             } catch (error) {
                 console.error('Error:', error);
-                alert('Error al cargar información del dispositivo');
+                swal("Error", "Error al cargar la información del dispositivo", "error");
             }
         }
 
@@ -296,7 +299,7 @@
 
             } catch (error) {
                 console.error('Error:', error);
-                alert('Error al cambiar el estado del dispositivo');
+                swal("Error", "Error al cambiar el estado del dispositivo", "error");
                 // Revertir el toggle
                 e.target.checked = !newState;
             }

@@ -69,16 +69,20 @@
         <div class="row">
             <h1 class="heading">Editar habitación</h1>
         </div>
-        <div class="row d-flex justify-content-center align-items-center">
-            <div class="col-lg-5" id="leftCol-addroom">
-                <h3>Nombre de habitación</h3>
-                <input type="text" id="userinput" name="roomName">
-                <h3>IP de habitación (ESP32)</h3>
-                <input type="text" id="user-input" name="ipESP32">
-                <button class="button-login">Guardar</button>
-                <button class="button-delete">Eliminar</button>
+        <div class="row d-flex justify-content-center align-items-center" id="room-content">
+            <div class="col-lg-5 d-flex justify-content-center" id="leftCol-addroom">
+                <div>
+                    <h3>Nombre de habitación</h3>
+                    <input type="text" id="userinput" name="roomName">
+                    <h3>IP de habitación (ESP32)</h3>
+                    <input type="text" id="user-input" name="ipESP32">
+                    <br>
+                    <button class="button-save">Guardar</button>
+                    <br>
+                    <button class="button-delete mt-2">Eliminar</button>
+                </div>
             </div>
-            <div class="col-lg-5">
+            <div class="col-lg-5 d-flex justify-content-center">
                 <img id="room-img" src="images/Office Work.png" alt="Room">
             </div>
         </div>
@@ -124,6 +128,9 @@
     <!-- Bootstrap JavaScript -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js" integrity="sha384-FKyoEForCGlyvwx9Hj09JcYn3nv7wiPVlz7YYwJrWVcXK/BmnVDxM+D2scQbITxI" crossorigin="anonymous"></script>
 
+    <!-- SweetAlert Javascript -->
+    <script src="https://unpkg.com/sweetalert/dist/sweetalert.min.js"></script>
+
     <!-- Auth utility -->
     <script src="js/auth.js"></script>
     <script src="js/navbar.js"></script>
@@ -143,7 +150,7 @@
             try {
                 const roomId = getParameterByName('roomId');
                 if (!roomId) {
-                    alert('No se encontró el ID de la habitación');
+                    swal("Error", "No se encontró el ID de la habitación", "error");
                     window.location.href = 'rooms.html';
                     return;
                 }
@@ -162,12 +169,12 @@
                         ipInput.value = room.descripcion || '';
                     }
                 } else {
-                    alert('Error al cargar los datos de la habitación');
+                    await swal("Error", "Error al cargar los datos de la habitación", "error");
                     window.location.href = 'rooms.html';
                 }
             } catch (error) {
                 console.error('Error:', error);
-                alert('Error al cargar los datos');
+                await swal("Error", "Error al cargar los datos", "error");
                 window.location.href = 'rooms.html';
             }
         }
@@ -181,7 +188,7 @@
             const ipESP32 = ipInput.value.trim();
 
             if (!roomName) {
-                alert('Por favor ingrese el nombre de la habitación');
+                swal("Error", "Favor de ingresar el nombre de la habitación", "warning");
                 return;
             }
 
@@ -197,14 +204,14 @@
                 const data = await response.json();
 
                 if (response.ok) {
-                    alert('Habitación actualizada exitosamente');
+                    swal({title:"Habitación actualizada exitosamente", icon:"success",});
                     window.location.href = 'rooms.html';
                 } else {
-                    alert(data.message || 'Error al actualizar la habitación');
+                    swal("Error", "Error al actualizar la habitación", "error");
                 }
             } catch (error) {
                 console.error('Error:', error);
-                alert('Error al conectar con el servidor');
+                swal("Error", "Error al conectar con el servidor", "error");
             }
         });
 
@@ -212,7 +219,15 @@
         deleteButton.addEventListener('click', async (e) => {
             e.preventDefault();
 
-            if (!confirm('¿Está seguro de que desea eliminar esta habitación? Esta acción no se puede deshacer.')) {
+            const willDelete = await swal({
+                title: "¿Está seguro?",
+                text: "Se eliminará esta habitación",
+                icon: "warning",
+                buttons: true,
+                dangerMode: true,
+            });
+
+            if(!willDelete){
                 return;
             }
 
@@ -226,14 +241,14 @@
                 const data = await response.json();
 
                 if (response.ok) {
-                    alert('Habitación eliminada exitosamente');
+                    swal({title:"Habitación eliminada exitosamente", icon:"success",});
                     window.location.href = 'rooms.html';
                 } else {
-                    alert(data.message || 'Error al eliminar la habitación');
+                    swal("Error", "Error al eliminar la habitación", "error");
                 }
             } catch (error) {
                 console.error('Error:', error);
-                alert('Error al conectar con el servidor');
+                swal("Error", "Error al conectar con el servidor", "error");
             }
         });
 

@@ -121,6 +121,9 @@
     <!-- Bootstrap JavaScript -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js" integrity="sha384-FKyoEForCGlyvwx9Hj09JcYn3nv7wiPVlz7YYwJrWVcXK/BmnVDxM+D2scQbITxI" crossorigin="anonymous"></script>
 
+    <!-- SweetAlert Javascript -->
+    <script src="https://unpkg.com/sweetalert/dist/sweetalert.min.js"></script>
+
     <!-- Auth utility -->
     <script src="js/auth.js"></script>
     <script src="js/navbar.js"></script>
@@ -156,11 +159,11 @@
 
         // Mapeo de iconos por tipo de dispositivo
         const deviceIcons = {
-            'luz': 'images/Lightbulb--Streamline-Flex.png',
-            'sensor': 'images/Lightbulb--Streamline-Flex.png',
-            'termostato': 'images/Lightbulb--Streamline-Flex.png',
+            'luz': 'images/Lightbulb.png',
+            'sensor': 'images/Sensor.png',
+            'termostato': 'images/Thermometer.png',
             'cerradura': 'images/Lightbulb--Streamline-Flex.png',
-            'default': 'images/Lightbulb--Streamline-Flex.png'
+            'default': 'images/Sensor.png'
         };
 
         function getIconForDevice(tipo) {
@@ -203,23 +206,23 @@
                     const statusText = device.estado ? 'Encendido' : 'Apagado';
 
                     deviceDiv.innerHTML = `
-                        <div class="row align-items-center">
-                            <div class="col-lg-10" id="rdiv">
-                                <div class="device-img">
-                                    <img src="${getIconForDevice(device.tipo)}">
-                                </div>
-                                <div class="text">
-                                    <h2 id="deviceName">${device.nombre}</h2>
-                                    <p id="deviceInfo">${device.tipo} - ${statusText}</p>
-                                </div>
-                            </div>
-                            <div class="col-lg-2 text-end">
-                                <img src="images/Pencil-Square--Streamline-Flex-Remix.png" id="edit">
-                            </div>
+                        <div class="col-lg-1 order-lg-1 order-1 col-sm-6" id="rdiv">
+                            <img src="${getIconForDevice(device.tipo)}">
+                        </div>
+                        <div class="text col-lg-9 order-lg-2 order-3 col-sm-12" id="rdiv-text">
+                            <h2 id="deviceName">${device.nombre}</h2>
+                            <p id="deviceInfo">${device.tipo} - ${statusText}</p>
+                        </div>
+                        <div class="col-lg-2 d-flex justify-content-end order-lg-3 order-2 col-sm-6">
+                            <img src="images/Edit.png" id="edit">
                         </div>
                     `;
 
                     deviceDiv.querySelector('#rdiv').onclick = () =>{
+                        navigateToDevice(device._id, device.nombre);
+                    }
+
+                    deviceDiv.querySelector('#rdiv-text').onclick = () =>{
                         navigateToDevice(device._id, device.nombre);
                     }
 
@@ -232,7 +235,7 @@
 
             } catch (error) {
                 console.error('Error:', error);
-                alert('Error al cargar los dispositivos');
+                swal("Error", "Error al cargar los dispositivos", "error");
             }
         }
 

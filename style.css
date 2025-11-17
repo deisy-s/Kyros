@@ -202,6 +202,10 @@ footer .container{
     margin-top: 30px;
 }
 
+.sm-div1{
+    margin-left: 0;
+}
+
 #sm-div svg{
     width: 16%;
     margin-left: -2px;
@@ -403,17 +407,20 @@ input:checked + .slider:before {
 #room-section img{
     width: 4%;
     height: 4%;
+    min-width: 35px;
+    min-height: 35px;
+    margin-top: -20px;
+}
+
+#room-section #edit{
+    width: 4%;
+    height: 4%;
     min-width: 30px;
     min-height: 30px;
 }
 
-#room-section #edit{
-    margin-top: -10px;
-}
-
 #room-section .text{
-    margin-left: 60px;
-    margin-top: -40px;
+    margin-left: -25px;
 }
 
 #room-section h2{
@@ -451,13 +458,20 @@ input:checked + .slider:before {
 #device-section img{
     width: 4%;
     height: 4%;
+    min-width: 35px;
+    min-height: 35px;
+    margin-top: 8px;
+}
+
+#device-section #edit{
+    width: 4%;
+    height: 4%;
     min-width: 30px;
     min-height: 30px;
 }
 
 #device-section .text{
-    margin-left: 60px;
-    margin-top: -40px;
+    margin-left: -25px;
 }
 
 #device-section h2{
@@ -469,6 +483,13 @@ input:checked + .slider:before {
     font-size: 16px;
     margin-top: -7px;
     color: #3b3b3b;
+}
+
+#device-section .add-image{
+    width: 6%;
+    height: 8%;
+    min-width: 40px;
+    min-height: 40px;
 }
 
 /* Help center section */
@@ -575,11 +596,28 @@ input:checked + .slider:before {
     border-radius: 8px;
     cursor: pointer;
     transition: width 0.5s;
-    position: relative;
-    top: -30px;
+    margin-top: -10px;
 }
 
 .button-login:hover{
+    background: linear-gradient(90deg,rgba(121, 166, 212, 1) 1%, rgba(80, 145, 211, 1) 100%);
+}
+
+.button-save{
+    width: 300px;
+    border: 0;
+    padding: 10px 10px;
+    outline: none;
+    font-size: 16px;
+    color: #fff;
+    background: #4691db;
+    background: linear-gradient(90deg,rgba(70, 145, 219, 1) 1%, rgba(6, 81, 199, 1) 100%);
+    border-radius: 8px;
+    cursor: pointer;
+    transition: width 0.5s;
+}
+
+.button-save:hover{
     background: linear-gradient(90deg,rgba(121, 166, 212, 1) 1%, rgba(80, 145, 211, 1) 100%);
 }
 
@@ -595,8 +633,6 @@ input:checked + .slider:before {
     border-radius: 8px;
     cursor: pointer;
     transition: width 0.5s;
-    position: relative;
-    top: -20px;
 }
 
 .button-delete:hover{
@@ -677,7 +713,6 @@ input:checked + .slider:before {
 
 #cont-carousel #main-img{
     width: 350px;
-    margin-left: 30px;
 }
 
 .carousel-item{
@@ -758,6 +793,10 @@ input:checked + .slider:before {
     margin-top: 30px;
 }
 
+#room-content{
+    margin-top: -30px;
+}
+
 .dropdown{
     width: 300px;
 }
@@ -778,12 +817,6 @@ input:checked + .slider:before {
 
 #room-img{
     width: 400px;
-    margin-top: -40px;
-    margin-left: -10px;
-}
-
-#leftCol-addroom{
-    margin-left: 80px;
 }
 
 /* Device info section */
@@ -857,8 +890,9 @@ input:checked + .slider:before {
     transform: translateX(16px);
 }
 
+/* Add task section */
 #main-container-addtask{
-    margin-top: 66px;
+    margin-top: 90px;
     margin-bottom: 60px;
 }
 
@@ -872,11 +906,66 @@ input:checked + .slider:before {
     margin-left: 80px;
 }
 
+/* Animation from Animista 
+   Licensed under FreeBSD License
+   http://animista.net */
+.swing-in-bottom-bck {
+	-webkit-animation: swing-in-bottom-bck 0.6s cubic-bezier(0.175, 0.885, 0.320, 1.275) both;
+	        animation: swing-in-bottom-bck 0.6s cubic-bezier(0.175, 0.885, 0.320, 1.275) both;
+}
+
+@-webkit-keyframes swing-in-bottom-bck {
+  0% {
+    -webkit-transform: rotateX(-70deg);
+            transform: rotateX(-70deg);
+    -webkit-transform-origin: bottom;
+            transform-origin: bottom;
+    opacity: 0;
+  }
+  100% {
+    -webkit-transform: rotateX(0);
+            transform: rotateX(0);
+    -webkit-transform-origin: bottom;
+            transform-origin: bottom;
+    opacity: 1;
+  }
+}
+@keyframes swing-in-bottom-bck {
+  0% {
+    -webkit-transform: rotateX(-70deg);
+            transform: rotateX(-70deg);
+    -webkit-transform-origin: bottom;
+            transform-origin: bottom;
+    opacity: 0;
+  }
+  100% {
+    -webkit-transform: rotateX(0);
+            transform: rotateX(0);
+    -webkit-transform-origin: bottom;
+            transform-origin: bottom;
+    opacity: 1;
+  }
+}
+
+#task-button{
+    border: none;
+    background: linear-gradient(90deg,rgba(70, 145, 219, 1) 1%, rgba(6, 81, 199, 1) 100%);
+    color: #fff;
+    border-radius: 8px;
+    width: 100%;
+    padding: 8px 0;
+    cursor: pointer;
+}
+
+#task-button:hover{
+    background: linear-gradient(90deg,rgba(121, 166, 212, 1) 1%, rgba(80, 145, 211, 1) 100%);
+}
+
 #rightCol-addtask , .timeOffLight{
     margin-top: 20px;
 }
 
-#turnOnTime, #turnOffTime, #turnOn, #timeOnLight, #timeOffLight{
+#turnOnTime, #turnOffTime, #turnOn, #turnOnTimeLight, #turnOffTimeLight{
     width: 140px;
     height: 35px;
     background: transparent;
@@ -887,6 +976,22 @@ input:checked + .slider:before {
     letter-spacing: 1px;
     font-family: sans-serif;
     padding: 10px 10px;
+}
+
+#timeOn h3, #tempOn h3, #timeOff h3, #tempOff h3, #timeOnLight h3, #timeOffLight h3, #turnOnAlarm h3{
+    margin-right: 20px;
+}
+
+#tempOn .degree, #tempOff .degree{
+    margin-left: 20px;
+}
+
+#option-fan .dropdown, #option-fan-off .dropdown{
+    width: 100%;
+}
+
+#option-fan .dropdown button, #option-fan-off .dropdown button{
+    width: 100%;
 }
 
 #turnOnTime:focus, #turnOffTime:focus, #turnOnTemp:focus, #turnOffTemp:focus{
@@ -920,20 +1025,8 @@ input:checked + .slider:before {
     margin-left: 80px;
 }
 
-#rightCol-taskinfo h3{
-    margin-right: 10px;
-}
-
-#rightCol-taskinfo .degree{
-    margin-left: 10px;
-}
-
-#rightCol-taskinfo input{
-    margin-bottom: 10px;
-}
-
-#rightCol-taskinfo .timeOff{
-    margin-top: 20px;
+#rightCol-taskinfo img{
+    width: 68%;
 }
 
 #rightCol-taskinfo .switch {
@@ -983,27 +1076,52 @@ input:checked + .slider:before {
 }
 
 @media(max-width: 991px){
+    /* Text carousel */
+    #car{
+        display: none;
+    }
+
+    /* Rooms section text */
+    #room-section .text{
+        margin-left: 0px;
+        margin-top: 6px;
+    }
+
+    /* Devices section */
+    #device-section .text{
+        margin-left: 0px;
+        margin-top: 6px;
+    }
+}
+
+@media(max-width: 991px) and (orientation: portrait){
+    #sm-div{
+        margin-left: 0;
+    }
+
     /* TODO: CENTER IN PHONE SCREENS */
     #leftCol-register{
-        margin-left: 10px;
+        margin-left: 0px;
+        padding-left: 40px;
     }
 
     #leftCol-login{
-        margin-left: 10px;
+        margin-left: 0px;
+        padding-left: 40px;
     }
 
-    /* Text carousel */
-    #cont-carousel{
-        display: none;
+    /* Rooms section */
+    #room-section .col-lg-1{
+        margin-top: 10px;
+    }
+
+    #room-content{
+        margin-top: 0px;
     }
 
     /* Add room section */
     #room-img{
         display: none;
-    }
-
-    #leftCol-addroom{
-        margin-left: 0;
     }
 
     #leftCol-addroom .button-login{
@@ -1032,9 +1150,7 @@ input:checked + .slider:before {
     #main-container-deviceinfo .col-lg-8{
         border-right: none;
     }
-}
 
-@media(max-width: 991px) and (orientation: portrait){
     #leftCol{
         margin-top: -100px;
         padding-bottom: 90px;
@@ -1082,7 +1198,11 @@ input:checked + .slider:before {
     }
 
     #rightCol-taskinfo{
-        margin-left: 0;
+        display: none;
+    }
+
+    #rightCol-taskinfo img{
+        display: none;
     }
 
     #rightCol-taskinfo .switch {
@@ -1093,8 +1213,24 @@ input:checked + .slider:before {
         top: 0;
     }
 
-    #leftCol-addroom, #leftCol-addtask, #rightCol-addtask, #leftCol-taskinfo, #rightCol-taskinfo{
+    #leftCol-addtask, #rightCol-addtask, #leftCol-taskinfo{
         padding-left: 25px;
+    }
+}
+
+@media(max-width: 581px){
+    /* Rooms section */
+    #room-section .col-lg-2{
+        margin-top: -17px;
+    }
+
+    /* Devices section */
+    #device-section #rdiv{
+        margin-top: -10px;
+    }
+
+    #device-section .col-lg-2{
+        margin-top: -35px;
     }
 }
 

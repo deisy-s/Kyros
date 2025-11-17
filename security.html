@@ -110,6 +110,9 @@
     <!-- Bootstrap JavaScript -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js" integrity="sha384-FKyoEForCGlyvwx9Hj09JcYn3nv7wiPVlz7YYwJrWVcXK/BmnVDxM+D2scQbITxI" crossorigin="anonymous"></script>
 
+    <!-- SweetAlert Javascript -->
+    <script src="https://unpkg.com/sweetalert/dist/sweetalert.min.js"></script>
+
     <!-- Auth utility -->
     <script src="js/auth.js"></script>
     <script src="js/navbar.js"></script>
@@ -197,11 +200,11 @@
                 if (response.ok) {
                     loadCameras(); // Recargar cámaras
                 } else {
-                    alert('Error al cambiar estado de la cámara');
+                    swal("Error", "Error al cambiar el estado de la cámara", "error");
                 }
             } catch (error) {
                 console.error('Error:', error);
-                alert('Error al conectar con el servidor');
+                swal("Error", "Error al conectar con el servidor", "error");
             }
         }
 
@@ -214,11 +217,11 @@
                 if (response.ok) {
                     loadCameras(); // Recargar cámaras
                 } else {
-                    alert('Error al cambiar grabación');
+                    swal("Error", "Error al cambiar la grabación", "error");
                 }
             } catch (error) {
                 console.error('Error:', error);
-                alert('Error al conectar con el servidor');
+                swal("Error", "Error al conectar con el servidor", "error");
             }
         }
 

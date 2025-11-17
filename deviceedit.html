@@ -69,39 +69,42 @@
         <div class="row">
             <h1 class="heading">Editar dispositivo</h1>
         </div>
-        <div class="row d-flex justify-content-center align-items-center">
-            <div class="col-lg-5" id="leftCol-addroom">
-                <h3>Tipo de dispositivo</h3>
-                <div class="dropdown">
-                    <button
-                        class="btn btn-primary dropdown-toggle"
-                        data-bs-toggle="dropdown"
-                        type="button"
-                        id="dropdownMenuButton"
-                        data-mdb-dropdown-init
-                        data-mdb-ripple-init
-                        aria-expanded="false"
-                    >
-                    </button>
-                    <ul class="dropdown-menu w-100" id="tableMenu" aria-labelledby="dropdownMenuButton">
-                        <li><a class="dropdown-item" href="#">Alarma</a></li>
-                        <li><a class="dropdown-item" href="#">Cámara</a></li>
-                        <li><a class="dropdown-item" href="#">Foco</a></li>
-                        <li><a class="dropdown-item" href="#">Sensor de humo y gas</a></li>
-                        <li><a class="dropdown-item" href="#">Sensor de movimiento</a></li>
-                        <li><a class="dropdown-item" href="#">Sensor de temperatura y humedad</a></li>
-                        <li><a class="dropdown-item" href="#">Ventilador</a></li>
-                    </ul>
+        <div class="row d-flex justify-content-center align-items-center" id="room-content">
+            <div class="col-lg-5 d-flex justify-content-center" id="leftCol-addroom">
+                <div>
+                    <h3>Tipo de dispositivo</h3>
+                    <div class="dropdown">
+                        <button
+                            class="btn btn-primary dropdown-toggle"
+                            data-bs-toggle="dropdown"
+                            type="button"
+                            id="dropdownMenuButton"
+                            data-mdb-dropdown-init
+                            data-mdb-ripple-init
+                            aria-expanded="false"
+                        >
+                        </button>
+                        <ul class="dropdown-menu w-100" id="tableMenu" aria-labelledby="dropdownMenuButton">
+                            <li><a class="dropdown-item" href="#">Alarma</a></li>
+                            <li><a class="dropdown-item" href="#">Cámara</a></li>
+                            <li><a class="dropdown-item" href="#">Foco</a></li>
+                            <li><a class="dropdown-item" href="#">Sensor de humo y gas</a></li>
+                            <li><a class="dropdown-item" href="#">Sensor de movimiento</a></li>
+                            <li><a class="dropdown-item" href="#">Sensor de temperatura y humedad</a></li>
+                            <li><a class="dropdown-item" href="#">Ventilador</a></li>
+                        </ul>
+                    </div>
+                    <h3>Nombre de dispositivo</h3>
+                    <input type="text" id="userinput" name="deviceName">
+                    <h3>Conexión</h3>
+                    <input type="text" id="user-input" name="conection">
+                    <br>
+                    <button class="button-save">Guardar</button>
+                    <br>
+                    <button class="button-delete mt-2">Eliminar</button>
                 </div>
-                <h3>Nombre de dispositivo</h3>
-                <input type="text" id="userinput" name="deviceName">
-                <h3>Conexión</h3>
-                <input type="text" id="user-input" name="conection">
-
-                <button class="button-login">Guardar</button>
-                <button class="button-delete mt-1">Eliminar</button>
             </div>
-            <div class="col-lg-5">
+            <div class="col-lg-5 d-flex justify-content-center">
                 <img id="room-img" src="images/Motivation 5.png" alt="Device">
             </div>
         </div>
@@ -146,6 +149,9 @@
 
     <!-- Bootstrap JavaScript -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js" integrity="sha384-FKyoEForCGlyvwx9Hj09JcYn3nv7wiPVlz7YYwJrWVcXK/BmnVDxM+D2scQbITxI" crossorigin="anonymous"></script>
+
+    <!-- SweetAlert Javascript -->
+    <script src="https://unpkg.com/sweetalert/dist/sweetalert.min.js"></script>
 
     <!-- Auth utility -->
     <script src="js/auth.js"></script>
@@ -222,7 +228,7 @@
             try {
                 const deviceId = getParameterByName('deviceId');
                 if (!deviceId) {
-                    alert('No se encontró el ID del dispositivo');
+                    swal("Error", "No se encontró el ID del dispositivo", "error");
                     window.location.href = `devices.html?roomId=${roomId}&roomname=${roomname}`;
                     return;
                 }
@@ -240,12 +246,12 @@
                     selectedDeviceType = displayType;
                     document.getElementById('dropdownMenuButton').textContent = displayType;
                 } else {
-                    alert('Error al cargar los datos del dispositivo');
+                    await swal("Error", "Error al cargar los datos del dispositivo", "error");
                     window.location.href = `devices.html?roomId=${roomId}&roomname=${roomname}`;
                 }
             } catch (error) {
                 console.error('Error:', error);
-                alert('Error al cargar los datos');
+                await swal("Error", "Error al cargar los datos", "error");
                 window.location.href = `devices.html?roomId=${roomId}&roomname=${roomname}`;
             }
         }
@@ -259,12 +265,17 @@
             const connection = connectionInput.value.trim();
 
             if (!selectedDeviceType) {
-                alert('Por favor seleccione el tipo de dispositivo');
+                swal("Campo vacío", "Favor de seleccionar el tipo de dispositivo", "warning");
                 return;
             }
 
             if (!deviceName) {
-                alert('Por favor ingrese el nombre del dispositivo');
+                swal("Campo vacío", "Favor de ingresar el nombre del dispositivo", "error");
+                return;
+            }
+
+            if (!connection) {
+                swal("Campo vacío", "Favor de ingresar la conexión del dispositivo", "error");
                 return;
             }
 
@@ -288,10 +299,10 @@
                     const data = await response.json();
 
                     if (response.ok) {
-                        alert('Cámara actualizada exitosamente');
+                        swal({title:"Cámara actualizada exitosamente", icon:"success",});
                         window.location.href = `devices.html?roomId=${roomId}&roomname=${roomname}`;
                     } else {
-                        alert(data.message || 'Error al actualizar la cámara');
+                        swal("Error", "Error al actualizar la cámara", "error");
                     }
                 } else {
                     // Para dispositivos normales
@@ -309,15 +320,15 @@
                     const data = await response.json();
 
                     if (response.ok) {
-                        alert('Dispositivo actualizado exitosamente');
+                        swal({title:"Dispositivo actualizado exitosamente", icon:"success",});
                         window.location.href = `devices.html?roomId=${roomId}&roomname=${roomname}`;
                     } else {
-                        alert(data.message || 'Error al actualizar el dispositivo');
+                        swal("Error", "Error al actualizar el dispositivo", "error");
                     }
                 }
             } catch (error) {
                 console.error('Error:', error);
-                alert('Error al conectar con el servidor');
+                swal("Error", "Error al conectar con el servidor", "error");
             }
         });
 
@@ -325,7 +336,15 @@
         deleteButton.addEventListener('click', async (e) => {
             e.preventDefault();
 
-            if (!confirm('¿Está seguro de que desea eliminar este dispositivo? Esta acción no se puede deshacer.')) {
+            const willDelete = await swal({
+                title: "¿Está seguro?",
+                text: "Se eliminará este dispositivo",
+                icon: "warning",
+                buttons: true,
+                dangerMode: true,
+            });
+
+            if(!willDelete){
                 return;
             }
 
@@ -339,14 +358,14 @@
                 const data = await response.json();
 
                 if (response.ok) {
-                    alert('Dispositivo eliminado exitosamente');
+                    swal({title:"Dispositivo eliminado exitosamente", icon:"success",});
                     window.location.href = `devices.html?roomId=${roomId}&roomname=${roomname}`;
                 } else {
-                    alert(data.message || 'Error al eliminar el dispositivo');
+                    swal("Error", "Error al eliminar el dispositivo", "error");
                 }
             } catch (error) {
                 console.error('Error:', error);
-                alert('Error al conectar con el servidor');
+                swal("Error", "Error al conectar al servidor", "error");
             }
         });
 

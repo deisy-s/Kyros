@@ -69,38 +69,41 @@
         <div class="row">
             <h1 class="heading">Agregar dispositivo</h1>
         </div>
-        <div class="row d-flex justify-content-center align-items-center">
-            <div class="col-lg-5" id="leftCol-addroom">
-                <h3>Tipo de dispositivo</h3>
-                <div class="dropdown">
-                    <button
-                        class="btn btn-primary dropdown-toggle"
-                        data-bs-toggle="dropdown"
-                        type="button"
-                        id="dropdownMenuButton"
-                        data-mdb-dropdown-init
-                        data-mdb-ripple-init
-                        aria-expanded="false"
-                    >
-                    </button>
-                    <ul class="dropdown-menu w-100" id="tableMenu" aria-labelledby="dropdownMenuButton">
-                        <li><a class="dropdown-item" href="#">Alarma</a></li>
-                        <li><a class="dropdown-item" href="#">Cámara</a></li>
-                        <li><a class="dropdown-item" href="#">Foco</a></li>
-                        <li><a class="dropdown-item" href="#">Sensor de humo y gas</a></li>
-                        <li><a class="dropdown-item" href="#">Sensor de movimiento</a></li>
-                        <li><a class="dropdown-item" href="#">Sensor de temperatura y humedad</a></li>
-                        <li><a class="dropdown-item" href="#">Ventilador</a></li>
-                    </ul>
+        <div class="row d-flex justify-content-center align-items-center" id="room-content">
+            <div class="col-lg-5 d-flex justify-content-center" id="leftCol-addroom">
+                <div>
+                    <h3>Tipo de dispositivo</h3>
+                    <div class="dropdown">
+                        <button
+                            class="btn btn-primary dropdown-toggle"
+                            data-bs-toggle="dropdown"
+                            type="button"
+                            id="dropdownMenuButton"
+                            data-mdb-dropdown-init
+                            data-mdb-ripple-init
+                            aria-expanded="false"
+                        >
+                        </button>
+                        <ul class="dropdown-menu w-100" id="tableMenu" aria-labelledby="dropdownMenuButton">
+                            <li><a class="dropdown-item" href="#">Alarma</a></li>
+                            <li><a class="dropdown-item" href="#">Cámara</a></li>
+                            <li><a class="dropdown-item" href="#">Foco</a></li>
+                            <li><a class="dropdown-item" href="#">Sensor de humo y gas</a></li>
+                            <li><a class="dropdown-item" href="#">Sensor de movimiento</a></li>
+                            <li><a class="dropdown-item" href="#">Sensor de temperatura</a></li>
+                            <li><a class="dropdown-item" href="#">Sensor de humedad</a></li>
+                            <li><a class="dropdown-item" href="#">Ventilador</a></li>
+                        </ul>
+                    </div>
+                    <h3>Nombre de dispositivo</h3>
+                    <input type="text" id="user-input" name="deviceName">
+                    <h3>Conexión</h3>
+                    <input type="text" id="user-input" name="conection">
+                    <br>
+                    <button class="button-save">Guardar</button>
                 </div>
-                <h3>Nombre de dispositivo</h3>
-                <input type="text" id="user-input" name="deviceName">
-                <h3>Conexión</h3>
-                <input type="text" id="user-input" name="conection">
-
-                <button class="button-login">Guardar</button>
             </div>
-            <div class="col-lg-5">
+            <div class="col-lg-5 d-flex justify-content-center">
                 <img id="room-img" src="images/Motivation 5.png" alt="Device">
             </div>
         </div>
@@ -145,6 +148,9 @@
 
     <!-- Bootstrap JavaScript -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js" integrity="sha384-FKyoEForCGlyvwx9Hj09JcYn3nv7wiPVlz7YYwJrWVcXK/BmnVDxM+D2scQbITxI" crossorigin="anonymous"></script>
+
+    <!-- SweetAlert Javascript -->
+    <script src="https://unpkg.com/sweetalert/dist/sweetalert.min.js"></script>
 
     <!-- Auth utility -->
     <script src="js/auth.js"></script>
@@ -216,11 +222,17 @@
 
             if (!selectedDeviceType) {
                 alert('Por favor seleccione el tipo de dispositivo');
+                swal("Campo vacío", "Favor de seleccionar el tipo de dispositivo", "warning");
                 return;
             }
 
             if (!deviceName) {
-                alert('Por favor ingrese el nombre del dispositivo');
+                swal("Campo vacío", "Favor de ingresar el nombre del dispositivo", "warning");
+                return;
+            }
+
+            if(!connection){
+                swal("Campo vacío", "Favor de ingresar la conexión del dispositivo", "warning");
                 return;
             }
 
@@ -251,10 +263,10 @@
                     const data = await response.json();
 
                     if (response.ok) {
-                        alert('Cámara creada exitosamente');
+                        swal({title: "Cámara creada exitosamente", icon:"success",});
                         window.location.href = `devices.html?roomId=${roomId}&roomname=${roomname}`;
                     } else {
-                        alert(data.message || 'Error al crear la cámara');
+                        swal("Error", "Error al crear la cámara", "error");
                     }
                 } else {
                     // Para dispositivos normales
@@ -273,15 +285,15 @@
                     const data = await response.json();
 
                     if (response.ok) {
-                        alert('Dispositivo creado exitosamente');
+                        swal({title:"Dispositivo creado exitosamente", icon:"success"});
                         window.location.href = `devices.html?roomId=${roomId}&roomname=${roomname}`;
                     } else {
-                        alert(data.message || 'Error al crear el dispositivo');
+                        swal("Error", "Error al crear el dispositivo", "error");
                     }
                 }
             } catch (error) {
                 console.error('Error:', error);
-                alert('Error al conectar con el servidor');
+                swal("Error", "Error al conectar con el servidor", "error");
             }
         });
     </script>

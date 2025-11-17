@@ -8,7 +8,7 @@
     <link rel="icon" href="images/logo.ico" type="image/x-icon" />
     <!-- Bootstrap CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-sRIl4kxILFvY47J16cr9ZwB07vP4J8+LH7qKQnuqkuIAvNWLzeN8tE5YBujZqJLB" crossorigin="anonymous">
-    \<!-- CSS -->
+    <!-- CSS -->
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -68,103 +68,243 @@
             <h1 class="heading">Agregar tarea</h1>
         </div>
         <div class="row d-flex justify-content-center">
-            <div class="col-lg-5" id="leftCol-addtask">
-                <h3>Nombre de tarea</h3>
-                <input type="text" id="user-input" name="taskName">
-                <h3>Nombre de dispositivo</h3>
-                <div class="dropdown">
-                    <button
-                        class="btn btn-primary dropdown-toggle"
-                        data-bs-toggle="dropdown"
-                        type="button"
-                        id="dropdownMenuButton"
-                        data-mdb-dropdown-init
-                        data-mdb-ripple-init
-                        aria-expanded="false"
-                    >
-                    </button>
-                    <ul class="dropdown-menu w-100" id="tableMenu" aria-labelledby="dropdownMenuButton">
-                        <li><a class="dropdown-item" href="#">Foco 1</a></li>
-                    </ul>
+            <div class="row name" id="name">
+                <div class="col-lg-5 d-flex justify-content-center align-items-center" id="leftCol-addtask">
+                    <div>
+                        <h3>Nombre de tarea</h3>
+                        <input type="text" id="user-input" name="taskName">
+                        <br>
+                        <button class="mt-2" id="task-button" onclick="nameClick()">Continuar</button>
+                    </div>
                 </div>
-                <button class="button-login mt-4">Guardar</button>
+                <div class="col-lg-5 d-flex justify-content-center" id="rightCol-taskinfo">
+                    <img src="images/Post It .png" alt="Image">
+                </div>
             </div>
-            <div class="col-lg-5" id="rightCol-taskinfo">
-                <div class="fan" style="display: none;">
-                    <div class="timeOn d-flex">
-                        <h3>Encender a la(s)</h3>
-                        <input
-                        type="time"
-                        id="turnOnTime"
-                        min="00:00"
-                        max="24:00"
-                        required />
-                    </div>
-                    <div class="tempOn d-flex">
-                        <h3>Encender cuando llegue a</h3>
-                        <input type="number" id="turnOnTemp">
-                        <h3 class="degree">°C</h3>
-                    </div>
-                    <div class="timeOff d-flex">
-                        <h3>Apagar a la(s)</h3>
-                        <input
-                        type="time"
-                        id="turnOffTime"
-                        min="00:00"
-                        max="24:00"
-                        required />
-                    </div>
-                    <div class="tempOff d-flex">
-                        <h3>Apagar a cuando llegue a</h3>
-                        <input type="number" id="turnOffTemp">
-                        <h3 class="degree">°C</h3>
+            <div class="row dev" id="dev" style="display: none;">
+                <div class="col-lg-5 d-flex justify-content-center align-items-center" id="leftCol-addtask">
+                    <div>
+                        <h3>Nombre de dispositivo</h3>
+                        <div class="dropdown">
+                            <button
+                                class="btn btn-primary dropdown-toggle"
+                                data-bs-toggle="dropdown"
+                                type="button"
+                                id="dropdownMenuButton"
+                                data-mdb-dropdown-init
+                                data-mdb-ripple-init
+                                aria-expanded="false"
+                            >
+                            </button>
+                            <ul class="dropdown-menu w-100" id="tableMenu" aria-labelledby="dropdownMenuButton">
+                                <li><a class="dropdown-item" href="#">Foco 1</a></li>
+                                <!-- TODO : Esto se debe hacer dinámico con todos los dispositivos que tiene el user -->
+                            </ul>
+                        </div>
+                        <br>
+                        <button id="task-button" onclick="devClick()">Continuar</button>
                     </div>
                 </div>
-                <div class="alarm" style="display: none;">
-                    <div class="turnOn d-flex">
-                        <h3>Sonar a la(s)</h3>
-                        <input
-                        type="time"
-                        id="turnOn"
-                        min="00:00"
-                        max="24:00"
-                        required />
+                <div class="col-lg-5 d-flex justify-content-center" id="rightCol-taskinfo">
+                    <img src="images/SEO.png" alt="Image">
+                </div>
+            </div>
+
+            <div class="row start-fan" id="start-fan" style="display: none;">
+                <div class="col-lg-5 d-flex justify-content-center align-items-center" id="leftCol-addtask">
+                    <div>
+                        <div id="option-fan">
+                            <h3>Opciones para encender</h3>
+                            <div class="dropdown">
+                                <button
+                                    class="btn btn-primary dropdown-toggle"
+                                    data-bs-toggle="dropdown"
+                                    type="button"
+                                    id="dropdownOptionButton"
+                                    data-mdb-dropdown-init
+                                    data-mdb-ripple-init
+                                    aria-expanded="false"
+                                >
+                                </button>
+                                <ul class="dropdown-menu w-150" id="optionMenu" aria-labelledby="dropdownOptionButton">
+                                    <li><a class="dropdown-item option" href="#">Encender a una hora establecida</a></li>
+                                    <li><a class="dropdown-item option" href="#">Encender a una temperatura establecida</a></li>
+                                </ul>
+                            </div>
+                        </div>
+                        <br>
+                        <div class="d-flex" id="timeOn" style="display: none !important;">
+                            <h3>Encender a la(s)</h3>
+                            <input
+                                type="time"
+                                id="turnOnTime"
+                                min="00:00"
+                                max="24:00"
+                            />
+                        </div>
+                        <br>
+                        <div class="d-flex" id="tempOn" style="display: none !important;">
+                            <h3>Encender cuando llegue a</h3>
+                            <input type="number" id="turnOnTemp">
+                            <h3 class="degree">°C</h3>
+                        </div>
+                        <br>
+                        <button id="task-button" onclick="startFanClick()">Continuar</button>
                     </div>
                 </div>
-                <div class="light" style="display: block;">
-                    <div class="timeOnLight d-flex">
-                        <h3>Encender a la(s)</h3>
-                        <input
-                        type="time"
-                        id="turnOnTime"
-                        min="00:00"
-                        max="24:00"
-                        required />
-                    </div>
-                    <div class="lightOn d-flex">
-                        <h3>Encender cuando no hay luz</h3>
-                        <label class="switch" id="lightOnSwitch">
-                            <input type="checkbox">
-                            <span class="slider round"></span>
-                        </label>
-                    </div>
-                    <div class="timeOffLight d-flex">
-                        <h3>Apagar a la(s)</h3>
-                        <input
-                        type="time"
-                        id="turnOffTime"
-                        min="00:00"
-                        max="24:00"
-                        required />
-                    </div>
-                    <div class="lightOff d-flex">
-                        <h3>Apagar cuando hay luz</h3>
-                        <label class="switch" id="lightOffSwitch">
-                            <input type="checkbox">
-                            <span class="slider round"></span>
-                        </label>
+                <div class="col-lg-5 d-flex justify-content-center" id="rightCol-taskinfo">
+                    <img src="images/Survey.png" alt="Image">
+                </div>
+            </div>
+            <div class="row stop-fan" id="stop-fan" style="display: none;">
+                <div class="col-lg-5 d-flex justify-content-center align-items-center" id="leftCol-addtask">
+                    <div>
+                        <div id="option-fan-off">
+                            <h3>Opciones para apagar</h3>
+                            <div class="dropdown">
+                                <button
+                                    class="btn btn-primary dropdown-toggle"
+                                    data-bs-toggle="dropdown"
+                                    type="button"
+                                    id="dropdownOption2Button"
+                                    data-mdb-dropdown-init
+                                    data-mdb-ripple-init
+                                    aria-expanded="false"
+                                >
+                                </button>
+                                <ul class="dropdown-menu w-150" id="option2Menu" aria-labelledby="dropdownOption2Button">
+                                    <li><a class="dropdown-item option2" href="#">Apagar a una hora establecida</a></li>
+                                    <li><a class="dropdown-item option2" href="#">Apagar a una temperatura establecida</a></li>
+                                </ul>
+                            </div>
+                        </div>
+                        <br>
+                        <div class="d-flex" id="timeOff" style="display: none !important;">
+                            <h3>Apagar a la(s)</h3>
+                            <input
+                            type="time"
+                            id="turnOffTime"
+                            min="00:00"
+                            max="24:00"
+                            required />
+                        </div>
+                        <br>
+                        <div class="d-flex" id="tempOff" style="display: none !important;">
+                            <h3>Apagar a cuando llegue a</h3>
+                            <input type="number" id="turnOffTemp">
+                            <h3 class="degree">°C</h3>
+                        </div>
+                        <br>
                     </div>
                 </div>
+                <div class="col-lg-5 d-flex justify-content-center" id="rightCol-taskinfo">
+                    <img src="images/Survey.png" alt="Image">
+                </div>
+            </div>
+
+            <div class="row start-light" id="start-light" style="display: none;">
+                <div class="col-lg-5 d-flex justify-content-center align-items-center" id="leftCol-addtask">
+                    <div>
+                        <div id="option-light-on">
+                            <h3>Opciones para encender</h3>
+                            <div class="dropdown">
+                                <button
+                                    class="btn btn-primary dropdown-toggle"
+                                    data-bs-toggle="dropdown"
+                                    type="button"
+                                    id="dropdownOption3Button"
+                                    data-mdb-dropdown-init
+                                    data-mdb-ripple-init
+                                    aria-expanded="false"
+                                >
+                                </button>
+                                <ul class="dropdown-menu w-150" id="option3Menu" aria-labelledby="dropdownOption3Button">
+                                    <li><a class="dropdown-item option3" href="#">Encender a una hora establecida</a></li>
+                                    <li><a class="dropdown-item option3" href="#">Encender cuando no hay luz</a></li>
+                                </ul>
+                            </div>
+                        </div>
+                        <br>
+                        <div class="d-flex" id="timeOnLight" style="display: none !important;">
+                            <h3>Encender a la(s)</h3>
+                            <input
+                                type="time"
+                                id="turnOnTimeLight"
+                                min="00:00"
+                                max="24:00"
+                                required 
+                            />
+                        </div>
+                        <br>
+                        <button id="task-button" onclick="startLightClick()">Continuar</button>
+                    </div>
+                </div>
+                <div class="col-lg-5 d-flex justify-content-center" id="rightCol-taskinfo">
+                    <img src="images/Survey.png" alt="Image">
+                </div>
+            </div>
+            <div class="row stop-light" id="stop-light" style="display: none;">
+                <div class="col-lg-5 d-flex justify-content-center align-items-center" id="leftCol-addtask">
+                    <div>
+                        <div id="option-light-off">
+                            <h3>Opciones para apagar</h3>
+                            <div class="dropdown">
+                                <button
+                                    class="btn btn-primary dropdown-toggle"
+                                    data-bs-toggle="dropdown"
+                                    type="button"
+                                    id="dropdownOption4Button"
+                                    data-mdb-dropdown-init
+                                    data-mdb-ripple-init
+                                    aria-expanded="false"
+                                >
+                                </button>
+                                <ul class="dropdown-menu w-150" id="option4Menu" aria-labelledby="dropdownOption4Button">
+                                    <li><a class="dropdown-item option4" href="#">Apagar a una hora establecida</a></li>
+                                    <li><a class="dropdown-item option4" href="#">Apagar cuando hay luz</a></li>
+                                </ul>
+                            </div>
+                        </div>
+                        <br>
+                        <div class="d-flex" id="timeOffLight" style="display: none !important;">
+                            <h3>Apagar a la(s)</h3>
+                            <input
+                                type="time"
+                                id="turnOffTimeLight"
+                                min="00:00"
+                                max="24:00"
+                                required 
+                            />
+                        </div>
+                    </div>
+                </div>
+                <div class="col-lg-5 d-flex justify-content-center" id="rightCol-taskinfo">
+                    <img src="images/Survey.png" alt="Image">
+                </div>
+            </div>
+
+            <div class="row alarm" id="alarm" style="display: none;">
+                <div class="col-lg-5 d-flex justify-content-center align-items-center" id="leftCol-addtask">
+                    <div>
+                        <div class="d-flex" id="turnOnAlarm">
+                            <h3>Sonar a la(s)</h3>
+                            <input
+                                type="time"
+                                id="turnOn"
+                                min="00:00"
+                                max="24:00"
+                                required 
+                            />
+                        </div>
+                    </div>
+                </div>
+                <div class="col-lg-5 d-flex justify-content-center" id="rightCol-taskinfo">
+                    <img src="images/Survey.png" alt="Image">
+                </div>
+            </div>
+
+            <div class="col-lg-5 mt-3" id="btn-div" style="display: none;">
+                <button id="task-button">Guardar</button> <!-- TODO : save -->
             </div>
         </div>
     </div>
@@ -211,7 +351,12 @@
     <script src="js/auth.js"></script>
     <script src="js/navbar.js"></script>
 
+    <!-- SweetAlert Javascript -->
+    <script src="https://unpkg.com/sweetalert/dist/sweetalert.min.js"></script>
+
+    <!-- Frontend JavaScript -->
     <script>
+        // Dropdown de nombres de dispositivos
         const dropdownItems = document.querySelectorAll('#tableMenu .dropdown-item');
 
         dropdownItems.forEach(item => {
@@ -221,6 +366,178 @@
                 dropdownButton.textContent = item.textContent;
             });
         });
+    
+        // Dropdown para opciones de encender abanico
+        const dropdownOption = document.querySelectorAll('#optionMenu .option');
+
+        dropdownOption.forEach(item => {
+            item.addEventListener('click', (e) => {
+                e.preventDefault();
+                const dropdownButton = document.querySelector('#dropdownOptionButton');
+                dropdownButton.textContent = item.textContent;
+
+                let time = document.getElementById("timeOn");
+                let temp = document.getElementById("tempOn");
+                if(dropdownButton.innerText === "Encender a una hora establecida"){
+                    time.classList.add('d-flex');
+                    time.style.display="flex";
+                    temp.classList.remove('d-flex');
+                    temp.style.display="none";
+                } else {
+                    time.classList.remove('d-flex');
+                    time.style.display="none";
+                    temp.classList.add('d-flex');
+                    temp.style.display="flex";
+                }
+            });
+        });
+
+        // Asegurar que solo 1 input de encender abanico tenga un valor
+        document.getElementById("turnOnTime").addEventListener('input', () => {
+            document.getElementById("turnOnTemp").value = "";
+        });
+
+        document.getElementById("turnOnTemp").addEventListener('input', () => {
+            document.getElementById("turnOnTime").value = "";
+        });
+    
+        // Dropdown de opciones para apagar abanico
+        const dropdownOption2 = document.querySelectorAll('#option2Menu .option2');
+
+        dropdownOption2.forEach(item => {
+            item.addEventListener('click', (e) => {
+                e.preventDefault();
+                const dropdownButton = document.querySelector('#dropdownOption2Button');
+                dropdownButton.textContent = item.textContent;
+
+                let time = document.getElementById("timeOff");
+                let temp = document.getElementById("tempOff");
+                if(dropdownButton.innerText === "Apagar a una hora establecida"){
+                    time.classList.add('d-flex');
+                    time.style.display="flex";
+                    temp.classList.remove('d-flex');
+                    temp.style.display="none";
+                } else {
+                    time.classList.remove('d-flex');
+                    time.style.display="none";
+                    temp.classList.add('d-flex');
+                    temp.style.display="flex";
+                }
+            });
+        });
+        
+        // Asegurar que solo 1 input para apagar abanico tenga un valor
+        document.getElementById("turnOffTime").addEventListener('input', () => {
+            document.getElementById("turnOffTemp").value = "";
+        });
+
+        document.getElementById("turnOffTemp").addEventListener('input', () => {
+            document.getElementById("turnOffTime").value = "";
+        });
+    
+        // Dropdown de opciones para encender foco
+        const dropdownOption3 = document.querySelectorAll('#option3Menu .option3');
+
+        dropdownOption3.forEach(item => {
+            item.addEventListener('click', (e) => {
+                e.preventDefault();
+                const dropdownButton = document.querySelector('#dropdownOption3Button');
+                dropdownButton.textContent = item.textContent;
+
+                let time = document.getElementById("timeOnLight");
+                if(dropdownButton.innerText === "Encender a una hora establecida"){
+                    time.classList.add('d-flex');
+                    time.style.display="flex";
+                } else {
+                    time.classList.remove('d-flex');
+                    time.style.display="none";
+                }
+            });
+        });
+    
+        // Dropdown de opciones para apagar foco
+        const dropdownOption4 = document.querySelectorAll('#option4Menu .option4');
+
+        dropdownOption4.forEach(item => {
+            item.addEventListener('click', (e) => {
+                e.preventDefault();
+                const dropdownButton = document.querySelector('#dropdownOption4Button');
+                dropdownButton.textContent = item.textContent;
+
+                let time = document.getElementById("timeOffLight");
+                if(dropdownButton.innerText === "Apagar a una hora establecida"){
+                    time.classList.add('d-flex');
+                    time.style.display="flex";
+                } else {
+                    time.classList.remove('d-flex');
+                    time.style.display="none";
+                }
+            });
+        });
+
+        function nameClick(){
+            let n = document.getElementById("user-input").value;
+            if(n.trim()!==""){
+                let ndiv = document.getElementById("name");
+                let ddiv = document.getElementById("dev");
+
+                ndiv.style.display = "none";
+                ddiv.style.display = "flex";
+                ddiv.classList.add('swing-in-bottom-bck');
+            } else {
+                swal("Campo vacío", "Favor de ingresar un nombre", "warning");
+            }
+        }
+
+        function devClick(){
+            let n = document.getElementById("dropdownMenuButton").textContent;
+            if(n.trim()!==""){
+                let ddiv = document.getElementById("dev");
+                ddiv.style.display = "none";
+                // TODO : somehow check what device type this is
+                let f = document.getElementById("start-fan");
+                f.style.display = "flex";
+                f.classList.add('swing-in-bottom-bck');
+            } else {
+                swal("Campo vacío", "Favor de seleccionar un dispositivo", "warning");
+            }
+        }
+
+        function startFanClick(){
+            let time = document.getElementById("turnOnTime").value;
+            let temp = document.getElementById("turnOnTemp").value;
+            if((time.trim()!=="" && temp.trim()==="") || (temp.trim()!=="" && time.trim()==="")){
+                let startdiv = document.getElementById("start-fan");
+                let stopdiv = document.getElementById("stop-fan");
+                let save = document.getElementById("btn-div");
+
+                startdiv.style.display = "none";
+                stopdiv.style.display = "flex";
+                save.style.display = "flex"
+                stopdiv.classList.add('swing-in-bottom-bck');
+                save.classList.add('swing-in-bottom-bck');
+            } else{
+                swal("Campos vacíos", "Favor de seleccionar e ingresar una opción", "warning");
+            }
+        }
+
+        function startLightClick(){
+            let time = document.getElementById("turnOnTimeLight").value;
+            let noLight = document.getElementById("dropdownOption3Button").textContent;
+            if((time.trim()!=="") || (noLight==="Encender cuando no hay luz")){
+                let startdiv = document.getElementById("start-light");
+                let stopdiv = document.getElementById("stop-light");
+                let save = document.getElementById("btn-div");
+
+                startdiv.style.display = "none";
+                stopdiv.style.display = "flex";
+                save.style.display = "flex"
+                stopdiv.classList.add('swing-in-bottom-bck');
+                save.classList.add('swing-in-bottom-bck');
+            } else{
+                swal("Campos vacíos", "Favor de seleccionar una opción", "warning");
+            }
+        }
     </script>
 
     <script>
@@ -268,7 +585,7 @@
                 }
             } catch (error) {
                 console.error('Error al cargar dispositivos:', error);
-                alert('Error al cargar los dispositivos');
+                swal("Error", "Error al cargar los dispositivos", "error");
             }
         }
 

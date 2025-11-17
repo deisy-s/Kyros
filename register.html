@@ -53,11 +53,11 @@
     <!-- Content -->
     <div class="container d-flex justify-content-center" id="main-container-login">
         <div class="row">
-            <div class="col-lg-6" id="leftCol-register">
+            <div class="col-lg-6 col-sm-12" id="leftCol-register">
                 <h4>Crear una cuenta</h4>
                 <p>Comience a monitorear su hogar con KYROS</p>
 
-                <form class="mb-2">
+                <form>
                     <h5>Nombre</h5>
                     <input id="user-input" type="text" name="userName" placeholder="Ingrese su nombre">
                     <h5>Correo electrónico</h5>
@@ -70,7 +70,7 @@
                 
                 <button class="button-login">Crear Cuenta</button>
 
-                <p id="sep">o iniciar con</p>
+                <p id="sep" class="mt-5">o iniciar con</p>
 
                 <div class="login-icon">
                     <a href="#"><svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" transform="rotate(0 0 0)">
@@ -82,7 +82,7 @@
                 <p id="p2">¿Ya tiene una cuenta?<br><a href="login.html" class="link">Iniciar sesión</a></p>
             </div>
 
-            <div class="col-lg-6">
+            <div class="col-lg-6" id="car">
                 <div id="cont-carousel">
                     <img id="main-img" src="images/User Interface 1.png" alt="Estadísticas web">
 
@@ -160,6 +160,9 @@
     <!-- Bootstrap JavaScript -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js" integrity="sha384-FKyoEForCGlyvwx9Hj09JcYn3nv7wiPVlz7YYwJrWVcXK/BmnVDxM+D2scQbITxI" crossorigin="anonymous"></script>
 
+    <!-- SweetAlert Javascript -->
+    <script src="https://unpkg.com/sweetalert/dist/sweetalert.min.js"></script>
+
     <!-- Auth utility -->
     <script src="js/auth.js"></script>
 
@@ -195,7 +198,7 @@
             const passwordValue = passwordInput.value;
 
             if (!name || !email || !passwordValue) {
-                alert('Por favor complete todos los campos');
+                swal("Campos vacíos", "Favor de completar todos los campos", "warning");
                 return;
             }
 
@@ -217,13 +220,14 @@
                 if (response.ok) {
                     saveToken(data.token);
                     alert('Cuenta creada exitosamente');
+                    swal({title:"Cuenta creada exitosamente", icon:"success",});
                     window.location.href = 'rooms.html';
                 } else {
-                    alert(data.message || 'Error al crear la cuenta');
+                    swal("Error", "Error al crear la cuenta", "error");
                 }
             } catch (error) {
                 console.error('Error:', error);
-                alert('Error al conectar con el servidor');
+                swal("Error", "Error al conectar con el servidor", "error");
             }
         });
     </script>
