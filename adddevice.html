@@ -69,7 +69,6 @@
         <div class="row">
             <h1 class="heading">Agregar dispositivo</h1>
         </div>
-<<<<<<< HEAD
         <div class="row d-flex justify-content-center align-items-center" id="room-content">
             <div class="col-lg-5 d-flex justify-content-center" id="leftCol-addroom">
                 <div>
@@ -84,57 +83,24 @@
                             data-mdb-ripple-init
                             aria-expanded="false"
                         >
+                        Seleccionar tipo
                         </button>
                         <ul class="dropdown-menu w-100" id="tableMenu" aria-labelledby="dropdownMenuButton">
-                            <li><a class="dropdown-item" href="#">Alarma</a></li>
-                            <li><a class="dropdown-item" href="#">Cámara</a></li>
-                            <li><a class="dropdown-item" href="#">Foco</a></li>
-                            <li><a class="dropdown-item" href="#">Sensor de humo y gas</a></li>
-                            <li><a class="dropdown-item" href="#">Sensor de movimiento</a></li>
-                            <li><a class="dropdown-item" href="#">Sensor de temperatura</a></li>
-                            <li><a class="dropdown-item" href="#">Sensor de humedad</a></li>
-                            <li><a class="dropdown-item" href="#">Ventilador</a></li>
+                            <li><a class="dropdown-item" href="#" data-type="luz">Luz</a></li>
+                            <li><a class="dropdown-item" href="#" data-type="temperatura">Temperatura</a></li>
+                            <li><a class="dropdown-item" href="#" data-type="actuador">Actuador</a></li>
+                            <li><a class="dropdown-item" href="#" data-type="camara">Cámara</a></li>
                         </ul>
                     </div>
                     <h3>Nombre de dispositivo</h3>
-                    <input type="text" id="user-input" name="deviceName">
-                    <h3>Conexión</h3>
-                    <input type="text" id="user-input" name="conection">
+                    <input type="text" id="deviceNameInput" name="deviceName">
+                    <h3 id="pinLabel">Pin del dispositivo</h3>
+                    <input type="number" id="pinInput" name="pin" placeholder="Ej: 17">
+                    <h3 id="connectionLabel" style="display: none;">URL de conexión (Cámara)</h3>
+                    <input type="text" id="connectionInput" name="conection" style="display: none;">
                     <br>
                     <button class="button-save">Guardar</button>
                 </div>
-=======
-        <div class="row d-flex justify-content-center align-items-center">
-            <div class="col-lg-5" id="leftCol-addroom">
-                <h3>Tipo de dispositivo</h3>
-                <div class="dropdown">
-                    <button
-                        class="btn btn-primary dropdown-toggle"
-                        data-bs-toggle="dropdown"
-                        type="button"
-                        id="dropdownMenuButton"
-                        data-mdb-dropdown-init
-                        data-mdb-ripple-init
-                        aria-expanded="false"
-                    >
-                        Seleccionar tipo
-                    </button>
-                    <ul class="dropdown-menu w-100" id="tableMenu" aria-labelledby="dropdownMenuButton">
-                        <li><a class="dropdown-item" href="#" data-type="luz">Luz</a></li>
-                        <li><a class="dropdown-item" href="#" data-type="temperatura">Temperatura</a></li>
-                        <li><a class="dropdown-item" href="#" data-type="actuador">Actuador</a></li>
-                        <li><a class="dropdown-item" href="#" data-type="camara">Cámara</a></li>
-                    </ul>
-                </div>
-                <h3>Nombre de dispositivo</h3>
-                <input type="text" id="deviceNameInput" name="deviceName">
-                <h3 id="pinLabel">Pin del dispositivo</h3>
-                <input type="number" id="pinInput" name="pin" placeholder="Ej: 17">
-                <h3 id="connectionLabel" style="display: none;">URL de conexión (Cámara)</h3>
-                <input type="text" id="connectionInput" name="conection" style="display: none;">
-
-                <button class="button-login">Guardar</button>
->>>>>>> 43cec59b192a889311fa58e74e557959f7a136a6
             </div>
             <div class="col-lg-5 d-flex justify-content-center">
                 <img id="room-img" src="images/Motivation 5.png" alt="Device">

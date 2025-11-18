@@ -65,29 +65,7 @@
         <div class="row">
             <h1 class="heading">Automatización</h1>
         </div>
-<<<<<<< HEAD
-        <div class="row d-flex justify-content-between" id="task-section">
-            <div class="col-lg-10 col-sm-10" onclick="getName()">
-                <div>
-                    <img src="images/Task.png">
-                </div>
-
-                <div class="text">
-                    <h2 id="taskname">Tarea 1</h2>
-                    <p id="taskfunction">Encender foco</p>
-                </div>
-            </div>
-
-            <div class="col-lg-2 col-sm-2">
-                <label class="switch">
-                    <input type="checkbox">
-                    <span class="slider round"></span>
-                </label>
-            </div>
-        </div>
-=======
         <!-- Las tareas se cargarán dinámicamente aquí -->
->>>>>>> 43cec59b192a889311fa58e74e557959f7a136a6
         <div class="row" id="add" onclick="location.href ='newtask.html';">
             <div class="add-image">
                 <img src="images/Copy-2--Streamline-Flex.png">
@@ -186,7 +164,7 @@
                         taskSection.innerHTML = `
                             <div class="col-lg-10 col-sm-10" onclick="window.location.href='taskinfo.html?taskId=${auto._id}&taskname=${encodeURIComponent(auto.nombre)}'">
                                 <div>
-                                    <img src="images/Bag-Suitcase-4--Streamline-Flex.png">
+                                    <img src="images/Task.png">
                                 </div>
                                 <div class="text">
                                     <h2>${auto.nombre}</h2>
