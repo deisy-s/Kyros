@@ -46,7 +46,7 @@ app.use('/api/devices', deviceRoutes);
 app.use('/api/cameras', cameraRoutes);
 app.use('/api/tasks', taskRoutes);
 app.use('/api/automatize', automatizeRoutes);
-app.use('/api', espRoutes); // Ruta pública para ESP32
+app.use('/api/esp', espRoutes); // Ruta pública para ESP32
 
 // Ruta de prueba
 app.get('/api/health', (req, res) => {
