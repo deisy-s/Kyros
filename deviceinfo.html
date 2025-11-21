@@ -72,9 +72,26 @@
         </div>
         <div class="row">
             <div class="col-lg-8">
-                <canvas id="myChart" style="width:100%;max-width:700px"></canvas>
-            </div>
+                
+                <div class="d-flex justify-content-end mb-3">
+                    <div class="btn-group" role="group" aria-label="Rango de tiempo">
+                        <button type="button" class="btn btn-outline-primary active" onclick="changeTimeRange('24h')" id="btn-24h">24H</button>
+                        <button type="button" class="btn btn-outline-primary" onclick="changeTimeRange('7d')" id="btn-7d">Semana</button>
+                        <button type="button" class="btn btn-outline-primary" onclick="changeTimeRange('30d')" id="btn-30d">Mes</button>
+                    </div>
+                </div>
 
+                <div id="chart-container">
+                    <canvas id="myChart" style="width:100%;max-width:700px"></canvas>
+                </div>
+
+                <div id="history-container" style="display: none;">
+                    <h5 class="mb-3">Historial de Eventos</h5>
+                    <div class="list-group" id="history-list">
+                        <div class="list-group-item text-center text-muted">Cargando historial...</div>
+                    </div>
+                </div>
+            </div>
             <div class="col-lg-4">
                 <h5>Tareas</h5>
                 <div class="tasks d-flex justify-content-between">
@@ -149,9 +166,15 @@
     <script src="js/navbar.js"></script>
 
     <script>
-        // Proteger la página
         requireAuth();
 
+        // --- VARIABLES GLOBALES ---
+        let myChart = null;
+        let deviceData = null;
+        let historicalData = [];
+        let currentTimeRange = '24h'; 
+
+        // --- UTILIDADES URL ---
         function getParameterByName(name) {
             var url = window.location.href;
             name = name.replace(/[\[\]]/g, "\\$&");
@@ -160,11 +183,7 @@
             if (!results[2]) return '';
             return decodeURIComponent(results[2].replace(/\+/g, " "));
         }
-
-        function eraseEnd(name){
-            name = name.replace(/\?.*$/g, " ");
-            return name;
-        }
+        function eraseEnd(name){ return name.replace(/\?.*$/g, " "); }
 
         const roomId = getParameterByName('roomId');
         const deviceId = getParameterByName('deviceId');
@@ -178,147 +197,375 @@
             document.getElementById("deviceRoute").innerHTML = devicename;
             document.getElementById("roomRoute").innerHTML = roomname;
         }
-
         displayRoomName();
 
-        let myChart = null;
-        let deviceData = null;
-
+        // --- 1. CARGA INICIAL ---
         async function loadDeviceInfo() {
             try {
                 const response = await fetchWithAuth(`${API_URL}/devices/${deviceId}`);
-
-                if (!response.ok) {
-                    throw new Error('Error al cargar información del dispositivo');
-                }
-
+                if (!response.ok) throw new Error('Error al cargar información');
                 const data = await response.json();
                 deviceData = data.data;
 
-                // Actualizar estado del toggle
-                const toggle = document.getElementById('device-toggle');
-                const taskname = document.getElementById('taskname');
-
-                toggle.checked = deviceData.estado;
-                taskname.textContent = deviceData.estado ? 'Encendido' : 'Apagado';
-
-                // Cargar datos históricos
-                await loadDeviceData();
+                setupInterfaceByType(deviceData.tipo);
+                updateToggleState(deviceData.estado);
+                await fetchHistoricalData();
 
             } catch (error) {
                 console.error('Error:', error);
-                swal("Error", "Error al cargar la información del dispositivo", "error");
+                swal("Error", "No se pudo cargar el dispositivo", "error");
             }
         }
 
-        async function loadDeviceData() {
+        function updateToggleState(estado) {
+            const toggle = document.getElementById('device-toggle');
+            const taskname = document.getElementById('taskname');
+            if(toggle) {
+                const isOn = (typeof estado === 'object') ? estado.encendido : estado;
+                toggle.checked = isOn;
+                if(taskname) taskname.textContent = isOn ? 'Encendido' : 'Apagado';
+            }
+        }
+
+        // --- 2. CONFIGURACIÓN DE INTERFAZ ---
+        function setupInterfaceByType(tipo) {
+            const toggleContainer = document.querySelector('.tasks');
+            const chartContainer = document.getElementById('chart-container');
+            const historyContainer = document.getElementById('history-container');
+            const addTaskBtn = document.querySelector('.addtask');
+
+            const tipoNorm = tipo ? tipo.toLowerCase() : '';
+
+            toggleContainer.style.display = 'none';
+            addTaskBtn.style.display = 'none';
+            chartContainer.style.display = 'none';
+            historyContainer.style.display = 'none';
+
+            // Actuadores
+            if (['actuador', 'luces', 'foco', 'ventilador'].includes(tipoNorm)) {
+                toggleContainer.style.display = 'flex';
+                addTaskBtn.style.display = 'block';
+                chartContainer.style.display = 'block'; 
+            }
+            // Eventos (Alarmas)
+            else if (['alarma', 'movimiento', 'pir', 'luz', 'ldr'].includes(tipoNorm)) {
+                historyContainer.style.display = 'block';
+            }
+            // Sensores
+            else {
+                chartContainer.style.display = 'block';
+            }
+        }
+
+        // --- 3. OBTENER DATOS ---
+        async function fetchHistoricalData() {
             try {
-                const response = await fetchWithAuth(`${API_URL}/devices/${deviceId}/data`);
-
-                if (!response.ok) {
-                    console.log('No hay datos históricos disponibles');
-                    createDefaultChart();
-                    return;
+                // Pedimos un límite alto para tener buen cálculo de vida útil
+                const response = await fetchWithAuth(`${API_URL}/devices/${deviceId}/data?limit=2000`);
+                if (response.ok) {
+                    const result = await response.json();
+                    historicalData = result.data || [];
+                } else {
+                    historicalData = [];
                 }
-
-                const result = await response.json();
-                const historicalData = result.data;
-
-                if (historicalData.length === 0) {
-                    createDefaultChart();
-                    return;
-                }
-
-                // Crear gráfico con datos reales
-                const labels = historicalData.map((item, index) => `${index + 1}`);
-                const values = historicalData.map(item => item.valor || 0);
-
-                createChart(labels, values, 'Datos del dispositivo');
-
+                renderDataView();
             } catch (error) {
-                console.error('Error:', error);
-                createDefaultChart();
+                console.error('Error fetching data:', error);
             }
         }
 
-        function createChart(labels, values, title) {
-            const ctx = document.getElementById('myChart');
+        // --- 4. CONTROLADOR DE VISTAS ---
+        function changeTimeRange(range) {
+            currentTimeRange = range;
+            document.querySelectorAll('.btn-group .btn').forEach(btn => btn.classList.remove('active'));
+            document.getElementById(`btn-${range}`)?.classList.add('active');
+            renderDataView();
+        }
 
-            if (myChart) {
-                myChart.destroy();
+        function renderDataView() {
+            const tipo = deviceData.tipo.toLowerCase();
+            // Datos filtrados para la gráfica (Zoom actual)
+            const filteredData = filterDataByTime(historicalData, currentTimeRange);
+
+            if (['alarma', 'movimiento', 'pir', 'luz', 'ldr'].includes(tipo)) {
+                renderHistoryList(filteredData, tipo);
+            } 
+            else if (['actuador', 'luces', 'foco', 'ventilador'].includes(tipo)) {
+                // PASAMOS AMBOS: 'filteredData' para la gráfica, 'historicalData' para la vida útil
+                renderUsageChart(filteredData, tipo, historicalData); 
             }
+            else {
+                renderLineChart(filteredData, tipo);
+            }
+        }
+
+        function filterDataByTime(data, range) {
+            const now = new Date();
+            const timeLimit = new Date();
+            if (range === '24h') timeLimit.setHours(now.getHours() - 24);
+            else if (range === '7d') timeLimit.setDate(now.getDate() - 7);
+            else if (range === '30d') timeLimit.setDate(now.getDate() - 30);
+            return data.filter(item => new Date(item.timestamp) >= timeLimit);
+        }
+
+        // --- 5. HISTORIAL ---
+        function renderHistoryList(data, tipo) {
+            const list = document.getElementById('history-list');
+            if(!list) return;
+            list.innerHTML = '';
+            if (data.length === 0) {
+                list.innerHTML = '<div class="list-group-item text-center text-muted">No hay eventos recientes</div>';
+                return;
+            }
+            const sortedData = data.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+            sortedData.forEach(item => {
+                const date = new Date(item.timestamp);
+                const dateStr = date.toLocaleDateString() + ' ' + date.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+                let message = `Valor: ${item.valor}`;
+                let cssClass = 'event-info';
+                const valStr = String(item.valor).toUpperCase();
+                const isOn = (valStr === 'ON' || valStr === 'ENCENDIDO' || valStr === '1' || valStr === 'TRUE' || valStr === 'ACTIVADA');
+
+                if (['movimiento', 'pir'].includes(tipo)) {
+                    message = isOn ? '🚶 Movimiento Detectado' : 'Fin de movimiento';
+                    cssClass = isOn ? 'event-alert' : 'event-info';
+                } else if (tipo === 'alarma') {
+                    message = isOn ? '🚨 Alarma Disparada' : 'Alarma Silenciada';
+                    cssClass = isOn ? 'event-alert' : 'event-success';
+                } else if (['luz', 'ldr'].includes(tipo)) {
+                    const esOscuro = (item.valor == 0);
+                    message = esOscuro ? '🌙 Oscuridad Detectada' : '☀️ Luz Detectada';
+                    cssClass = esOscuro ? 'event-info' : 'event-success';
+                }
+                const origen = item.metadata?.origen ? `<span class="badge bg-secondary ms-2">${item.metadata.origen}</span>` : '';
+                list.innerHTML += `<div class="list-group-item ${cssClass}"><div class="d-flex w-100 justify-content-between align-items-center"><div><h6 class="mb-0">${message}</h6>${origen}</div><small class="text-muted ms-2">${dateStr}</small></div></div>`;
+            });
+        }
+
+        // --- 6. GRÁFICA DE USO (Focos, Ventiladores) - CORREGIDA ---
+        function renderUsageChart(dataFiltered, tipo, dataTotal) {
+            // 1. CÁLCULO DE VIDA ÚTIL (Usando dataTotal = Todo el historial)
+            let vidaUtilTotalHoras = 10000; 
+            if (tipo.includes('foco') || tipo.includes('luz')) vidaUtilTotalHoras = 15000; 
+            else if (tipo.includes('ventilador')) vidaUtilTotalHoras = 20000;
+
+            const totalMinutesUsed = calculateTotalUsage(dataTotal); // Usamos el historial COMPLETO
+            const totalHoursUsed = totalMinutesUsed / 60;
+            
+            let porcentajeRestante = 100 - ((totalHoursUsed / vidaUtilTotalHoras) * 100);
+            if (porcentajeRestante < 0) porcentajeRestante = 0;
+            
+            let colorBarra = 'bg-success';
+            if (porcentajeRestante < 50) colorBarra = 'bg-warning';
+            if (porcentajeRestante < 10) colorBarra = 'bg-danger';
+
+            // Inyectar HTML de Vida Útil
+            const chartContainer = document.getElementById('chart-container');
+            let statsDiv = document.getElementById('usage-stats');
+            if (!statsDiv) {
+                statsDiv = document.createElement('div');
+                statsDiv.id = 'usage-stats';
+                statsDiv.className = 'card p-3 mb-3 bg-light';
+                chartContainer.prepend(statsDiv);
+            }
+            statsDiv.innerHTML = `
+                <div class="d-flex justify-content-between align-items-center mb-1">
+                    <strong>Vida Útil Restante:</strong>
+                    <span class="${porcentajeRestante < 10 ? 'text-danger fw-bold' : 'text-dark'}">
+                        ${porcentajeRestante.toFixed(2)}%
+                    </span>
+                </div>
+                <div class="progress" style="height: 15px;">
+                    <div class="progress-bar ${colorBarra}" style="width: ${porcentajeRestante}%"></div>
+                </div>
+                <small class="text-muted d-block mt-1">Horas totales usadas: ${totalHoursUsed.toFixed(2)} hrs</small>
+            `;
+
+            // 2. GRÁFICA DETALLADA (Usando dataFiltered)
+            // Agrupamos los datos por horas o días
+            const aggregatedData = aggregateUsageByPeriod(dataFiltered, currentTimeRange);
+            
+            const ctx = document.getElementById('myChart');
+            if (myChart) myChart.destroy();
 
             myChart = new Chart(ctx, {
-                type: "line",
+                type: 'bar',
                 data: {
-                    labels: labels,
+                    labels: aggregatedData.labels,
                     datasets: [{
-                        fill: false,
-                        lineTension: 0,
-                        backgroundColor: "rgba(0,0,255,1.0)",
-                        borderColor: "rgba(0,0,255,0.1)",
-                        data: values
+                        label: 'Minutos de Uso',
+                        data: aggregatedData.values,
+                        backgroundColor: 'rgba(75, 192, 192, 0.6)',
+                        borderColor: 'rgba(75, 192, 192, 1)',
+                        borderWidth: 1
                     }]
                 },
                 options: {
-                    plugins: {
-                        legend: {display:false},
-                        title: {
-                            display: true,
-                            text: title,
-                            font: {size:16}
-                        }
+                    responsive: true,
+                    scales: { 
+                        y: { beginAtZero: true, title: {display: true, text: 'Minutos'} } 
+                    },
+                    plugins: { 
+                        title: { display: true, text: `Uso por ${currentTimeRange === '24h' ? 'Hora' : 'Día'}` },
+                        legend: { display: false }
                     }
                 }
             });
         }
 
-        function createDefaultChart() {
-            const xValues = [50,60,70,80,90,100,110,120,130,140,150];
-            const yValues = [7,8,8,9,9,9,10,11,14,14,15];
-            createChart(xValues, yValues, 'Datos de ejemplo');
+        // --- NUEVA LÓGICA DE AGREGACIÓN (BARRAS DIVIDIDAS) ---
+        function aggregateUsageByPeriod(data, range) {
+            const labels = [];
+            const values = [];
+            const buckets = {}; // Mapa para sumar minutos por hora/día
+
+            // 1. Inicializar cubetas
+            const now = new Date();
+            if (range === '24h') {
+                // Crear 24 cubetas para las últimas 24h
+                for(let i=23; i>=0; i--) {
+                    const d = new Date(now);
+                    d.setHours(d.getHours() - i);
+                    const label = d.toLocaleTimeString([], {hour: '2-digit', minute:'00'});
+                    buckets[label] = 0;
+                    labels.push(label);
+                }
+            } else {
+                // Crear cubetas por día (7 o 30)
+                const days = range === '7d' ? 7 : 30;
+                for(let i=days-1; i>=0; i--) {
+                    const d = new Date(now);
+                    d.setDate(d.getDate() - i);
+                    const label = d.toLocaleDateString();
+                    buckets[label] = 0;
+                    labels.push(label);
+                }
+            }
+
+            // 2. Calcular duraciones y llenar cubetas
+            // Necesitamos ordenar cronológicamente
+            const sorted = [...data].sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
+            
+            let lastOnTime = null;
+
+            for (let i = 0; i < sorted.length; i++) {
+                const item = sorted[i];
+                const val = String(item.valor).toUpperCase();
+                const isOn = (val === 'ON' || val === 'ENCENDIDO' || val === '1');
+                const timestamp = new Date(item.timestamp);
+
+                if (isOn) {
+                    if (!lastOnTime) lastOnTime = timestamp;
+                } else {
+                    if (lastOnTime) {
+                        // Encontró un apagado, calculamos duración
+                        const diffMs = timestamp - lastOnTime;
+                        const minutes = diffMs / 1000 / 60;
+
+                        // Asignar a la cubeta correspondiente (simplificado: a la hora de inicio)
+                        let key;
+                        if (range === '24h') key = lastOnTime.toLocaleTimeString([], {hour: '2-digit', minute:'00'});
+                        else key = lastOnTime.toLocaleDateString();
+
+                        // Solo sumar si la cubeta existe en el rango actual
+                        if (buckets[key] !== undefined) {
+                            buckets[key] += minutes;
+                        }
+                        lastOnTime = null;
+                    }
+                }
+            }
+            
+            // Si sigue encendido hasta "ahora"
+            if (lastOnTime) {
+                const diffMs = new Date() - lastOnTime;
+                const minutes = diffMs / 1000 / 60;
+                let key;
+                if (range === '24h') key = lastOnTime.toLocaleTimeString([], {hour: '2-digit', minute:'00'});
+                else key = lastOnTime.toLocaleDateString();
+                
+                if (buckets[key] !== undefined) buckets[key] += minutes;
+            }
+
+            // Convertir mapa a array alineado con labels
+            labels.forEach(label => {
+                values.push(buckets[label] || 0);
+            });
+
+            return { labels, values };
         }
 
-        // Toggle device state
+        function calculateTotalUsage(data) {
+            const sorted = [...data].sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
+            let totalMs = 0;
+            let lastOnTime = null;
+            sorted.forEach(item => {
+                const val = String(item.valor).toUpperCase();
+                const isOn = (val === 'ON' || val === 'ENCENDIDO' || val === '1' || val === 'TRUE');
+                if (isOn) { if (!lastOnTime) lastOnTime = new Date(item.timestamp); } 
+                else { if (lastOnTime) { totalMs += (new Date(item.timestamp) - lastOnTime); lastOnTime = null; } }
+            });
+            if (lastOnTime) totalMs += (new Date() - lastOnTime);
+            return totalMs / 1000 / 60; 
+        }
+
+        // --- 7. SENSORES RANGO ---
+        function renderLineChart(data, tipo) {
+            const statsDiv = document.getElementById('usage-stats');
+            if(statsDiv) statsDiv.remove();
+            const ctx = document.getElementById('myChart');
+            if (myChart) myChart.destroy();
+
+            if (!data || data.length === 0) {
+                 myChart = new Chart(ctx, { type: 'line', data: {labels:[], datasets:[]}, options: {plugins:{title:{display:true, text:'Esperando datos...'}}}});
+                 return;
+            }
+
+            const sortedData = data.sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
+            const labels = sortedData.map(item => {
+                const d = new Date(item.timestamp);
+                return currentTimeRange === '24h' ? d.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}) : d.toLocaleDateString();
+            });
+            const values = sortedData.map(item => item.valor);
+
+            let color = 'rgba(54, 162, 235, 1)';
+            let title = 'Valor';
+            if (tipo.includes('temp')) { color = 'rgba(255, 99, 132, 1)'; title = 'Temperatura (°C)'; }
+            else if (tipo.includes('hum')) { color = 'rgba(54, 162, 235, 1)'; title = 'Humedad (%)'; }
+            else if (tipo.includes('gas')) { color = 'rgba(255, 206, 86, 1)'; title = 'Gas (ppm)'; }
+
+            myChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: title, data: values, borderColor: color, backgroundColor: color.replace('1)', '0.1)'),
+                        borderWidth: 2, fill: true, tension: 0.4
+                    }]
+                },
+                options: { responsive: true, scales: { y: { beginAtZero: true } } }
+            });
+        }
+
         const toggle = document.getElementById('device-toggle');
         toggle.addEventListener('change', async (e) => {
             const newState = e.target.checked;
-
+            const taskname = document.getElementById('taskname');
+            taskname.textContent = newState ? 'Encendido' : 'Apagado';
             try {
-                const response = await fetchWithAuth(`${API_URL}/devices/${deviceId}/toggle`, {
-                    method: 'PUT'
-                });
-
-                if (!response.ok) {
-                    throw new Error('Error al cambiar el estado');
-                }
-
-                const data = await response.json();
-                const taskname = document.getElementById('taskname');
-                taskname.textContent = data.data.estado ? 'Encendido' : 'Apagado';
-
+                const response = await fetchWithAuth(`${API_URL}/devices/${deviceId}/toggle`, { method: 'PUT' });
+                if (!response.ok) throw new Error('Error');
+                setTimeout(fetchHistoricalData, 500);
             } catch (error) {
-                console.error('Error:', error);
-                swal("Error", "Error al cambiar el estado del dispositivo", "error");
-                // Revertir el toggle
+                swal("Error", "No se pudo cambiar el estado", "error");
                 e.target.checked = !newState;
+                taskname.textContent = !newState ? 'Encendido' : 'Apagado';
             }
         });
 
-        function sendName(){
-            window.location.href = `devices.html?roomId=${roomId}&roomname=${roomname}`;
-        }
-
-        function sendTaskInfo(){
-            window.location.href = `addtask.html?deviceId=${deviceId}&devicename=${devicename}&roomId=${roomId}&roomname=${roomname}`;
-        }
-
-        function sendTask(){
-            var taskname = document.getElementById("taskname").textContent;
-            window.location.href = `taskdata.html?deviceId=${deviceId}&devicename=${devicename}&roomId=${roomId}&roomname=${roomname}&taskname=${taskname}`;
-        }
-
-        // Cargar información al iniciar
+        function sendName(){ window.location.href = `devices.html?roomId=${roomId}&roomname=${roomname}`; }
+        function sendTaskInfo(){ window.location.href = `addtask.html?deviceId=${deviceId}&devicename=${devicename}&roomId=${roomId}&roomname=${roomname}`; }
+        function sendTask(){ var taskname = document.getElementById("taskname").textContent; window.location.href = `taskdata.html?deviceId=${deviceId}&devicename=${devicename}&roomId=${roomId}&roomname=${roomname}&taskname=${taskname}`; }
         loadDeviceInfo();
     </script>
 </body>

@@ -10,7 +10,7 @@ const DeviceDataSchema = new mongoose.Schema({
     tipo: {
         type: String,
         required: true,
-        enum: ['temperatura', 'humedad', 'movimiento', 'luz', 'energia', 'estado', 'otro']
+        enum: ['temperatura', 'humedad', 'movimiento', 'luz', 'energia', 'estado', 'gas']
     },
     valor: {
         type: mongoose.Schema.Types.Mixed,
