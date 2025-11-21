@@ -22,12 +22,20 @@ const app = express();
 
 // Conectar a MongoDB
 connectDB();
-
+app.use((req, res, next) => {
+    if (req.method === 'GET') {
+        delete req.headers['content-type'];
+    }
+    next();
+});
 // Middleware
 app.use(cors({
     origin: process.env.CORS_ORIGIN || '*',
     credentials: true
 }));
+
+
+// Carga directa del parser JSON:
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 

@@ -1,7 +1,7 @@
 const Device = require('../models/Device');
 const Room = require('../models/Room');
 const DeviceData = require('../models/DeviceData');
-
+const fetch = require('node-fetch');
 // @desc    Obtener todos los dispositivos del usuario
 // @route   GET /api/devices
 // @access  Private
@@ -176,43 +176,76 @@ exports.deleteDevice = async (req, res, next) => {
 // @access  Private
 exports.toggleDevice = async (req, res, next) => {
     try {
-        const device = await Device.findById(req.params.id);
+        let device = await Device.findById(req.params.id);
 
         if (!device) {
             return res.status(404).json({
-                success: false,
-                message: 'Dispositivo no encontrado'
-            });
+                    success: false,
+                    message: 'Dispositivo no encontrado'
+                });
         }
 
-        // Verificar propiedad
-        if (device.usuario.toString() !== req.user.id) {
-            return res.status(403).json({
-                success: false,
-                message: 'No autorizado'
-            });
+        // 1. Cambiar el estado en la Base de Datos
+        // Verificamos si 'estado' es un objeto o un booleano
+        let estadoActual = false;
+
+        if (typeof device.estado === 'object' && device.estado !== null) {
+            estadoActual = device.estado.encendido || false;
+        } else {
+            estadoActual = !!device.estado; // Forzamos a booleano si era otra cosa
         }
 
-        // Toggle estado (solo para luz y actuador)
-        if (device.tipo === 'luz' || device.tipo === 'actuador') {
-            device.estado.encendido = !device.estado.encendido;
-        }
+        // Sobrescribimos con el objeto correcto que espera tu esquema
+        device.estado = {
+            encendido: !estadoActual,
+            valor: !estadoActual ? 100 : 0 // Valor por defecto para dimmer/intensidad
+        };
 
+        // Marcamos el campo como modificado para forzar a Mongoose a guardarlo
+        device.markModified('estado'); 
         await device.save();
 
-        // Registrar en histórico
+        // 2. Guardar registro en el historial
         await DeviceData.create({
             dispositivo: device._id,
             tipo: 'estado',
-            valor: device.estado.encendido ? 'encendido' : 'apagado'
+            valor: device.estado ? 'Encendido' : 'Apagado',
+            metadata: { origen: 'Manual (Web)' }
         });
+
+        // --- 3. ENVIAR COMANDO AL ESP32 (NUEVO) ---
+        try {
+            // Buscar la habitación para obtener la IP
+            const room = await Room.findById(device.habitacion);
+            
+            if (room && room.ip) {
+                const comando = device.estado.encendido ? 'on' : 'off';
+                const url = `http://${room.ip}/control?dispositivo=${device._id}&comando=${comando}`;
+                
+                console.log(`[DeviceController] Enviando a ESP32: ${url}`);
+                
+                // Enviamos el comando (con timeout corto para no bloquear)
+                fetch(url, { timeout: 2000 })
+                    .then(response => {
+                        if (response.ok) console.log("[DeviceController] ESP32 respondió OK");
+                        else console.warn("[DeviceController] ESP32 respondió error");
+                    })
+                    .catch(err => console.error(`[DeviceController] No se pudo conectar al ESP32 (${room.ip}):`, err.message));
+            } else {
+                console.warn("[DeviceController] No se puede controlar físico: La habitación no tiene IP.");
+            }
+        } catch (netError) {
+            console.error("[DeviceController] Error de red al intentar controlar hardware:", netError);
+            // No detenemos la respuesta, el cambio en BD ya se hizo
+        }
+        // -------------------------------------------
 
         res.status(200).json({
             success: true,
-            message: `Dispositivo ${device.estado.encendido ? 'encendido' : 'apagado'}`,
             data: device
         });
-    } catch (error) {
+
+    }catch (error) {
         next(error);
     }
 };
