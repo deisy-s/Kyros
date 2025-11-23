@@ -1209,6 +1209,136 @@ const taskData = {
 
 ---
 
+## 16. ACTUALIZACIÓN: MEJORAS DE UI Y ALMACENAMIENTO (Noviembre 2025)
+
+### 16.1 Selector de Dispositivos en Automatización
+
+**Cambio realizado en `newtask.html`:**
+
+El dropdown de selección de dispositivos ahora muestra información más completa para facilitar la identificación del dispositivo.
+
+**Formato anterior:**
+```
+Foco 1 (luz)
+```
+
+**Formato nuevo:**
+```
+Foco 1 (luz, Sala)
+```
+
+**Estructura:** `[Nombre del dispositivo] ([tipo], [nombre de la habitación])`
+
+**Código modificado (líneas 417-418):**
+```javascript
+const habitacionNombre = device.habitacion?.nombre || 'Sin habitación';
+a.textContent = `${device.nombre} (${device.tipo}, ${habitacionNombre})`;
+```
+
+**Para documentación:**
+- Captura del dropdown mostrando dispositivos con habitación
+- Explicar que esto ayuda a identificar dispositivos cuando hay varios del mismo tipo
+
+---
+
+### 16.2 Almacenamiento de IP en Habitaciones
+
+**Problema anterior:**
+La IP del ESP32 se guardaba únicamente en el campo `descripcion` con formato "IP: 192.168.1.100"
+
+**Solución implementada:**
+Ahora la IP se guarda en **dos campos**:
+- `ip`: Solo la dirección IP (para uso del ESP32)
+- `descripcion`: Con formato "IP: x.x.x.x" (para mostrar en la UI)
+
+**Archivos modificados:**
+
+**1. `addroom.html` - Crear habitación:**
+```javascript
+body: JSON.stringify({
+    nombre: roomName,
+    ip: ipESP32 || '',
+    descripcion: ipESP32 ? `IP: ${ipESP32}` : ''
+})
+```
+
+**2. `roomedit.html` - Editar habitación:**
+```javascript
+// Guardar
+body: JSON.stringify({
+    nombre: roomName,
+    ip: ipESP32 || '',
+    descripcion: ipESP32 ? `IP: ${ipESP32}` : ''
+})
+
+// Cargar (ahora lee del campo ip directamente)
+ipInput.value = room.ip || '';
+```
+
+**Impacto en la base de datos:**
+
+| Campo | Valor guardado | Uso |
+|-------|---------------|-----|
+| `ip` | `192.168.1.100` | Integración ESP32, envío de comandos |
+| `descripcion` | `IP: 192.168.1.100` | Mostrar en lista de habitaciones |
+
+**Para documentación:**
+- Explicar que el campo IP es opcional
+- Si se proporciona, se usa para comunicación con dispositivos ESP32
+
+---
+
+### 16.3 Gráficas con Placeholder y Overlay "Esperando datos"
+
+**Cambio realizado en `deviceinfo.html`:**
+
+Cuando un dispositivo no tiene datos históricos, ahora se muestra una gráfica placeholder de fondo con un overlay semitransparente que indica "Esperando datos...".
+
+**Comportamiento anterior:**
+- Gráfica vacía con título "Esperando datos..."
+
+**Comportamiento nuevo:**
+1. Se muestra una gráfica placeholder con datos de ejemplo (en color gris)
+2. Overlay semitransparente sobre la gráfica
+3. Spinner de carga + texto "Esperando datos..."
+4. Cuando llegan datos reales, se oculta el overlay y se muestra la gráfica con colores reales
+
+**HTML del overlay (líneas 84-90):**
+```html
+<div id="chart-container" style="position: relative;">
+    <canvas id="myChart" style="width:100%;max-width:700px"></canvas>
+    <div id="chart-overlay" style="display: none; position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: rgba(255,255,255,0.85); justify-content: center; align-items: center; flex-direction: column;">
+        <div class="spinner-border text-primary mb-2" role="status"></div>
+        <span class="text-muted">Esperando datos...</span>
+    </div>
+</div>
+```
+
+**Gráficas afectadas:**
+
+| Tipo de gráfica | Dispositivos | Datos placeholder |
+|-----------------|--------------|-------------------|
+| **Líneas** | Sensores (temperatura, humedad, gas) | Curva suave con valores 22-28 |
+| **Barras** | Actuadores, focos, ventiladores | Barras con valores 10-45 minutos |
+
+**Para documentación:**
+- Captura de gráfica con overlay "Esperando datos..."
+- Captura de gráfica con datos reales cargados
+- Explicar que los datos se generan cuando el ESP32 reporta información
+
+---
+
+### 16.4 Resumen de Archivos Modificados
+
+| Archivo | Cambio |
+|---------|--------|
+| `newtask.html` | Selector de dispositivos muestra (tipo, habitación) |
+| `addroom.html` | Guarda IP en campos `ip` y `descripcion` |
+| `roomedit.html` | Guarda/carga IP correctamente |
+| `deviceinfo.html` | Gráficas placeholder con overlay |
+
+---
+
 ## NOTAS FINALES
 
 - Este documento está actualizado a la fecha del último commit
@@ -1220,4 +1350,4 @@ const taskData = {
 
 **Fecha de creación:** Noviembre 2025
 **Versión del sistema:** 2.0
-**Última actualización:** Implementación completa de formularios de tareas para todos los dispositivos
+**Última actualización:** Mejoras de UI (selector con habitación, gráficas placeholder) y corrección de almacenamiento de IP

@@ -191,13 +191,7 @@
                 if (response.ok && data.success) {
                     const room = data.data;
                     roomNameInput.value = room.nombre;
-
-                    // Si la descripción contiene IP, extraerla
-                    if (room.descripcion && room.descripcion.startsWith('IP: ')) {
-                        ipInput.value = room.descripcion.substring(4);
-                    } else {
-                        ipInput.value = room.descripcion || '';
-                    }
+                    ipInput.value = room.ip || '';
                 } else {
                     await swal("Error", "Error al cargar los datos de la habitación", "error");
                     window.location.href = 'rooms.html';
@@ -226,6 +220,7 @@
                     method: 'PUT',
                     body: JSON.stringify({
                         nombre: roomName,
+                        ip: ipESP32 || '',
                         descripcion: ipESP32 ? `IP: ${ipESP32}` : ''
                     })
                 });

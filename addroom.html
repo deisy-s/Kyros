@@ -157,6 +157,7 @@
                     method: 'POST',
                     body: JSON.stringify({
                         nombre: roomName,
+                        ip: ipESP32 || '',
                         descripcion: ipESP32 ? `IP: ${ipESP32}` : ''
                     })
                 });

@@ -492,7 +492,8 @@
                         const a = document.createElement('a');
                         a.className = 'dropdown-item';
                         a.href = '#';
-                        a.textContent = `${device.nombre} (${device.tipo})`;
+                        const habitacionNombre = device.habitacion?.nombre || 'Sin habitación';
+                        a.textContent = `${device.nombre} (${device.tipo}, ${habitacionNombre})`;
                         a.onclick = (e) => {
                             e.preventDefault();
                             selectedDeviceId = device._id;

@@ -81,8 +81,12 @@
                     </div>
                 </div>
 
-                <div id="chart-container">
+                <div id="chart-container" style="position: relative;">
                     <canvas id="myChart" style="width:100%;max-width:700px"></canvas>
+                    <div id="chart-overlay" style="display: none; position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: rgba(255,255,255,0.85); justify-content: center; align-items: center; flex-direction: column;">
+                        <div class="spinner-border text-primary mb-2" role="status"></div>
+                        <span class="text-muted">Esperando datos...</span>
+                    </div>
                 </div>
 
                 <div id="history-container" style="display: none;">
@@ -344,17 +348,54 @@
 
         // --- 6. GRÁFICA DE USO (Focos, Ventiladores) - CORREGIDA ---
         function renderUsageChart(dataFiltered, tipo, dataTotal) {
+            const overlay = document.getElementById('chart-overlay');
+            const ctx = document.getElementById('myChart');
+            if (myChart) myChart.destroy();
+
+            // Si no hay datos, mostrar placeholder con overlay
+            if (!dataTotal || dataTotal.length === 0) {
+                const statsDiv = document.getElementById('usage-stats');
+                if(statsDiv) statsDiv.remove();
+
+                const placeholderLabels = ['00:00', '04:00', '08:00', '12:00', '16:00', '20:00'];
+                const placeholderValues = [15, 30, 10, 45, 20, 35];
+
+                myChart = new Chart(ctx, {
+                    type: 'bar',
+                    data: {
+                        labels: placeholderLabels,
+                        datasets: [{
+                            label: 'Minutos de Uso',
+                            data: placeholderValues,
+                            backgroundColor: 'rgba(200, 200, 200, 0.4)',
+                            borderColor: 'rgba(200, 200, 200, 0.6)',
+                            borderWidth: 1
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        scales: { y: { beginAtZero: true, title: {display: true, text: 'Minutos'} } },
+                        plugins: { title: { display: true, text: 'Uso por Hora' }, legend: { display: false } }
+                    }
+                });
+                overlay.style.display = 'flex';
+                return;
+            }
+
+            // Ocultar overlay cuando hay datos
+            overlay.style.display = 'none';
+
             // 1. CÁLCULO DE VIDA ÚTIL (Usando dataTotal = Todo el historial)
-            let vidaUtilTotalHoras = 10000; 
-            if (tipo.includes('foco') || tipo.includes('luz')) vidaUtilTotalHoras = 15000; 
+            let vidaUtilTotalHoras = 10000;
+            if (tipo.includes('foco') || tipo.includes('luz')) vidaUtilTotalHoras = 15000;
             else if (tipo.includes('ventilador')) vidaUtilTotalHoras = 20000;
 
-            const totalMinutesUsed = calculateTotalUsage(dataTotal); // Usamos el historial COMPLETO
+            const totalMinutesUsed = calculateTotalUsage(dataTotal);
             const totalHoursUsed = totalMinutesUsed / 60;
-            
+
             let porcentajeRestante = 100 - ((totalHoursUsed / vidaUtilTotalHoras) * 100);
             if (porcentajeRestante < 0) porcentajeRestante = 0;
-            
+
             let colorBarra = 'bg-success';
             if (porcentajeRestante < 50) colorBarra = 'bg-warning';
             if (porcentajeRestante < 10) colorBarra = 'bg-danger';
@@ -382,11 +423,7 @@
             `;
 
             // 2. GRÁFICA DETALLADA (Usando dataFiltered)
-            // Agrupamos los datos por horas o días
             const aggregatedData = aggregateUsageByPeriod(dataFiltered, currentTimeRange);
-            
-            const ctx = document.getElementById('myChart');
-            if (myChart) myChart.destroy();
 
             myChart = new Chart(ctx, {
                 type: 'bar',
@@ -402,10 +439,10 @@
                 },
                 options: {
                     responsive: true,
-                    scales: { 
-                        y: { beginAtZero: true, title: {display: true, text: 'Minutos'} } 
+                    scales: {
+                        y: { beginAtZero: true, title: {display: true, text: 'Minutos'} }
                     },
-                    plugins: { 
+                    plugins: {
                         title: { display: true, text: `Uso por ${currentTimeRange === '24h' ? 'Hora' : 'Día'}` },
                         legend: { display: false }
                     }
@@ -514,12 +551,37 @@
             const statsDiv = document.getElementById('usage-stats');
             if(statsDiv) statsDiv.remove();
             const ctx = document.getElementById('myChart');
+            const overlay = document.getElementById('chart-overlay');
             if (myChart) myChart.destroy();
 
+            let color = 'rgba(54, 162, 235, 1)';
+            let title = 'Valor';
+            if (tipo.includes('temp')) { color = 'rgba(255, 99, 132, 1)'; title = 'Temperatura (°C)'; }
+            else if (tipo.includes('hum')) { color = 'rgba(54, 162, 235, 1)'; title = 'Humedad (%)'; }
+            else if (tipo.includes('gas')) { color = 'rgba(255, 206, 86, 1)'; title = 'Gas (ppm)'; }
+
             if (!data || data.length === 0) {
-                 myChart = new Chart(ctx, { type: 'line', data: {labels:[], datasets:[]}, options: {plugins:{title:{display:true, text:'Esperando datos...'}}}});
-                 return;
+                // Datos placeholder para la gráfica de fondo
+                const placeholderLabels = ['00:00', '04:00', '08:00', '12:00', '16:00', '20:00', '24:00'];
+                const placeholderValues = [22, 24, 26, 28, 27, 25, 23];
+
+                myChart = new Chart(ctx, {
+                    type: 'line',
+                    data: {
+                        labels: placeholderLabels,
+                        datasets: [{
+                            label: title, data: placeholderValues, borderColor: 'rgba(200, 200, 200, 0.5)', backgroundColor: 'rgba(200, 200, 200, 0.1)',
+                            borderWidth: 2, fill: true, tension: 0.4
+                        }]
+                    },
+                    options: { responsive: true, scales: { y: { beginAtZero: true } } }
+                });
+                overlay.style.display = 'flex';
+                return;
             }
+
+            // Ocultar overlay cuando hay datos
+            overlay.style.display = 'none';
 
             const sortedData = data.sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
             const labels = sortedData.map(item => {
@@ -527,12 +589,6 @@
                 return currentTimeRange === '24h' ? d.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}) : d.toLocaleDateString();
             });
             const values = sortedData.map(item => item.valor);
-
-            let color = 'rgba(54, 162, 235, 1)';
-            let title = 'Valor';
-            if (tipo.includes('temp')) { color = 'rgba(255, 99, 132, 1)'; title = 'Temperatura (°C)'; }
-            else if (tipo.includes('hum')) { color = 'rgba(54, 162, 235, 1)'; title = 'Humedad (%)'; }
-            else if (tipo.includes('gas')) { color = 'rgba(255, 206, 86, 1)'; title = 'Gas (ppm)'; }
 
             myChart = new Chart(ctx, {
                 type: 'line',
