@@ -1,5 +1,6 @@
 const Automatize = require('../models/Automatize');
 const Device = require('../models/Device');
+const { notifyESP32ConfigUpdate } = require('./espController');
 
 // @desc    Obtener todas las automatizaciones del usuario
 // @route   GET /api/automatize
@@ -150,6 +151,11 @@ exports.createAutomatization = async (req, res, next) => {
 
         const automatization = await Automatize.create(req.body);
 
+        // Notificar a ESP32s afectados (no bloqueante)
+        notifyESP32ConfigUpdate(automatization).catch(err => {
+            console.error('[AutoController] Error notificando ESP32:', err);
+        });
+
         res.status(201).json({
             success: true,
             data: automatization
@@ -188,6 +194,11 @@ exports.updateAutomatization = async (req, res, next) => {
         automatization = await Automatize.findByIdAndUpdate(req.params.id, req.body, {
             new: true,
             runValidators: true
+        });
+
+        // Notificar a ESP32s afectados (no bloqueante)
+        notifyESP32ConfigUpdate(automatization).catch(err => {
+            console.error('[AutoController] Error notificando ESP32:', err);
         });
 
         res.status(200).json({
@@ -265,6 +276,11 @@ exports.toggleAutomatization = async (req, res, next) => {
         // Toggle activa
         automatization.activa = !automatization.activa;
         await automatization.save();
+
+        // Notificar a ESP32s afectados (no bloqueante)
+        notifyESP32ConfigUpdate(automatization).catch(err => {
+            console.error('[AutoController] Error notificando ESP32:', err);
+        });
 
         res.status(200).json({
             success: true,
