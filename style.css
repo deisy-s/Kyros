@@ -558,7 +558,7 @@ input::-webkit-inner-spin-button {
     text-align: left;
 }
 
-#user-input, #deviceNameInput, #pinInput, #connectionInput, #cameraNameInput, #name-input, #seconds{
+#user-input, #deviceNameInput, #pinInput, #connectionInput, #cameraNameInput, #name-input, #seconds, #startRangeInfo, #stopRangeInfo, #turnOnTimeAlarm, #turnOffTimeAlarm, #turnOnTimeAlarmInfo, #turnOffTimeAlarmInfo{
     width: 100%;
     height: 35px;
     background: transparent;
@@ -575,6 +575,10 @@ input::-webkit-inner-spin-button {
 #seconds{
     width: 50px;
     margin-left: 10px;
+}
+
+#startRangeInfo, #stopRangeInfo, #turnOnTimeAlarmInfo, #turnOffTimeAlarmInfo, #turnOnTimeAlarm, #turnOffTimeAlarm{
+    width: 130px;
 }
 
 #password-div{
@@ -1057,12 +1061,8 @@ input::-webkit-inner-spin-button {
     margin-left: 80px;
 }
 
-#rightCol-taskinfo{
-    margin-left: 80px;
-}
-
 #rightCol-taskinfo img{
-    width: 68%;
+    width: 80%;
 }
 
 #rightCol-taskinfo .switch {
@@ -1088,6 +1088,10 @@ input::-webkit-inner-spin-button {
     -webkit-transform: translateX(16px);
     -ms-transform: translateX(16px);
     transform: translateX(16px);
+}
+
+#taskInfo-btn{
+    margin-left: 67px;
 }
 
 /* Mobile start */
@@ -1245,7 +1249,8 @@ input::-webkit-inner-spin-button {
     }
 
     #rightCol-taskinfo{
-        display: none;
+        margin-top: 20px;
+        margin-left: 18px;
     }
 
     #rightCol-taskinfo img{
@@ -1258,6 +1263,10 @@ input::-webkit-inner-spin-button {
         position: relative;
         left: 0;
         top: 0;
+    }
+
+    #taskInfo-btn{
+        margin-left:0px;
     }
 
     #leftCol-addtask, #rightCol-addtask, #leftCol-taskinfo{
