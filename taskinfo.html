@@ -93,36 +93,66 @@
             </div>
             <div class="col-lg-5" id="rightCol-taskinfo">
                 <div class="fan" style="display: none;">
-                    <div class="timeOn d-flex">
-                        <h3 id="h3-r">Encender a la(s)</h3>
-                        <input
-                        type="time"
-                        id="turnOnTime"
-                        min="00:00"
-                        max="24:00"
-                        required />
+                    <!-- Selector de condición de encendido -->
+                    <h3>Condición de encendido</h3>
+                    <div class="dropdown mb-3">
+                        <button class="btn btn-primary dropdown-toggle w-100" data-bs-toggle="dropdown" type="button" id="dropdownFanOnButton">
+                            Seleccionar condición
+                        </button>
+                        <ul class="dropdown-menu w-100" id="fanOnMenu">
+                            <li><a class="dropdown-item fanOnOption" href="#" data-option="time">Encender a una hora establecida</a></li>
+                            <li><a class="dropdown-item fanOnOption" href="#" data-option="temp">Encender a una temperatura específica</a></li>
+                        </ul>
+                    </div>
+                    <!-- Opción: Por hora -->
+                    <div id="fanTimeOnInfo" style="display: none;">
+                        <div class="timeOn d-flex">
+                            <h3 id="h3-r">Encender a la(s)</h3>
+                            <input type="time" id="turnOnTime" min="00:00" max="24:00" required />
+                        </div>
+                    </div>
+                    <!-- Opción: Por temperatura -->
+                    <div id="fanTempOnInfo" style="display: none;">
+                        <h3 class="mt-3">Sensor de temperatura</h3>
+                        <div class="dropdown mb-3">
+                            <button class="btn btn-primary dropdown-toggle w-100" data-bs-toggle="dropdown" type="button" id="dropdownTempSensorButtonInfo">
+                                Seleccionar sensor de temperatura
+                            </button>
+                            <ul class="dropdown-menu w-100" id="TempSensorMenuInfo"></ul>
+                        </div>
+                        <div class="tempOn d-flex">
+                            <h3 id="h3-r">Encender a los</h3>
+                            <input type="number" id="turnOnTemp">
+                            <h3 class="degree">°C</h3>
+                        </div>
                     </div>
                     <br>
-                    <div class="tempOn d-flex">
-                        <h3 id="h3-r">Encender a los</h3>
-                        <input type="number" id="turnOnTemp">
-                        <h3 class="degree">°C</h3>
+                    <!-- Selector de condición de apagado -->
+                    <h3>Condición de apagado (opcional)</h3>
+                    <div class="dropdown mb-3">
+                        <button class="btn btn-primary dropdown-toggle w-100" data-bs-toggle="dropdown" type="button" id="dropdownFanOffButton">
+                            Sin apagado automático
+                        </button>
+                        <ul class="dropdown-menu w-100" id="fanOffMenu">
+                            <li><a class="dropdown-item fanOffOption" href="#" data-option="none">Sin apagado automático</a></li>
+                            <li><a class="dropdown-item fanOffOption" href="#" data-option="time">Apagar a una hora establecida</a></li>
+                            <li><a class="dropdown-item fanOffOption" href="#" data-option="temp">Apagar a una temperatura específica</a></li>
+                        </ul>
                     </div>
-                    <br>
-                    <div class="timeOff d-flex">
-                        <h3 id="h3-r">Apagar a la(s)</h3>
-                        <input
-                        type="time"
-                        id="turnOffTime"
-                        min="00:00"
-                        max="24:00"
-                        required />
+                    <!-- Opción apagado: Por hora -->
+                    <div id="fanTimeOffInfo" style="display: none;">
+                        <div class="timeOff d-flex">
+                            <h3 id="h3-r">Apagar a la(s)</h3>
+                            <input type="time" id="turnOffTime" min="00:00" max="24:00" required />
+                        </div>
                     </div>
-                    <br>
-                    <div class="tempOff d-flex">
-                        <h3 id="h3-r">Apagar a los</h3>
-                        <input type="number" id="turnOffTemp">
-                        <h3 class="degree">°C</h3>
+                    <!-- Opción apagado: Por temperatura -->
+                    <div id="fanTempOffInfo" style="display: none;">
+                        <div class="tempOff d-flex">
+                            <h3 id="h3-r">Apagar a los</h3>
+                            <input type="number" id="turnOffTemp">
+                            <h3 class="degree">°C</h3>
+                        </div>
                     </div>
                 </div>
                 <div class="alarm" style="display: none;">
@@ -203,40 +233,59 @@
                     </div>
                 </div>
                 <div class="light" style="display: none;">
-                    <div class="timeOnLight d-flex">
-                        <h3 id="h3-r">Encender a la(s)</h3>
-                        <input
-                        type="time"
-                        id="turnOnTime"
-                        min="00:00"
-                        max="24:00"
-                        required />
+                    <!-- Selector de condición de encendido -->
+                    <h3>Condición de encendido</h3>
+                    <div class="dropdown mb-3">
+                        <button class="btn btn-primary dropdown-toggle w-100" data-bs-toggle="dropdown" type="button" id="dropdownLightOnButton">
+                            Seleccionar condición
+                        </button>
+                        <ul class="dropdown-menu w-100" id="lightOnMenu">
+                            <li><a class="dropdown-item lightOnOption" href="#" data-option="time">Encender a una hora establecida</a></li>
+                            <li><a class="dropdown-item lightOnOption" href="#" data-option="sensor">Encender cuando no hay luz (sensor)</a></li>
+                        </ul>
+                    </div>
+                    <!-- Opción: Por hora -->
+                    <div id="lightTimeOnInfo" style="display: none;">
+                        <div class="timeOnLight d-flex">
+                            <h3 id="h3-r">Encender a la(s)</h3>
+                            <input type="time" id="turnOnTime" min="00:00" max="24:00" required />
+                        </div>
+                    </div>
+                    <!-- Opción: Por sensor de luz -->
+                    <div id="lightSensorOnInfo" style="display: none;">
+                        <h3 class="mt-3">Sensor de luz</h3>
+                        <div class="dropdown">
+                            <button class="btn btn-primary dropdown-toggle w-100" data-bs-toggle="dropdown" type="button" id="dropdownLightSensorOnButtonInfo">
+                                Seleccionar sensor de luz
+                            </button>
+                            <ul class="dropdown-menu w-100" id="LightSensorOnMenuInfo"></ul>
+                        </div>
                     </div>
                     <br>
-                    <div class="lightOn d-flex">
-                        <h3 id="h3-r">Encender cuando no hay luz</h3>
-                        <label class="switch" id="lightOnSwitch">
-                            <input type="checkbox">
-                            <span class="slider round"></span>
-                        </label>
+                    <!-- Selector de condición de apagado -->
+                    <h3>Condición de apagado (opcional)</h3>
+                    <div class="dropdown mb-3">
+                        <button class="btn btn-primary dropdown-toggle w-100" data-bs-toggle="dropdown" type="button" id="dropdownLightOffButton">
+                            Sin apagado automático
+                        </button>
+                        <ul class="dropdown-menu w-100" id="lightOffMenu">
+                            <li><a class="dropdown-item lightOffOption" href="#" data-option="none">Sin apagado automático</a></li>
+                            <li><a class="dropdown-item lightOffOption" href="#" data-option="time">Apagar a una hora establecida</a></li>
+                            <li><a class="dropdown-item lightOffOption" href="#" data-option="sensor">Apagar cuando hay luz (sensor)</a></li>
+                        </ul>
                     </div>
-                    <br>
-                    <div class="timeOffLight d-flex">
-                        <h3 id="h3-r">Apagar a la(s)</h3>
-                        <input
-                        type="time"
-                        id="turnOffTime"
-                        min="00:00"
-                        max="24:00"
-                        required />
+                    <!-- Opción apagado: Por hora -->
+                    <div id="lightTimeOffInfo" style="display: none;">
+                        <div class="timeOffLight d-flex">
+                            <h3 id="h3-r">Apagar a la(s)</h3>
+                            <input type="time" id="turnOffTime" min="00:00" max="24:00" required />
+                        </div>
                     </div>
-                    <br>
-                    <div class="lightOff d-flex">
-                        <h3 id="h3-r">Apagar cuando hay luz</h3>
-                        <label class="switch" id="lightOffSwitch">
-                            <input type="checkbox">
-                            <span class="slider round"></span>
-                        </label>
+                    <!-- Opción apagado: Por sensor -->
+                    <div id="lightSensorOffInfo" style="display: none;">
+                        <div class="alert alert-info" role="alert">
+                            <strong>ℹ️ Información:</strong> Se usará el mismo sensor de luz seleccionado para encendido
+                        </div>
                     </div>
                 </div>
             </div>
@@ -308,9 +357,11 @@
         const taskId = getParameterByName('taskId');
         let selectedDeviceId = null;
         let selectedDeviceType = null;
+        let selectedDeviceSubtype = null;
         let currentAutomatization = null;
         let selectedMovementSensorId = null;
         let selectedGasSensorId = null;
+        let selectedTempSensorId = null; // Sensor compartido para encender y apagar
 
         const saveButton = document.querySelector('.button-save');
         const deleteButton = document.querySelector('.button-delete');
@@ -394,6 +445,86 @@
             }
         }
 
+        // Cargar sensores de luz (compartido para encendido y apagado)
+        let selectedLightSensorId = null;
+        async function loadLightSensors(preselectedId = null) {
+            try {
+                const response = await fetchWithAuth(`${API_URL}/devices?tipo=luz`);
+                const data = await response.json();
+                if (data.success) {
+                    const dropdown = document.getElementById('LightSensorOnMenuInfo');
+                    const dropdownButton = document.getElementById('dropdownLightSensorOnButtonInfo');
+                    dropdown.innerHTML = '';
+                    if (data.data.length === 0) {
+                        dropdown.innerHTML = '<li><a class="dropdown-item disabled" href="#">No hay sensores de luz</a></li>';
+                        return;
+                    }
+                    data.data.forEach(sensor => {
+                        const li = document.createElement('li');
+                        const a = document.createElement('a');
+                        a.className = 'dropdown-item';
+                        a.href = '#';
+                        const habitacionNombre = sensor.habitacion?.nombre || 'Sin habitación';
+                        a.textContent = `${sensor.nombre} (${habitacionNombre})`;
+                        a.onclick = (e) => {
+                            e.preventDefault();
+                            selectedLightSensorId = sensor._id;
+                            dropdownButton.textContent = sensor.nombre;
+                            console.log('✅ Sensor de luz seleccionado (compartido):', sensor.nombre);
+                        };
+                        li.appendChild(a);
+                        dropdown.appendChild(li);
+                        // Pre-seleccionar si coincide
+                        if (preselectedId && sensor._id === preselectedId) {
+                            selectedLightSensorId = sensor._id;
+                            dropdownButton.textContent = sensor.nombre;
+                        }
+                    });
+                }
+            } catch (error) {
+                console.error('Error al cargar sensores de luz:', error);
+            }
+        }
+
+        // Cargar sensores de temperatura (compartido para encendido y apagado)
+        async function loadTempSensors(preselectedId = null) {
+            try {
+                const response = await fetchWithAuth(`${API_URL}/devices?tipo=temperatura`);
+                const data = await response.json();
+                if (data.success) {
+                    const dropdown = document.getElementById('TempSensorMenuInfo');
+                    const dropdownButton = document.getElementById('dropdownTempSensorButtonInfo');
+                    dropdown.innerHTML = '';
+                    if (data.data.length === 0) {
+                        dropdown.innerHTML = '<li><a class="dropdown-item disabled" href="#">No hay sensores de temperatura</a></li>';
+                        return;
+                    }
+                    data.data.forEach(sensor => {
+                        const li = document.createElement('li');
+                        const a = document.createElement('a');
+                        a.className = 'dropdown-item';
+                        a.href = '#';
+                        const habitacionNombre = sensor.habitacion?.nombre || 'Sin habitación';
+                        a.textContent = `${sensor.nombre} (${habitacionNombre})`;
+                        a.onclick = (e) => {
+                            e.preventDefault();
+                            selectedTempSensorId = sensor._id;
+                            dropdownButton.textContent = sensor.nombre;
+                        };
+                        li.appendChild(a);
+                        dropdown.appendChild(li);
+                        // Pre-seleccionar si coincide
+                        if (preselectedId && sensor._id === preselectedId) {
+                            selectedTempSensorId = sensor._id;
+                            dropdownButton.textContent = sensor.nombre;
+                        }
+                    });
+                }
+            } catch (error) {
+                console.error('Error al cargar sensores de temperatura:', error);
+            }
+        }
+
         // Handler del dropdown de opciones para actuador
         document.addEventListener('DOMContentLoaded', () => {
             const dropdownOption5 = document.querySelectorAll('#option5Menu .option5');
@@ -421,10 +552,106 @@
                     }
                 });
             });
+
+            // Handler del dropdown de ventilador - ENCENDIDO
+            const fanOnOptions = document.querySelectorAll('.fanOnOption');
+            fanOnOptions.forEach(item => {
+                item.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    const option = item.dataset.option;
+                    const dropdownButton = document.getElementById('dropdownFanOnButton');
+                    dropdownButton.textContent = item.textContent;
+
+                    // Ocultar todos
+                    document.getElementById('fanTimeOnInfo').style.display = 'none';
+                    document.getElementById('fanTempOnInfo').style.display = 'none';
+
+                    // Mostrar el seleccionado
+                    if (option === 'time') {
+                        document.getElementById('fanTimeOnInfo').style.display = 'block';
+                    } else if (option === 'temp') {
+                        document.getElementById('fanTempOnInfo').style.display = 'block';
+                        // Cargar sensores de temperatura
+                        loadTempSensors();
+                    }
+                });
+            });
+
+            // Handler del dropdown de ventilador - APAGADO
+            const fanOffOptions = document.querySelectorAll('.fanOffOption');
+            fanOffOptions.forEach(item => {
+                item.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    const option = item.dataset.option;
+                    const dropdownButton = document.getElementById('dropdownFanOffButton');
+                    dropdownButton.textContent = item.textContent;
+
+                    // Ocultar todos
+                    document.getElementById('fanTimeOffInfo').style.display = 'none';
+                    document.getElementById('fanTempOffInfo').style.display = 'none';
+
+                    // Mostrar el seleccionado
+                    if (option === 'time') {
+                        document.getElementById('fanTimeOffInfo').style.display = 'block';
+                    } else if (option === 'temp') {
+                        document.getElementById('fanTempOffInfo').style.display = 'block';
+                    }
+                    // Si es 'none', no mostramos nada
+                });
+            });
+
+            // Handler del dropdown de luz - ENCENDIDO
+            const lightOnOptions = document.querySelectorAll('.lightOnOption');
+            lightOnOptions.forEach(item => {
+                item.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    const option = item.dataset.option;
+                    const dropdownButton = document.getElementById('dropdownLightOnButton');
+                    dropdownButton.textContent = item.textContent;
+
+                    // Ocultar todos
+                    document.getElementById('lightTimeOnInfo').style.display = 'none';
+                    document.getElementById('lightSensorOnInfo').style.display = 'none';
+
+                    // Mostrar el seleccionado
+                    if (option === 'time') {
+                        document.getElementById('lightTimeOnInfo').style.display = 'block';
+                    } else if (option === 'sensor') {
+                        document.getElementById('lightSensorOnInfo').style.display = 'block';
+                        // Cargar sensores de luz (se usa el mismo para encendido y apagado)
+                        loadLightSensors();
+                    }
+                });
+            });
+
+            // Handler del dropdown de luz - APAGADO
+            const lightOffOptions = document.querySelectorAll('.lightOffOption');
+            lightOffOptions.forEach(item => {
+                item.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    const option = item.dataset.option;
+                    const dropdownButton = document.getElementById('dropdownLightOffButton');
+                    dropdownButton.textContent = item.textContent;
+
+                    // Ocultar todos
+                    document.getElementById('lightTimeOffInfo').style.display = 'none';
+                    document.getElementById('lightSensorOffInfo').style.display = 'none';
+
+                    // Mostrar el seleccionado
+                    if (option === 'time') {
+                        document.getElementById('lightTimeOffInfo').style.display = 'block';
+                    } else if (option === 'sensor') {
+                        document.getElementById('lightSensorOffInfo').style.display = 'block';
+                        // Nota: El mismo sensor se usa para encendido y apagado
+                        console.log('ℹ️ Se usará el mismo sensor de luz seleccionado para encendido');
+                    }
+                    // Si es 'none', no mostramos nada
+                });
+            });
         });
 
         // Función para mostrar el formulario correcto según el tipo de dispositivo
-        function showFormForDeviceType(tipo) {
+        function showFormForDeviceType(tipo, subtipo = null) {
             const lightDiv = document.querySelector('.light');
             const fanDiv = document.querySelector('.fan');
             const alarmDiv = document.querySelector('.alarm');
@@ -437,28 +664,36 @@
             if (alarmDiv) alarmDiv.style.display = 'none';
             if (actuadorDiv) actuadorDiv.style.display = 'none';
 
-            console.log(`Mostrando formulario para tipo: ${tipo}`);
+            // Determinar el tipo efectivo para mostrar el formulario correcto
+            let tipoEfectivo = tipo;
+            if (tipo === 'actuador' && subtipo) {
+                tipoEfectivo = subtipo;
+            }
 
-            // Mostrar el correcto según el tipo
-            if (tipo === 'luz') {
+            console.log(`🔍 Mostrando formulario - Tipo: ${tipo}, Subtipo: ${subtipo}, Efectivo: ${tipoEfectivo}`);
+
+            // Mostrar el formulario correcto según el tipo efectivo
+            if (tipoEfectivo === 'luz') {
                 if (lightDiv) lightDiv.style.display = 'block';
-            } else if (tipo === 'ventilador' || tipo === 'termostato' || tipo === 'sensor' || tipo === 'temperatura' || tipo === 'humedad') {
+            } else if (tipoEfectivo === 'ventilador' || tipoEfectivo === 'termostato' || tipoEfectivo === 'sensor' || tipoEfectivo === 'temperatura' || tipoEfectivo === 'humedad') {
                 // Todos estos tipos usan el formulario de temperatura/fan
                 if (fanDiv) fanDiv.style.display = 'block';
-            } else if (tipo === 'alarma' || tipo === 'movimiento' || tipo === 'gas') {
+            } else if (tipo === 'actuador' && (subtipo === 'alarma' || !subtipo)) {
+                // Actuadores tipo alarma o sin subtipo: mostrar formulario de actuador (con selector de 3 opciones)
+                if (actuadorDiv) actuadorDiv.style.display = 'block';
+            } else if (tipoEfectivo === 'alarma' || tipoEfectivo === 'movimiento' || tipoEfectivo === 'gas') {
+                // Sensores de movimiento/gas: mostrar formulario de alarma simple
                 if (alarmDiv) {
                     alarmDiv.style.display = 'block';
                     // Cambiar el texto según el tipo de dispositivo
                     if (alarmLabel) {
-                        if (tipo === 'movimiento' || tipo === 'gas') {
+                        if (tipoEfectivo === 'movimiento' || tipoEfectivo === 'gas') {
                             alarmLabel.textContent = 'Activar a la(s)';
                         } else {
                             alarmLabel.textContent = 'Sonar a la(s)';
                         }
                     }
                 }
-            } else if (tipo === 'actuador') {
-                if (actuadorDiv) actuadorDiv.style.display = 'block';
             } else {
                 // Por defecto, mostrar ventilador para otros tipos (enchufe, cerradura, etc.)
                 if (fanDiv) fanDiv.style.display = 'block';
@@ -497,8 +732,9 @@
                         a.onclick = () => {
                             selectedDeviceId = device._id;
                             selectedDeviceType = device.tipo;
+                            selectedDeviceSubtype = device.subtipo || null;
                             dropdownButton.textContent = device.nombre;
-                            showFormForDeviceType(device.tipo);
+                            showFormForDeviceType(device.tipo, device.subtipo);
                         };
                         li.appendChild(a);
                         dropdown.appendChild(li);
@@ -543,6 +779,7 @@
 
                         selectedDeviceId = dispositivo._id;
                         selectedDeviceType = dispositivo.tipo;
+                        selectedDeviceSubtype = dispositivo.subtipo || null;
 
                         // Mostrar dispositivo en dropdown
                         const dropdownButton = document.getElementById('dropdownMenuButton');
@@ -554,8 +791,8 @@
                         await loadDevices(dispositivo.tipo);
 
                         // Mostrar formulario correcto
-                        showFormForDeviceType(dispositivo.tipo);
-                        console.log(`Formulario para tipo "${dispositivo.tipo}" mostrado`);
+                        showFormForDeviceType(dispositivo.tipo, dispositivo.subtipo);
+                        console.log(`Formulario para tipo "${dispositivo.tipo}" subtipo "${dispositivo.subtipo}" mostrado`);
                     }
 
                     // Cargar horario y/o parámetros
@@ -569,14 +806,21 @@
                     console.log('  - Trigger completo:', auto.trigger);
                     console.log('  - Acciones completas:', auto.acciones);
 
+                    // Determinar tipo efectivo para cargar datos correctos
+                    const tipoEfectivo = (selectedDeviceType === 'actuador' && selectedDeviceSubtype) ? selectedDeviceSubtype : selectedDeviceType;
+                    console.log(`🔍 Cargando datos - Tipo: ${selectedDeviceType}, Subtipo: ${selectedDeviceSubtype}, Efectivo: ${tipoEfectivo}`);
+
                     // Solo procesar si hay hora O parámetros
                     if (hora || (parametros && Object.keys(parametros).length > 0)) {
-                        console.log(`Cargando datos para tipo ${selectedDeviceType}:`, { hora, parametros });
+                        console.log(`Cargando datos para tipo efectivo ${tipoEfectivo}:`, { hora, parametros });
 
-                        // Llenar campos según el tipo
-                        if (selectedDeviceType === 'actuador') {
+                        // Llenar campos según el tipo efectivo
+                        if (selectedDeviceType === 'actuador' && (selectedDeviceSubtype === 'alarma' || !selectedDeviceSubtype)) {
                             const triggerTipo = auto.trigger?.tipo;
                             const dropdownButton = document.getElementById('dropdownOption5Button');
+
+                            console.log('🔍 ALARMA - Trigger tipo:', triggerTipo);
+                            console.log('🔍 ALARMA - Trigger completo:', auto.trigger);
 
                             // Cargar sensores para los dropdowns
                             loadMovementSensors(auto.trigger?.sensor?.dispositivo?._id || auto.trigger?.sensor?.dispositivo);
@@ -584,6 +828,7 @@
 
                             if (triggerTipo === 'sensor') {
                                 const tipoSensor = auto.trigger.sensor?.tipoSensor;
+                                console.log('🔍 ALARMA - Tipo de sensor:', tipoSensor);
 
                                 if (tipoSensor === 'movimiento') {
                                     dropdownButton.textContent = 'Encender al detectar movimiento';
@@ -599,15 +844,24 @@
                                     if (parametros.duracionSegundos) document.getElementById('secondsMovementInfo').value = parametros.duracionSegundos;
 
                                 } else if (tipoSensor === 'gas') {
+                                    console.log('🔍 GAS - Cargando formulario de gas');
                                     dropdownButton.textContent = 'Encender al sobrepasar los niveles de gas regulares';
-                                    document.getElementById('gasAlarmInfo').style.display = 'block';
+                                    const gasDiv = document.getElementById('gasAlarmInfo');
+                                    gasDiv.style.display = 'block';
+                                    console.log('🔍 GAS - Div display:', gasDiv.style.display);
+                                    console.log('🔍 GAS - Div existe:', gasDiv !== null);
 
                                     // Cargar datos del sensor
                                     const sensorId = auto.trigger.sensor?.dispositivo?._id || auto.trigger.sensor?.dispositivo;
                                     selectedGasSensorId = sensorId;
+                                    console.log('🔍 GAS - Sensor ID:', sensorId);
+                                    console.log('🔍 GAS - Duración segundos:', parametros.duracionSegundos);
 
                                     // Cargar parámetros
-                                    if (parametros.duracionSegundos) document.getElementById('secondsGasInfo').value = parametros.duracionSegundos;
+                                    if (parametros.duracionSegundos) {
+                                        document.getElementById('secondsGasInfo').value = parametros.duracionSegundos;
+                                        console.log('🔍 GAS - Duración cargada en el campo');
+                                    }
                                 }
                             } else {
                                 // Trigger por horario
@@ -618,216 +872,208 @@
                                 if (parametros.horaApagar) document.getElementById('turnOffTimeAlarmInfo').value = parametros.horaApagar;
                             }
                             console.log('Datos de actuador cargados');
-                        } else if (selectedDeviceType === 'movimiento' || selectedDeviceType === 'gas') {
+                        } else if ((selectedDeviceType === 'movimiento' || selectedDeviceType === 'gas') && selectedDeviceType !== 'actuador') {
                             // Cargar hora para dispositivos de alarma (movimiento, gas)
                             const turnOnInput = document.getElementById('turnOn');
                             if (turnOnInput && hora) {
                                 turnOnInput.value = hora;
                                 console.log(`Horario asignado al campo de alarma: ${hora}`);
                             }
-                        } else if (selectedDeviceType === 'luz') {
+                        } else if (tipoEfectivo === 'luz') {
                             console.log('Cargando datos para luz');
                             console.log('Hora del trigger:', hora);
+                            console.log('Trigger completo:', auto.trigger);
                             console.log('Parámetros:', parametros);
 
-                            // Referencias a los divs de luz
-                            const timeOnLightDiv = document.querySelector('.light .timeOnLight');
-                            const lightOnDiv = document.querySelector('.light .lightOn');
-                            const timeOffLightDiv = document.querySelector('.light .timeOffLight');
-                            const lightOffDiv = document.querySelector('.light .lightOff');
-
-                            console.log('Divs de luz encontrados:', {
-                                timeOnLightDiv: timeOnLightDiv ? 'SÍ' : 'NO',
-                                lightOnDiv: lightOnDiv ? 'SÍ' : 'NO',
-                                timeOffLightDiv: timeOffLightDiv ? 'SÍ' : 'NO',
-                                lightOffDiv: lightOffDiv ? 'SÍ' : 'NO'
-                            });
+                            // Referencias a dropdowns y divs de luz
+                            const dropdownLightOnButton = document.getElementById('dropdownLightOnButton');
+                            const dropdownLightOffButton = document.getElementById('dropdownLightOffButton');
+                            const lightTimeOnInfo = document.getElementById('lightTimeOnInfo');
+                            const lightSensorOnInfo = document.getElementById('lightSensorOnInfo');
+                            const lightTimeOffInfo = document.getElementById('lightTimeOffInfo');
+                            const lightSensorOffInfo = document.getElementById('lightSensorOffInfo');
 
                             // ========== ENCENDIDO ==========
-                            // Primero ocultar todo
-                            if (timeOnLightDiv) {
-                                timeOnLightDiv.style.setProperty('display', 'none', 'important');
-                                console.log('✓ timeOnLightDiv ocultado');
-                            }
-                            if (lightOnDiv) {
-                                lightOnDiv.style.setProperty('display', 'none', 'important');
-                                console.log('✓ lightOnDiv ocultado');
-                            }
+                            // Ocultar todos los divs de encendido
+                            if (lightTimeOnInfo) lightTimeOnInfo.style.display = 'none';
+                            if (lightSensorOnInfo) lightSensorOnInfo.style.display = 'none';
 
+                            // Si hay trigger por sensor de luz
+                            if (auto.trigger.tipo === 'sensor' && auto.trigger.sensor?.tipoSensor === 'luz') {
+                                if (dropdownLightOnButton) {
+                                    dropdownLightOnButton.textContent = 'Encender cuando no hay luz (sensor)';
+                                }
+
+                                // Cargar datos del sensor compartido
+                                const sensorId = auto.trigger.sensor?.dispositivo?._id || auto.trigger.sensor?.dispositivo;
+                                selectedLightSensorId = sensorId;
+                                console.log('✅ Sensor de luz compartido:', sensorId);
+
+                                // Cargar lista de sensores y pre-seleccionar
+                                await loadLightSensors(sensorId);
+
+                                if (lightSensorOnInfo) {
+                                    lightSensorOnInfo.style.display = 'block';
+                                    console.log('Mostrando: Encender cuando no hay luz (sensor)');
+                                }
+                            }
                             // Si hay hora en el trigger, usar hora para encendido
-                            if (hora) {
-                                const turnOnTimeLight = document.querySelector('.light #turnOnTime');
-                                if (turnOnTimeLight) {
-                                    turnOnTimeLight.value = hora;
+                            else if (hora) {
+                                if (dropdownLightOnButton) {
+                                    dropdownLightOnButton.textContent = 'Encender a una hora establecida';
+                                }
+                                const turnOnTimeLightInput = lightTimeOnInfo?.querySelector('input[type="time"]');
+                                if (turnOnTimeLightInput) {
+                                    turnOnTimeLightInput.value = hora;
                                     console.log(`✅ Hora de encendido: ${hora}`);
                                 }
-                                if (timeOnLightDiv) {
-                                    timeOnLightDiv.style.setProperty('display', 'flex', 'important');
-                                    console.log('Mostrando campo: Hora de encendido luz');
+                                if (lightTimeOnInfo) {
+                                    lightTimeOnInfo.style.display = 'block';
+                                    console.log('Mostrando: Encender a una hora establecida');
                                 }
-                            }
-                            // Si hay opción "encender cuando no hay luz"
-                            else if (parametros && parametros.encenderSinLuz) {
-                                const lightOnSwitch = document.querySelector('#lightOnSwitch input[type="checkbox"]');
-                                if (lightOnSwitch) {
-                                    lightOnSwitch.checked = true;
-                                    console.log('✅ Switch "Encender cuando no hay luz" activado');
-                                }
-                                if (lightOnDiv) {
-                                    lightOnDiv.style.setProperty('display', 'flex', 'important');
-                                    console.log('Mostrando campo: Switch encender sin luz');
-                                }
-                            }
-                            // Si no hay ninguno, mostrar ambos
-                            else {
-                                if (timeOnLightDiv) timeOnLightDiv.style.setProperty('display', 'flex', 'important');
-                                if (lightOnDiv) lightOnDiv.style.setProperty('display', 'flex', 'important');
-                                console.log('Sin datos de encendido luz, mostrando ambos');
                             }
 
                             // ========== APAGADO ==========
-                            // Primero ocultar todo
-                            if (timeOffLightDiv) {
-                                timeOffLightDiv.style.setProperty('display', 'none', 'important');
-                                console.log('✓ timeOffLightDiv ocultado');
-                            }
-                            if (lightOffDiv) {
-                                lightOffDiv.style.setProperty('display', 'none', 'important');
-                                console.log('✓ lightOffDiv ocultado');
-                            }
+                            // Ocultar todos los divs de apagado
+                            if (lightTimeOffInfo) lightTimeOffInfo.style.display = 'none';
+                            if (lightSensorOffInfo) lightSensorOffInfo.style.display = 'none';
 
-                            let hasOffValueLight = false;
+                            // Si hay parámetro usarSensorLuz (apagar con sensor)
+                            if (parametros && parametros.usarSensorLuz) {
+                                if (dropdownLightOffButton) {
+                                    dropdownLightOffButton.textContent = 'Apagar cuando hay luz (sensor)';
+                                }
 
+                                if (lightSensorOffInfo) {
+                                    lightSensorOffInfo.style.display = 'block';
+                                    console.log('Mostrando: Apagar cuando hay luz (mismo sensor)');
+                                }
+                            }
                             // Si hay hora de apagado en parámetros
-                            if (parametros && parametros.horaApagar) {
-                                const turnOffTimeLight = document.querySelector('.light #turnOffTime');
-                                if (turnOffTimeLight) {
-                                    turnOffTimeLight.value = parametros.horaApagar;
+                            else if (parametros && parametros.horaApagar) {
+                                if (dropdownLightOffButton) {
+                                    dropdownLightOffButton.textContent = 'Apagar a una hora establecida';
+                                }
+                                const turnOffTimeLightInput = lightTimeOffInfo?.querySelector('input[type="time"]');
+                                if (turnOffTimeLightInput) {
+                                    turnOffTimeLightInput.value = parametros.horaApagar;
                                     console.log(`✅ Hora de apagado: ${parametros.horaApagar}`);
                                 }
-                                if (timeOffLightDiv) {
-                                    timeOffLightDiv.style.setProperty('display', 'flex', 'important');
-                                    console.log('Mostrando campo: Hora de apagado luz');
+                                if (lightTimeOffInfo) {
+                                    lightTimeOffInfo.style.display = 'block';
+                                    console.log('Mostrando: Apagar a una hora establecida');
                                 }
-                                hasOffValueLight = true;
                             }
-
-                            // Si hay opción "apagar cuando hay luz"
-                            if (parametros && parametros.apagarConLuz) {
-                                const lightOffSwitch = document.querySelector('#lightOffSwitch input[type="checkbox"]');
-                                if (lightOffSwitch) {
-                                    lightOffSwitch.checked = true;
-                                    console.log('✅ Switch "Apagar cuando hay luz" activado');
+                            // Si no hay apagado, dejar el dropdown en "Sin apagado automático"
+                            else {
+                                if (dropdownLightOffButton) {
+                                    dropdownLightOffButton.textContent = 'Sin apagado automático';
                                 }
-                                if (lightOffDiv) {
-                                    lightOffDiv.style.setProperty('display', 'flex', 'important');
-                                    console.log('Mostrando campo: Switch apagar con luz');
-                                }
-                                hasOffValueLight = true;
+                                console.log('Sin apagado para luz');
                             }
-
-                            // Si no hay ningún valor de apagado, mostrar ambos
-                            if (!hasOffValueLight) {
-                                if (timeOffLightDiv) timeOffLightDiv.style.setProperty('display', 'flex', 'important');
-                                if (lightOffDiv) lightOffDiv.style.setProperty('display', 'flex', 'important');
-                                console.log('Sin datos de apagado luz, mostrando ambos');
-                            }
-                        } else if (selectedDeviceType === 'ventilador' || selectedDeviceType === 'termostato' || selectedDeviceType === 'sensor' || selectedDeviceType === 'temperatura' || selectedDeviceType === 'humedad') {
+                        } else if (tipoEfectivo === 'ventilador' || tipoEfectivo === 'termostato' || tipoEfectivo === 'sensor' || tipoEfectivo === 'temperatura' || tipoEfectivo === 'humedad') {
                             // Todos estos tipos usan el mismo formulario de temperatura/fan
                             console.log('Cargando datos para sensor/ventilador/termostato/humedad');
                             console.log('Hora del trigger:', hora);
+                            console.log('Trigger completo:', auto.trigger);
                             console.log('Parámetros:', parametros);
 
-                            // Referencias a los divs de encendido y apagado
-                            const timeOnDiv = document.querySelector('.fan .timeOn');
-                            const tempOnDiv = document.querySelector('.fan .tempOn');
-                            const timeOffDiv = document.querySelector('.fan .timeOff');
-                            const tempOffDiv = document.querySelector('.fan .tempOff');
-
-                            console.log('Divs encontrados:', {
-                                timeOnDiv: timeOnDiv ? 'SÍ' : 'NO',
-                                tempOnDiv: tempOnDiv ? 'SÍ' : 'NO',
-                                timeOffDiv: timeOffDiv ? 'SÍ' : 'NO',
-                                tempOffDiv: tempOffDiv ? 'SÍ' : 'NO'
-                            });
+                            // Referencias a dropdowns y divs de ventilador
+                            const dropdownFanOnButton = document.getElementById('dropdownFanOnButton');
+                            const dropdownFanOffButton = document.getElementById('dropdownFanOffButton');
+                            const fanTimeOnInfo = document.getElementById('fanTimeOnInfo');
+                            const fanTempOnInfo = document.getElementById('fanTempOnInfo');
+                            const fanTimeOffInfo = document.getElementById('fanTimeOffInfo');
+                            const fanTempOffInfo = document.getElementById('fanTempOffInfo');
 
                             // ========== ENCENDIDO ==========
-                            // Primero ocultar todo usando !important para sobrescribir CSS
-                            if (timeOnDiv) {
-                                timeOnDiv.style.setProperty('display', 'none', 'important');
-                                console.log('✓ timeOnDiv ocultado (display: none !important)');
-                            }
-                            if (tempOnDiv) {
-                                tempOnDiv.style.setProperty('display', 'none', 'important');
-                                console.log('✓ tempOnDiv ocultado (display: none !important)');
-                            }
+                            // Ocultar todos los divs de encendido
+                            if (fanTimeOnInfo) fanTimeOnInfo.style.display = 'none';
+                            if (fanTempOnInfo) fanTempOnInfo.style.display = 'none';
 
+                            // Si hay trigger por sensor de temperatura
+                            if (auto.trigger.tipo === 'sensor' && auto.trigger.sensor?.tipoSensor === 'temperatura') {
+                                if (dropdownFanOnButton) {
+                                    dropdownFanOnButton.textContent = 'Encender a una temperatura específica';
+                                }
+
+                                // Cargar datos del sensor de temperatura
+                                const sensorId = auto.trigger.sensor?.dispositivo?._id || auto.trigger.sensor?.dispositivo;
+                                selectedTempSensorId = sensorId;
+                                const temperaturaEncender = auto.trigger.sensor?.condicion?.valor || 0;
+                                console.log('✅ Sensor de temperatura:', sensorId, 'Temp encendido:', temperaturaEncender);
+
+                                // Cargar lista de sensores y pre-seleccionar
+                                await loadTempSensors(sensorId);
+
+                                // Cargar temperatura de encendido
+                                const turnOnTempInput = fanTempOnInfo?.querySelector('input[type="number"]');
+                                if (turnOnTempInput) {
+                                    turnOnTempInput.value = temperaturaEncender;
+                                }
+
+                                if (fanTempOnInfo) {
+                                    fanTempOnInfo.style.display = 'block';
+                                    console.log('Mostrando: Encender a una temperatura específica');
+                                }
+                            }
                             // Si hay hora en el trigger, usar hora para encendido
-                            if (hora) {
-                                const turnOnTimeElem = document.getElementById('turnOnTime');
-                                if (turnOnTimeElem) {
-                                    turnOnTimeElem.value = hora;
+                            else if (hora) {
+                                if (dropdownFanOnButton) {
+                                    dropdownFanOnButton.textContent = 'Encender a una hora establecida';
+                                }
+                                const turnOnTimeInput = fanTimeOnInfo?.querySelector('input[type="time"]');
+                                if (turnOnTimeInput) {
+                                    turnOnTimeInput.value = hora;
                                     console.log(`✅ Hora de encendido: ${hora}`);
                                 }
-                                // Mostrar SOLO campo de hora
-                                if (timeOnDiv) {
-                                    timeOnDiv.style.setProperty('display', 'flex', 'important');
-                                    console.log('Mostrando campo: Hora de encendido');
-                                }
-                            }
-                            // Si hay temperatura de encendido en parámetros, usar temperatura
-                            else if (parametros && parametros.temperaturaEncender) {
-                                const turnOnTemp = document.getElementById('turnOnTemp');
-                                if (turnOnTemp) {
-                                    turnOnTemp.value = parametros.temperaturaEncender;
-                                    console.log(`✅ Temperatura de encendido: ${parametros.temperaturaEncender}°C`);
-                                }
-                                // Mostrar SOLO campo de temperatura
-                                if (tempOnDiv) {
-                                    tempOnDiv.style.setProperty('display', 'flex', 'important');
-                                    console.log('Mostrando campo: Temperatura de encendido');
+                                if (fanTimeOnInfo) {
+                                    fanTimeOnInfo.style.display = 'block';
+                                    console.log('Mostrando: Encender a una hora establecida');
                                 }
                             }
 
                             // ========== APAGADO ==========
-                            // Primero ocultar todo usando !important para sobrescribir CSS
-                            if (timeOffDiv) {
-                                timeOffDiv.style.setProperty('display', 'none', 'important');
-                                console.log('✓ timeOffDiv ocultado (display: none !important)');
-                            }
-                            if (tempOffDiv) {
-                                tempOffDiv.style.setProperty('display', 'none', 'important');
-                                console.log('✓ tempOffDiv ocultado (display: none !important)');
-                            }
-
-                            let hasOffValue = false;
-
-                            // Si hay hora de apagado en parámetros
-                            if (parametros && parametros.horaApagar) {
-                                const turnOffTime = document.getElementById('turnOffTime');
-                                if (turnOffTime) {
-                                    turnOffTime.value = parametros.horaApagar;
-                                    console.log(`✅ Hora de apagado: ${parametros.horaApagar}`);
-                                }
-                                if (timeOffDiv) {
-                                    timeOffDiv.style.setProperty('display', 'flex', 'important');
-                                    console.log('Mostrando campo: Hora de apagado');
-                                }
-                                hasOffValue = true;
-                            }
+                            // Ocultar todos los divs de apagado
+                            if (fanTimeOffInfo) fanTimeOffInfo.style.display = 'none';
+                            if (fanTempOffInfo) fanTempOffInfo.style.display = 'none';
 
                             // Si hay temperatura de apagado en parámetros
                             if (parametros && parametros.temperaturaApagar) {
-                                const turnOffTemp = document.getElementById('turnOffTemp');
-                                if (turnOffTemp) {
-                                    turnOffTemp.value = parametros.temperaturaApagar;
+                                if (dropdownFanOffButton) {
+                                    dropdownFanOffButton.textContent = 'Apagar a una temperatura específica';
+                                }
+                                const turnOffTempInput = fanTempOffInfo?.querySelector('input[type="number"]');
+                                if (turnOffTempInput) {
+                                    turnOffTempInput.value = parametros.temperaturaApagar;
                                     console.log(`✅ Temperatura de apagado: ${parametros.temperaturaApagar}°C`);
                                 }
-                                if (tempOffDiv) {
-                                    tempOffDiv.style.setProperty('display', 'flex', 'important');
-                                    console.log('Mostrando campo: Temperatura de apagado');
+                                if (fanTempOffInfo) {
+                                    fanTempOffInfo.style.display = 'block';
+                                    console.log('Mostrando: Apagar a una temperatura específica');
                                 }
-                                hasOffValue = true;
+                            }
+                            // Si hay hora de apagado en parámetros
+                            else if (parametros && parametros.horaApagar) {
+                                if (dropdownFanOffButton) {
+                                    dropdownFanOffButton.textContent = 'Apagar a una hora establecida';
+                                }
+                                const turnOffTimeInput = fanTimeOffInfo?.querySelector('input[type="time"]');
+                                if (turnOffTimeInput) {
+                                    turnOffTimeInput.value = parametros.horaApagar;
+                                    console.log(`✅ Hora de apagado: ${parametros.horaApagar}`);
+                                }
+                                if (fanTimeOffInfo) {
+                                    fanTimeOffInfo.style.display = 'block';
+                                    console.log('Mostrando: Apagar a una hora establecida');
+                                }
+                            }
+                            // Si no hay apagado, dejar el dropdown en "Sin apagado automático"
+                            else {
+                                if (dropdownFanOffButton) {
+                                    dropdownFanOffButton.textContent = 'Sin apagado automático';
+                                }
+                                console.log('Sin apagado para ventilador');
                             }
                         }
                     }
@@ -875,8 +1121,12 @@
                     }]
                 };
 
-                // Obtener horario según el tipo de dispositivo seleccionado
-                if (selectedDeviceType === 'actuador') {
+                // Determinar tipo efectivo para guardado
+                const tipoEfectivo = (selectedDeviceType === 'actuador' && selectedDeviceSubtype) ? selectedDeviceSubtype : selectedDeviceType;
+                console.log('🔍 Guardando tarea para tipo:', selectedDeviceType, 'subtipo:', selectedDeviceSubtype, 'tipo efectivo:', tipoEfectivo);
+
+                // Obtener horario según el tipo efectivo del dispositivo
+                if (selectedDeviceType === 'actuador' && (selectedDeviceSubtype === 'alarma' || !selectedDeviceSubtype)) {
                     const opcionSeleccionada = document.getElementById('dropdownOption5Button').textContent;
 
                     if (!opcionSeleccionada || opcionSeleccionada === 'Seleccionar opción') {
@@ -937,39 +1187,145 @@
                             duracionSegundos: document.getElementById('secondsGasInfo').value ? parseInt(document.getElementById('secondsGasInfo').value) : null
                         };
                     }
-                } else if (selectedDeviceType === 'luz') {
-                    const turnOnTime = document.querySelector('.light #turnOnTime').value;
-                    const turnOffTime = document.querySelector('.light #turnOffTime').value;
+                } else if (tipoEfectivo === 'luz') {
+                    const dropdownLightOnButton = document.getElementById('dropdownLightOnButton');
+                    const dropdownLightOffButton = document.getElementById('dropdownLightOffButton');
+                    const opcionEncendido = dropdownLightOnButton?.textContent.trim();
+                    const opcionApagado = dropdownLightOffButton?.textContent.trim();
 
-                    if (turnOnTime) {
+                    console.log('🔍 LUZ - Opción encendido:', opcionEncendido);
+                    console.log('🔍 LUZ - Opción apagado:', opcionApagado);
+
+                    // ========== ENCENDIDO ==========
+                    if (opcionEncendido === 'Encender a una hora establecida') {
+                        const turnOnTimeInput = document.querySelector('#lightTimeOnInfo input[type="time"]');
+                        const turnOnTime = turnOnTimeInput?.value;
+
+                        if (!turnOnTime) {
+                            swal("Campo vacío", "Favor de ingresar la hora de encendido", "warning");
+                            return;
+                        }
+
+                        taskData.trigger.tipo = 'horario';
                         taskData.trigger.horario.hora = turnOnTime;
-                    }
+                        console.log('✅ LUZ - Guardando hora de encendido:', turnOnTime);
+                    } else if (opcionEncendido === 'Encender cuando no hay luz (sensor)') {
+                        if (!selectedLightSensorId) {
+                            swal("Campo vacío", "Favor de seleccionar un sensor de luz", "warning");
+                            return;
+                        }
 
-                    // Guardar hora de apagado en parametros
-                    if (turnOffTime) {
-                        taskData.acciones[0].parametros = {
-                            horaApagar: turnOffTime
+                        taskData.trigger = {
+                            tipo: 'sensor',
+                            sensor: {
+                                dispositivo: selectedLightSensorId,
+                                tipoSensor: 'luz',
+                                condicion: { operador: 'mayor', valor: 2000 }
+                            }
                         };
+                        console.log('✅ LUZ - Guardando trigger por sensor de luz:', selectedLightSensorId, '(umbral: 2000 - lógica inversa)');
+                    } else {
+                        swal("Campo vacío", "Favor de seleccionar una condición de encendido", "warning");
+                        return;
                     }
-                } else if (selectedDeviceType === 'ventilador' || selectedDeviceType === 'termostato' || selectedDeviceType === 'sensor' || selectedDeviceType === 'temperatura' || selectedDeviceType === 'humedad') {
-                    const turnOnTime = document.getElementById('turnOnTime').value;
-                    const turnOffTime = document.getElementById('turnOffTime').value;
-                    const turnOnTemp = document.getElementById('turnOnTemp').value;
-                    const turnOffTemp = document.getElementById('turnOffTemp').value;
 
-                    if (turnOnTime) {
+                    // ========== APAGADO ==========
+                    if (opcionApagado === 'Apagar a una hora establecida') {
+                        const turnOffTimeInput = document.querySelector('#lightTimeOffInfo input[type="time"]');
+                        const turnOffTime = turnOffTimeInput?.value;
+
+                        if (!turnOffTime) {
+                            swal("Campo vacío", "Favor de ingresar la hora de apagado", "warning");
+                            return;
+                        }
+
+                        taskData.acciones[0].parametros = taskData.acciones[0].parametros || {};
+                        taskData.acciones[0].parametros.horaApagar = turnOffTime;
+                        console.log('✅ LUZ - Guardando hora de apagado:', turnOffTime);
+                    } else if (opcionApagado === 'Apagar cuando hay luz (sensor)') {
+                        // Usar el mismo sensor seleccionado para encendido
+                        taskData.acciones[0].parametros = taskData.acciones[0].parametros || {};
+                        taskData.acciones[0].parametros.usarSensorLuz = true;
+                        console.log('✅ LUZ - Usando mismo sensor para apagado');
+                    }
+                    // Si es "Sin apagado automático", no hacer nada
+                } else if (tipoEfectivo === 'ventilador' || tipoEfectivo === 'termostato' || tipoEfectivo === 'sensor' || tipoEfectivo === 'temperatura' || tipoEfectivo === 'humedad') {
+                    const dropdownFanOnButton = document.getElementById('dropdownFanOnButton');
+                    const dropdownFanOffButton = document.getElementById('dropdownFanOffButton');
+                    const opcionEncendido = dropdownFanOnButton?.textContent.trim();
+                    const opcionApagado = dropdownFanOffButton?.textContent.trim();
+
+                    console.log('🔍 VENTILADOR - Opción encendido:', opcionEncendido);
+                    console.log('🔍 VENTILADOR - Opción apagado:', opcionApagado);
+
+                    // ========== ENCENDIDO ==========
+                    if (opcionEncendido === 'Encender a una hora establecida') {
+                        const turnOnTimeInput = document.querySelector('#fanTimeOnInfo input[type="time"]');
+                        const turnOnTime = turnOnTimeInput?.value;
+
+                        if (!turnOnTime) {
+                            swal("Campo vacío", "Favor de ingresar la hora de encendido", "warning");
+                            return;
+                        }
+
+                        taskData.trigger.tipo = 'horario';
                         taskData.trigger.horario.hora = turnOnTime;
+                        console.log('✅ VENTILADOR - Guardando hora de encendido:', turnOnTime);
+                    } else if (opcionEncendido === 'Encender a una temperatura específica') {
+                        const turnOnTempInput = document.querySelector('#fanTempOnInfo input[type="number"]');
+                        const turnOnTemp = turnOnTempInput?.value;
+
+                        if (!turnOnTemp) {
+                            swal("Campo vacío", "Favor de ingresar la temperatura de encendido", "warning");
+                            return;
+                        }
+
+                        if (!selectedTempSensorId) {
+                            swal("Campo vacío", "Favor de seleccionar un sensor de temperatura", "warning");
+                            return;
+                        }
+
+                        taskData.trigger = {
+                            tipo: 'sensor',
+                            sensor: {
+                                dispositivo: selectedTempSensorId,
+                                tipoSensor: 'temperatura',
+                                condicion: { operador: 'mayor', valor: parseFloat(turnOnTemp) }
+                            }
+                        };
+                        console.log('✅ VENTILADOR - Guardando trigger por sensor de temperatura:', selectedTempSensorId, turnOnTemp + '°C');
+                    } else {
+                        swal("Campo vacío", "Favor de seleccionar una condición de encendido", "warning");
+                        return;
                     }
 
-                    // Guardar parámetros adicionales
-                    const parametros = {};
-                    if (turnOffTime) parametros.horaApagar = turnOffTime;
-                    if (turnOnTemp) parametros.temperaturaEncender = parseFloat(turnOnTemp);
-                    if (turnOffTemp) parametros.temperaturaApagar = parseFloat(turnOffTemp);
+                    // ========== APAGADO ==========
+                    if (opcionApagado === 'Apagar a una hora establecida') {
+                        const turnOffTimeInput = document.querySelector('#fanTimeOffInfo input[type="time"]');
+                        const turnOffTime = turnOffTimeInput?.value;
 
-                    if (Object.keys(parametros).length > 0) {
-                        taskData.acciones[0].parametros = parametros;
+                        if (!turnOffTime) {
+                            swal("Campo vacío", "Favor de ingresar la hora de apagado", "warning");
+                            return;
+                        }
+
+                        taskData.acciones[0].parametros = taskData.acciones[0].parametros || {};
+                        taskData.acciones[0].parametros.horaApagar = turnOffTime;
+                        console.log('✅ VENTILADOR - Guardando hora de apagado:', turnOffTime);
+                    } else if (opcionApagado === 'Apagar a una temperatura específica') {
+                        const turnOffTempInput = document.querySelector('#fanTempOffInfo input[type="number"]');
+                        const turnOffTemp = turnOffTempInput?.value;
+
+                        if (!turnOffTemp) {
+                            swal("Campo vacío", "Favor de ingresar la temperatura de apagado", "warning");
+                            return;
+                        }
+
+                        taskData.acciones[0].parametros = taskData.acciones[0].parametros || {};
+                        taskData.acciones[0].parametros.temperaturaApagar = parseFloat(turnOffTemp);
+                        console.log('✅ VENTILADOR - Guardando temperatura de apagado:', turnOffTemp);
                     }
+                    // Si es "Sin apagado automático", no hacer nada
                 } else if (selectedDeviceType === 'alarma') {
                     const turnOnTime = document.getElementById('turnOn').value;
                     if (turnOnTime) {

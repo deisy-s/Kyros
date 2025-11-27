@@ -489,6 +489,7 @@
         displayRoomName();
 
         let selectedDeviceType = null;
+        let selectedDeviceSubtype = null;
 
         // Función para mostrar el formulario correcto según el tipo de dispositivo
         function showFormForDeviceType(tipo) {
@@ -537,6 +538,8 @@
                     if (deviceData.success) {
                         selectedDeviceId = deviceId;
                         selectedDeviceType = deviceData.data.tipo;
+                        selectedDeviceSubtype = deviceData.data.subtipo || null;
+                        console.log('📱 Dispositivo cargado - Tipo:', selectedDeviceType, 'Subtipo:', selectedDeviceSubtype);
                     } else {
                         swal("Error", "No se pudo cargar el dispositivo", "error");
                     }
@@ -820,28 +823,55 @@
                 let ndiv = document.getElementById("name");
                 ndiv.style.display = "none";
 
-                // Evaluar el tipo de dispositivo para mostrar el formulario correcto
-                if (selectedDeviceType === 'luz') {
+                // Determinar qué formulario mostrar basado en tipo y subtipo
+                let formToShow = null;
+
+                // Para actuadores, usar el subtipo para decidir el formulario
+                if (selectedDeviceType === 'actuador') {
+                    if (selectedDeviceSubtype === 'luz') {
+                        formToShow = 'light';
+                    } else if (selectedDeviceSubtype === 'ventilador') {
+                        formToShow = 'fan';
+                    } else if (selectedDeviceSubtype === 'alarma') {
+                        formToShow = 'alarm';
+                    } else {
+                        // Actuador genérico sin subtipo: mostrar todas las opciones (alarma)
+                        formToShow = 'alarm';
+                    }
+                }
+                // Para dispositivos que no son actuadores, usar el tipo directamente
+                else if (selectedDeviceType === 'luz') {
+                    formToShow = 'light';
+                } else if (selectedDeviceType === 'temperatura' || selectedDeviceType === 'humedad') {
+                    formToShow = 'fan';
+                } else if (selectedDeviceType === 'movimiento' || selectedDeviceType === 'gas') {
+                    formToShow = 'alarm';
+                } else {
+                    formToShow = 'light'; // Por defecto
+                }
+
+                // Mostrar el formulario correspondiente
+                if (formToShow === 'light') {
                     let lightDiv = document.getElementById("start-light");
                     lightDiv.style.display = "flex";
                     lightDiv.classList.add('swing-in-bottom-bck');
-                } else if (selectedDeviceType === 'temperatura' || selectedDeviceType === 'humedad') {
+                } else if (formToShow === 'fan') {
                     let fanDiv = document.getElementById("start-fan");
                     fanDiv.style.display = "flex";
                     fanDiv.classList.add('swing-in-bottom-bck');
-                } else if (selectedDeviceType === 'actuador') {
-                    // Los actuadores usan el formulario de alarma con todas las opciones
+                } else if (formToShow === 'alarm') {
                     let alarmDiv = document.getElementById("alarm");
                     let save = document.getElementById("btn-div");
                     alarmDiv.style.display = "flex";
                     save.style.display = "flex";
                     alarmDiv.classList.add('swing-in-bottom-bck');
                     save.classList.add('swing-in-bottom-bck');
-                } else {
-                    // Por defecto, mostrar luz
-                    let lightDiv = document.getElementById("start-light");
-                    lightDiv.style.display = "flex";
-                    lightDiv.classList.add('swing-in-bottom-bck');
+
+                    // Solo cargar sensores si es tipo alarma o sensores de movimiento/gas
+                    if (selectedDeviceSubtype === 'alarma' || selectedDeviceType === 'movimiento' || selectedDeviceType === 'gas') {
+                        loadMovementSensors();
+                        loadGasSensors();
+                    }
                 }
             } else {
                 swal("Campo vacío", "Favor de ingresar un nombre", "warning");
@@ -921,8 +951,8 @@
                     acciones: []
                 };
 
-                // Usar selectedDeviceType en lugar de verificar qué formulario está visible
-                console.log('🔍 Guardando tarea para tipo de dispositivo:', selectedDeviceType);
+                // Usar selectedDeviceType y selectedDeviceSubtype para determinar la lógica
+                console.log('🔍 Guardando tarea para tipo:', selectedDeviceType, 'subtipo:', selectedDeviceSubtype);
 
                 let accion = {
                     dispositivo: selectedDeviceId,
@@ -931,8 +961,14 @@
                     orden: 0
                 };
 
-                // Si es actuador (usa formulario de alarma con 3 opciones)
-                if (selectedDeviceType === 'actuador') {
+                // Determinar el tipo efectivo para la lógica de guardado
+                let tipoEfectivo = selectedDeviceType;
+                if (selectedDeviceType === 'actuador' && selectedDeviceSubtype) {
+                    tipoEfectivo = selectedDeviceSubtype;
+                }
+
+                // Si es actuador tipo alarma o actuador sin subtipo (usa formulario de alarma con 3 opciones)
+                if (selectedDeviceType === 'actuador' && (selectedDeviceSubtype === 'alarma' || !selectedDeviceSubtype)) {
                     console.log('✅ Tipo: ACTUADOR');
                     const opcionSeleccionada = document.getElementById("dropdownOption5Button").textContent;
 
@@ -1009,8 +1045,8 @@
                     accion.accion = 'encender';
                     console.log('📦 Datos a guardar:', { trigger: taskData.trigger, parametros: accion.parametros });
                 }
-                // Si es luz
-                else if (selectedDeviceType === 'luz') {
+                // Si es luz o actuador tipo luz
+                else if (tipoEfectivo === 'luz') {
                     console.log('✅ Tipo: LUZ');
                     const turnOnTime = document.getElementById('turnOnTimeLight').value;
                     const turnOffTime = document.getElementById('turnOffTimeLight').value;
@@ -1031,8 +1067,8 @@
                         horaApagar: turnOffTime || null
                     };
                 }
-                // Si es temperatura/humedad
-                else if (selectedDeviceType === 'temperatura' || selectedDeviceType === 'humedad') {
+                // Si es temperatura/humedad o actuador tipo ventilador
+                else if (tipoEfectivo === 'temperatura' || tipoEfectivo === 'humedad' || tipoEfectivo === 'ventilador') {
                     console.log('✅ Tipo: TEMPERATURA/HUMEDAD');
                     const turnOnTime = document.getElementById('turnOnTime').value;
                     const turnOnTemp = document.getElementById('turnOnTemp').value;
@@ -1061,7 +1097,7 @@
 
                     console.log('📦 Datos a guardar:', { trigger: taskData.trigger, parametros: accion.parametros });
                 } else {
-                    console.error('❌ Tipo de dispositivo no soportado:', selectedDeviceType);
+                    console.error('❌ Tipo de dispositivo no soportado:', tipoEfectivo);
                     swal("Error", "Tipo de dispositivo no soportado", "error");
                     return;
                 }

@@ -13,13 +13,14 @@ const getESPConfig = async (req, res, next) => {
 
         if (!room) return res.status(404).json({ success: false, message: 'Habitación no encontrada' });
 
-        const devices = await Device.find({ habitacion: habitacionId }).select('_id nombre pin tipo estado').lean();
+        const devices = await Device.find({ habitacion: habitacionId }).select('_id nombre pin tipo subtipo estado').lean();
 
         const dispositivosMapeados = devices.map(device => ({
             id: device._id.toString(),
             nombre: device.nombre,
             pin: device.pin,
-            tipo: device.tipo
+            tipo: device.tipo,
+            subtipo: device.subtipo || null
         }));
 
         const deviceIds = devices.map(d => d._id);
@@ -250,13 +251,14 @@ async function notifyESP32ConfigUpdate(automatizacion) {
             }
 
             // Obtener configuración completa para esta habitación
-            const devices = await Device.find({ habitacion: habitacionId }).select('_id nombre pin tipo estado').lean();
+            const devices = await Device.find({ habitacion: habitacionId }).select('_id nombre pin tipo subtipo estado').lean();
 
             const dispositivosMapeados = devices.map(device => ({
                 id: device._id.toString(),
                 nombre: device.nombre,
                 pin: device.pin,
-                tipo: device.tipo
+                tipo: device.tipo,
+                subtipo: device.subtipo || null
             }));
 
             const deviceIds = devices.map(d => d._id);

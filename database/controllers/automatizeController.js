@@ -20,10 +20,10 @@ exports.getAutomatizations = async (req, res, next) => {
         }
 
         const automatizations = await Automatize.find(query)
-            .populate('trigger.sensor.dispositivo', 'nombre tipo')
-            .populate('trigger.dispositivoEstado.dispositivo', 'nombre tipo')
-            .populate('acciones.dispositivo', 'nombre tipo habitacion')
-            .populate('condiciones.dispositivo', 'nombre tipo')
+            .populate('trigger.sensor.dispositivo', 'nombre tipo subtipo')
+            .populate('trigger.dispositivoEstado.dispositivo', 'nombre tipo subtipo')
+            .populate('acciones.dispositivo', 'nombre tipo subtipo habitacion')
+            .populate('condiciones.dispositivo', 'nombre tipo subtipo')
             .sort('-createdAt');
 
         res.status(200).json({
@@ -46,10 +46,16 @@ exports.getAutomatizations = async (req, res, next) => {
 exports.getAutomatization = async (req, res, next) => {
     try {
         const automatization = await Automatize.findById(req.params.id)
-            .populate('trigger.sensor.dispositivo', 'nombre tipo')
-            .populate('trigger.dispositivoEstado.dispositivo', 'nombre tipo')
-            .populate('acciones.dispositivo', 'nombre tipo habitacion')
-            .populate('condiciones.dispositivo', 'nombre tipo');
+            .populate('trigger.sensor.dispositivo', 'nombre tipo subtipo')
+            .populate('trigger.dispositivoEstado.dispositivo', 'nombre tipo subtipo')
+            .populate('acciones.dispositivo', 'nombre tipo subtipo habitacion')
+            .populate('condiciones.dispositivo', 'nombre tipo subtipo');
+
+        // DEBUG: Verificar qué está devolviendo el populate
+        console.log('🔍 DEBUG Automatización:', req.params.id);
+        if (automatization && automatization.acciones && automatization.acciones[0]) {
+            console.log('🔍 DEBUG Dispositivo en acción:', JSON.stringify(automatization.acciones[0].dispositivo));
+        }
 
         if (!automatization) {
             return res.status(404).json({

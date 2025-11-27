@@ -215,7 +215,7 @@
                 const data = await response.json();
                 deviceData = data.data;
 
-                setupInterfaceByType(deviceData.tipo);
+                setupInterfaceByType(deviceData.tipo, deviceData.subtipo);
                 updateToggleState(deviceData.estado);
                 await fetchHistoricalData();
 
@@ -236,13 +236,14 @@
         }
 
         // --- 2. CONFIGURACIÓN DE INTERFAZ ---
-        function setupInterfaceByType(tipo) {
+        function setupInterfaceByType(tipo, subtipo) {
             const toggleSection = document.getElementById('toggle-section');
             const tasksSection = document.getElementById('tasks-section');
             const chartContainer = document.getElementById('chart-container');
             const historyContainer = document.getElementById('history-container');
 
             const tipoNorm = tipo ? tipo.toLowerCase() : '';
+            const subtipoNorm = subtipo ? subtipo.toLowerCase() : '';
 
             // Ocultar todo por defecto
             toggleSection.style.setProperty('display', 'none', 'important');
@@ -250,14 +251,21 @@
             chartContainer.style.setProperty('display', 'none', 'important');
             historyContainer.style.setProperty('display', 'none', 'important');
 
-            console.log('🔍 Tipo de dispositivo:', tipoNorm);
+            console.log('🔍 Tipo de dispositivo:', tipoNorm, 'Subtipo:', subtipoNorm);
 
-            // Actuadores - toggle, sección tareas y gráfica
+            // Actuadores - toggle, sección tareas y gráfica/historial según subtipo
             if (tipoNorm === 'actuador') {
                 toggleSection.style.setProperty('display', 'flex', 'important');
                 tasksSection.style.setProperty('display', 'block', 'important');
-                chartContainer.style.setProperty('display', 'block', 'important');
-                console.log('✅ Es actuador - mostrando todo');
+
+                // Alarmas muestran historial, otros muestran gráfica
+                if (subtipoNorm === 'alarma') {
+                    historyContainer.style.setProperty('display', 'block', 'important');
+                    console.log('✅ Es actuador (alarma) - mostrando toggle, tareas e historial');
+                } else {
+                    chartContainer.style.setProperty('display', 'block', 'important');
+                    console.log('✅ Es actuador - mostrando toggle, tareas y gráfica');
+                }
             }
             // Dispositivos con toggle pero SIN tareas (luces, focos, ventiladores)
             else if (['luces', 'foco', 'ventilador', 'luz'].includes(tipoNorm)) {
@@ -312,22 +320,31 @@
 
         function renderDataView() {
             const tipo = deviceData.tipo.toLowerCase();
-            console.log('🎨 Renderizando vista para tipo:', tipo);
+            const subtipo = deviceData.subtipo ? deviceData.subtipo.toLowerCase() : '';
+            console.log('🎨 Renderizando vista para tipo:', tipo, 'subtipo:', subtipo);
             console.log('📁 Total datos históricos:', historicalData.length);
 
             // Datos filtrados para la gráfica (Zoom actual)
             const filteredData = filterDataByTime(historicalData, currentTimeRange);
             console.log('🔍 Datos filtrados (rango ' + currentTimeRange + '):', filteredData.length);
 
-            if (['alarma', 'movimiento', 'pir', 'luz', 'ldr'].includes(tipo)) {
-                console.log('→ Renderizando historial de eventos');
-                renderHistoryList(filteredData, tipo);
+            // Actuadores con subtipo alarma → historial
+            if (tipo === 'actuador' && subtipo === 'alarma') {
+                console.log('→ Renderizando historial de eventos (actuador alarma)');
+                renderHistoryList(filteredData, 'alarma');
             }
-            else if (['actuador', 'luces', 'foco', 'ventilador'].includes(tipo)) {
+            // Actuadores (luz, ventilador o sin subtipo) → gráfica de uso
+            else if (tipo === 'actuador' || ['luces', 'foco', 'ventilador'].includes(tipo)) {
                 console.log('→ Renderizando gráfica de uso');
                 // PASAMOS AMBOS: 'filteredData' para la gráfica, 'historicalData' para la vida útil
                 renderUsageChart(filteredData, tipo, historicalData);
             }
+            // Sensores de eventos → historial
+            else if (['alarma', 'movimiento', 'pir', 'luz', 'ldr'].includes(tipo)) {
+                console.log('→ Renderizando historial de eventos');
+                renderHistoryList(filteredData, tipo);
+            }
+            // Sensores de medición → gráfica de línea
             else {
                 console.log('→ Renderizando gráfica de línea (sensor)');
                 renderLineChart(filteredData, tipo);
