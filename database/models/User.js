@@ -21,9 +21,22 @@ const UserSchema = new mongoose.Schema({
     },
     password: {
         type: String,
-        required: [true, 'Por favor ingrese una contraseña'],
+        required: function() {
+            // Solo requerir password si no es usuario de Google
+            return this.authProvider === 'local';
+        },
         minlength: [6, 'La contraseña debe tener al menos 6 caracteres'],
         select: false // No devolver password por defecto en queries
+    },
+    googleId: {
+        type: String,
+        default: null,
+        sparse: true // Permite múltiples documentos con googleId null
+    },
+    authProvider: {
+        type: String,
+        enum: ['local', 'google'],
+        default: 'local'
     },
     tipo: {
         type: String,
@@ -63,8 +76,8 @@ const UserSchema = new mongoose.Schema({
 
 // Middleware para hashear password antes de guardar
 UserSchema.pre('save', async function(next) {
-    // Solo hashear si el password fue modificado
-    if (!this.isModified('password')) {
+    // Solo hashear si el password fue modificado y existe
+    if (!this.isModified('password') || !this.password) {
         return next();
     }
 

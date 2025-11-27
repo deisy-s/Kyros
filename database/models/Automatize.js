@@ -54,7 +54,7 @@ const AutomatizeSchema = new mongoose.Schema({
             },
             tipoSensor: {
                 type: String,
-                enum: ['temperatura', 'humedad', 'movimiento', 'luz', 'puerta', 'ventana', 'otro']
+                enum: ['temperatura', 'humedad', 'movimiento', 'luz', 'gas', 'puerta', 'ventana', 'otro']
             },
             condicion: {
                 operador: {

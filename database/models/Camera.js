@@ -53,7 +53,7 @@ const CameraSchema = new mongoose.Schema({
         },
         conectada: {
             type: Boolean,
-            default: false
+            default: true
         }
     },
     // Configuración

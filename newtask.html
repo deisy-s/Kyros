@@ -300,9 +300,20 @@
                                 >
                                 </button>
                                 <ul class="dropdown-menu w-150" id="option5Menu" aria-labelledby="dropdownOption5Button">
+                                    <li><a class="dropdown-item option5" href="#">Encender a una hora establecida</a></li>
                                     <li><a class="dropdown-item option5" href="#">Encender al detectar movimiento</a></li>
                                     <li><a class="dropdown-item option5" href="#">Encender al sobrepasar los niveles de gas regulares</a></li>
                                 </ul>
+                            </div>
+                            <div id="timeAlarm" style="display: none;">
+                                <div class="d-flex mt-3">
+                                    <h3>Encender a la(s)</h3>
+                                    <input type="time" id="turnOnTimeAlarm" min="00:00" max="24:00" />
+                                </div>
+                                <div class="d-flex mt-3">
+                                    <h3>Apagar a la(s)</h3>
+                                    <input type="time" id="turnOffTimeAlarm" min="00:00" max="24:00" />
+                                </div>
                             </div>
                             <div id="movementAlarm" style="display: none;">
                                 <h3 class="mt-3">Seleccionar sensor de movimiento</h3>
@@ -318,9 +329,7 @@
                                     >
                                     </button>
                                     <ul class="dropdown-menu w-150" id="MovementMenu" aria-labelledby="dropdownMovementButton">
-                                        <li><a class="dropdown-item movement" href="#">Nombre</a></li>
-                                        <li><a class="dropdown-item movement" href="#">Nombre</a></li>
-                                        <!-- TODO : Crear aquí las opciones de sensores de movimiento -->
+                                        <!-- Sensores de movimiento cargados dinámicamente -->
                                     </ul>
                                 </div>
                                 <h3 class="mt-3">Sonar cuando se detecta movimiento entre</h3>
@@ -360,9 +369,7 @@
                                     >
                                     </button>
                                     <ul class="dropdown-menu w-150" id="GasMenu" aria-labelledby="dropdownGasButton">
-                                        <li><a class="dropdown-item gas" href="#">Nombre</a></li>
-                                        <li><a class="dropdown-item gas" href="#">Nombre</a></li>
-                                        <!-- TODO : Crear aquí las opciones de sensores de gas -->
+                                        <!-- Sensores de gas cargados dinámicamente -->
                                     </ul>
                                 </div>
                             </div>
@@ -467,8 +474,9 @@
         // API_URL ya está definido en js/auth.js
         let selectedDeviceId = null;
         let selectedDeviceType = null;
+        let selectedDeviceSubtype = null;
 
-        // Cargar dispositivos del usuario dinámicamente
+        // Cargar dispositivos del usuario dinámicamente (SOLO ACTUADORES)
         async function loadDevices() {
             try {
                 const response = await fetchWithAuth(`${API_URL}/devices`);
@@ -480,24 +488,28 @@
 
                     dropdown.innerHTML = '';
 
-                    if (data.data.length === 0) {
-                        dropdown.innerHTML = '<li><a class="dropdown-item disabled" href="#">No hay dispositivos</a></li>';
-                        dropdownButton.textContent = 'Sin dispositivos';
+                    // Filtrar solo actuadores
+                    const actuadores = data.data.filter(device => device.tipo === 'actuador');
+
+                    if (actuadores.length === 0) {
+                        dropdown.innerHTML = '<li><a class="dropdown-item disabled" href="#">No hay actuadores</a></li>';
+                        dropdownButton.textContent = 'Sin actuadores';
                         return;
                     }
 
-                    // Agregar todos los dispositivos al dropdown
-                    data.data.forEach(device => {
+                    // Agregar solo actuadores al dropdown
+                    actuadores.forEach(device => {
                         const li = document.createElement('li');
                         const a = document.createElement('a');
                         a.className = 'dropdown-item';
                         a.href = '#';
                         const habitacionNombre = device.habitacion?.nombre || 'Sin habitación';
-                        a.textContent = `${device.nombre} (${device.tipo}, ${habitacionNombre})`;
+                        a.textContent = `${device.nombre} (${habitacionNombre})`;
                         a.onclick = (e) => {
                             e.preventDefault();
                             selectedDeviceId = device._id;
                             selectedDeviceType = device.tipo;
+                            selectedDeviceSubtype = device.subtipo || null;
                             dropdownButton.textContent = device.nombre;
                         };
                         li.appendChild(a);
@@ -505,10 +517,11 @@
                     });
 
                     // Pre-seleccionar el primero
-                    if (data.data.length > 0) {
-                        selectedDeviceId = data.data[0]._id;
-                        selectedDeviceType = data.data[0].tipo;
-                        dropdownButton.textContent = data.data[0].nombre;
+                    if (actuadores.length > 0) {
+                        selectedDeviceId = actuadores[0]._id;
+                        selectedDeviceType = actuadores[0].tipo;
+                        selectedDeviceSubtype = actuadores[0].subtipo || null;
+                        dropdownButton.textContent = actuadores[0].nombre;
                     }
                 }
             } catch (error) {
@@ -517,8 +530,96 @@
             }
         }
 
-        // Cargar dispositivos cuando la página esté lista
-        document.addEventListener('DOMContentLoaded', loadDevices);
+        // Cargar sensores de movimiento dinámicamente
+        async function loadMovementSensors() {
+            try {
+                const response = await fetchWithAuth(`${API_URL}/devices?tipo=movimiento`);
+                const data = await response.json();
+
+                if (data.success) {
+                    const dropdown = document.getElementById('MovementMenu');
+                    const dropdownButton = document.getElementById('dropdownMovementButton');
+
+                    dropdown.innerHTML = '';
+
+                    if (data.data.length === 0) {
+                        dropdown.innerHTML = '<li><a class="dropdown-item disabled" href="#">No hay sensores de movimiento</a></li>';
+                        dropdownButton.textContent = 'Sin sensores';
+                        return;
+                    }
+
+                    data.data.forEach(sensor => {
+                        const li = document.createElement('li');
+                        const a = document.createElement('a');
+                        a.className = 'dropdown-item movement';
+                        a.href = '#';
+                        const habitacionNombre = sensor.habitacion?.nombre || 'Sin habitación';
+                        a.textContent = `${sensor.nombre} (${habitacionNombre})`;
+                        a.dataset.sensorId = sensor._id;
+                        a.onclick = (e) => {
+                            e.preventDefault();
+                            dropdownButton.textContent = sensor.nombre;
+                            dropdownButton.dataset.sensorId = sensor._id;
+                        };
+                        li.appendChild(a);
+                        dropdown.appendChild(li);
+                    });
+
+                    dropdownButton.textContent = 'Seleccionar sensor';
+                }
+            } catch (error) {
+                console.error('Error al cargar sensores de movimiento:', error);
+            }
+        }
+
+        // Cargar sensores de gas dinámicamente
+        async function loadGasSensors() {
+            try {
+                const response = await fetchWithAuth(`${API_URL}/devices?tipo=gas`);
+                const data = await response.json();
+
+                if (data.success) {
+                    const dropdown = document.getElementById('GasMenu');
+                    const dropdownButton = document.getElementById('dropdownGasButton');
+
+                    dropdown.innerHTML = '';
+
+                    if (data.data.length === 0) {
+                        dropdown.innerHTML = '<li><a class="dropdown-item disabled" href="#">No hay sensores de gas</a></li>';
+                        dropdownButton.textContent = 'Sin sensores';
+                        return;
+                    }
+
+                    data.data.forEach(sensor => {
+                        const li = document.createElement('li');
+                        const a = document.createElement('a');
+                        a.className = 'dropdown-item gas';
+                        a.href = '#';
+                        const habitacionNombre = sensor.habitacion?.nombre || 'Sin habitación';
+                        a.textContent = `${sensor.nombre} (${habitacionNombre})`;
+                        a.dataset.sensorId = sensor._id;
+                        a.onclick = (e) => {
+                            e.preventDefault();
+                            dropdownButton.textContent = sensor.nombre;
+                            dropdownButton.dataset.sensorId = sensor._id;
+                        };
+                        li.appendChild(a);
+                        dropdown.appendChild(li);
+                    });
+
+                    dropdownButton.textContent = 'Seleccionar sensor';
+                }
+            } catch (error) {
+                console.error('Error al cargar sensores de gas:', error);
+            }
+        }
+
+        // Cargar dispositivos y sensores cuando la página esté lista
+        document.addEventListener('DOMContentLoaded', () => {
+            loadDevices();
+            loadMovementSensors();
+            loadGasSensors();
+        });
     
         // Dropdown para opciones de encender abanico
         const dropdownOption = document.querySelectorAll('#optionMenu .option');
@@ -616,7 +717,7 @@
             });
         });
 
-        // Dropdown de opciones para alarma
+        // Dropdown de opciones para alarma/actuador
         const dropdownOption5 = document.querySelectorAll('#option5Menu .option5');
 
         dropdownOption5.forEach(item => {
@@ -625,23 +726,34 @@
                 const dropdownButton = document.querySelector('#dropdownOption5Button');
                 dropdownButton.textContent = item.textContent;
 
+                let timeDiv = document.getElementById("timeAlarm");
                 let gas = document.getElementById("gasAlarm");
                 let move = document.getElementById("movementAlarm");
                 let dur = document.getElementById("durationAlarm");
-                if(dropdownButton.innerText === "Encender al detectar movimiento"){
-                    gas.style.display="none";
-                    document.getElementById("dropdownGasButton").innerText = ""; // Asegurar que se limpie el input que no está en uso
-                    move.style.display="block";
-                    dur.style.display="block";
-                    document.getElementById("seconds").value = ""; // Asegurar que se limpie la duración de la alarma
-                } else {
-                    gas.style.display="block";
-                    dur.style.display="block";
-                    move.style.display="none";
-                    document.getElementById("dropdownMovementButton").innerText = ""; // Asegurar que se limpie el input que no está en uso
-                    document.getElementById("startRange").value = ""; // Asegurar que se limpie el rango de sensor de movimiento
-                    document.getElementById("stopRange").value = "";
-                    document.getElementById("seconds").value = ""; // Asegurar que se limpie la duración de la alarma
+
+                // Ocultar todos primero
+                timeDiv.style.display = "none";
+                gas.style.display = "none";
+                move.style.display = "none";
+                dur.style.display = "none";
+
+                // Limpiar campos
+                document.getElementById("turnOnTimeAlarm").value = "";
+                document.getElementById("turnOffTimeAlarm").value = "";
+                document.getElementById("dropdownGasButton").innerText = "";
+                document.getElementById("dropdownMovementButton").innerText = "";
+                document.getElementById("startRange").value = "";
+                document.getElementById("stopRange").value = "";
+                document.getElementById("seconds").value = "";
+
+                if(dropdownButton.innerText === "Encender a una hora establecida"){
+                    timeDiv.style.display = "block";
+                } else if(dropdownButton.innerText === "Encender al detectar movimiento"){
+                    move.style.display = "block";
+                    dur.style.display = "block";
+                } else if(dropdownButton.innerText === "Encender al sobrepasar los niveles de gas regulares"){
+                    gas.style.display = "block";
+                    dur.style.display = "block";
                 }
             });
         });
@@ -688,43 +800,49 @@
                 let ddiv = document.getElementById("dev");
                 ddiv.style.display = "none";
 
-                // Evaluar el tipo de dispositivo para mostrar el formulario correcto
-                if (selectedDeviceType === 'luz') {
+                // Determinar qué formulario mostrar basado en tipo y subtipo
+                let formToShow = null;
+
+                // Para actuadores, usar el subtipo para decidir el formulario
+                if (selectedDeviceType === 'actuador') {
+                    if (selectedDeviceSubtype === 'luz') {
+                        formToShow = 'light';
+                    } else if (selectedDeviceSubtype === 'ventilador') {
+                        formToShow = 'fan';
+                    } else if (selectedDeviceSubtype === 'alarma') {
+                        formToShow = 'alarm';
+                    } else {
+                        // Actuador genérico sin subtipo: mostrar todas las opciones (alarma)
+                        formToShow = 'alarm';
+                    }
+                }
+                // Para dispositivos que no son actuadores, usar el tipo directamente
+                else if (selectedDeviceType === 'luz') {
+                    formToShow = 'light';
+                } else if (selectedDeviceType === 'temperatura' || selectedDeviceType === 'humedad') {
+                    formToShow = 'fan';
+                } else if (selectedDeviceType === 'movimiento' || selectedDeviceType === 'gas') {
+                    formToShow = 'alarm';
+                } else {
+                    formToShow = 'fan'; // Por defecto
+                }
+
+                // Mostrar el formulario correspondiente
+                if (formToShow === 'light') {
                     let lightDiv = document.getElementById("start-light");
                     lightDiv.style.display = "flex";
                     lightDiv.classList.add('swing-in-bottom-bck');
-                } else if (selectedDeviceType === 'temperatura' || selectedDeviceType === 'humedad') {
+                } else if (formToShow === 'fan') {
                     let fanDiv = document.getElementById("start-fan");
                     fanDiv.style.display = "flex";
                     fanDiv.classList.add('swing-in-bottom-bck');
-                } else if (selectedDeviceType === 'movimiento' || selectedDeviceType === 'gas') {
+                } else if (formToShow === 'alarm') {
                     let alarmDiv = document.getElementById("alarm");
-                    //let alarmLabel = document.getElementById("alarmLabel");
                     let save = document.getElementById("btn-div");
-
-                    // Cambiar el texto según el tipo de dispositivo
-                    /* if (selectedDeviceType === 'movimiento' || selectedDeviceType === 'gas') {
-                        alarmLabel.textContent = 'Activar a la(s)';
-                    } else {
-                        alarmLabel.textContent = 'Sonar a la(s)';
-                    } */
-
                     alarmDiv.style.display = "flex";
-                    save.style.display="flex"
+                    save.style.display = "flex";
                     alarmDiv.classList.add('swing-in-bottom-bck');
                     save.classList.add('swing-in-bottom-bck');
-                } else if (selectedDeviceType === 'actuador') {
-                    let actuadorDiv = document.getElementById("actuador");
-                    let save = document.getElementById("btn-div");
-                    actuadorDiv.style.display = "flex";
-                    save.style.display="flex"
-                    actuadorDiv.classList.add('swing-in-bottom-bck');
-                    save.classList.add('swing-in-bottom-bck');
-                } else {
-                    // Por defecto, mostrar ventilador para otros tipos (enchufe, cerradura, etc.)
-                    let fanDiv = document.getElementById("start-fan");
-                    fanDiv.style.display = "flex";
-                    fanDiv.classList.add('swing-in-bottom-bck');
                 }
             } else {
                 swal("Campo vacío", "Favor de seleccionar un dispositivo", "warning");
@@ -805,11 +923,19 @@
                             }]
                         };
 
-                        // Usar el tipo de dispositivo seleccionado en lugar de verificar divs visibles
+                        // Determinar el tipo efectivo para la lógica de guardado
+                        let tipoEfectivo = selectedDeviceType;
+                        if (selectedDeviceType === 'actuador' && selectedDeviceSubtype) {
+                            tipoEfectivo = selectedDeviceSubtype;
+                        }
+
+                        console.log('🔍 Guardando tarea para tipo:', selectedDeviceType, 'subtipo:', selectedDeviceSubtype, 'tipo efectivo:', tipoEfectivo);
+
+                        // Usar el tipo efectivo para determinar validación
                         let isValid = false;
 
-                        // SI ES TEMPERATURA/HUMEDAD (usan formulario de temperatura)
-                        if (selectedDeviceType === 'temperatura' || selectedDeviceType === 'humedad') {
+                        // SI ES TEMPERATURA/HUMEDAD O VENTILADOR (usan formulario de temperatura)
+                        if (tipoEfectivo === 'temperatura' || tipoEfectivo === 'humedad' || tipoEfectivo === 'ventilador') {
                             const turnOnTime = document.getElementById("turnOnTime").value;
                             const turnOnTemp = document.getElementById("turnOnTemp").value;
                             const turnOffTime = document.getElementById("turnOffTime").value;
@@ -841,8 +967,8 @@
 
                             isValid = true;
                         }
-                        // SI ES LUZ
-                        else if (selectedDeviceType === 'luz') {
+                        // SI ES LUZ O ACTUADOR TIPO LUZ
+                        else if (tipoEfectivo === 'luz') {
                             const turnOnTimeLight = document.getElementById("turnOnTimeLight").value;
                             const turnOffTimeLight = document.getElementById("turnOffTimeLight").value;
                             const lightOption = document.getElementById("dropdownOption3Button").textContent;
@@ -875,8 +1001,8 @@
 
                             isValid = true;
                         }
-                        // SI ES MOVIMIENTO/GAS (alarmas)
-                        else if (selectedDeviceType === 'movimiento' || selectedDeviceType === 'gas') {
+                        // SI ES MOVIMIENTO/GAS (alarmas) - pero NO actuador tipo alarma
+                        else if ((selectedDeviceType === 'movimiento' || selectedDeviceType === 'gas') && selectedDeviceType !== 'actuador') {
                             const turnOn = document.getElementById("turnOn").value;
                             const durMinute = document.getElementById("minutes").value;
                             const durSeconds = document.getElementById("seconds").value;
@@ -899,25 +1025,79 @@
                             taskData.acciones[0].accion = 'encender';
                             isValid = true;
                         }
-                        // SI ES ACTUADOR
-                        else if (selectedDeviceType === 'actuador') {
-                            const turnOnTime = document.getElementById("turnOnTimeActuador").value;
-                            const turnOffTime = document.getElementById("turnOffTimeActuador").value;
+                        // SI ES ACTUADOR TIPO ALARMA O SIN SUBTIPO (usa formulario de alarma con 3 opciones)
+                        else if (selectedDeviceType === 'actuador' && (selectedDeviceSubtype === 'alarma' || !selectedDeviceSubtype)) {
+                            const opcionSeleccionada = document.getElementById("dropdownOption5Button").textContent;
 
-                            if (!turnOnTime) {
-                                swal("Campo vacío", "Favor de ingresar al menos la hora de encendido", "warning");
+                            if (!opcionSeleccionada || opcionSeleccionada.trim() === '') {
+                                swal("Campo vacío", "Favor de seleccionar una opción para encender", "warning");
                                 return;
                             }
 
-                            taskData.trigger.horario = {
-                                dias: [0, 1, 2, 3, 4, 5, 6],
-                                hora: turnOnTime
-                            };
+                            // Opción 1: Por hora
+                            if (opcionSeleccionada === "Encender a una hora establecida") {
+                                const turnOnTime = document.getElementById("turnOnTimeAlarm").value;
+                                const turnOffTime = document.getElementById("turnOffTimeAlarm").value;
 
-                            // Agregar hora de apagado si existe
-                            if (turnOffTime) {
+                                if (!turnOnTime) {
+                                    swal("Campo vacío", "Favor de ingresar la hora de encendido", "warning");
+                                    return;
+                                }
+
+                                taskData.trigger.tipo = 'horario';
+                                taskData.trigger.horario = {
+                                    dias: [0, 1, 2, 3, 4, 5, 6],
+                                    hora: turnOnTime
+                                };
+
+                                if (turnOffTime) {
+                                    taskData.acciones[0].parametros = { horaApagar: turnOffTime };
+                                }
+                            }
+                            // Opción 2: Por sensor de movimiento
+                            else if (opcionSeleccionada === "Encender al detectar movimiento") {
+                                const sensorId = document.getElementById("dropdownMovementButton").dataset.sensorId;
+                                const startRange = document.getElementById("startRange").value;
+                                const stopRange = document.getElementById("stopRange").value;
+                                const duracion = document.getElementById("seconds").value;
+
+                                if (!sensorId) {
+                                    swal("Campo vacío", "Favor de seleccionar un sensor de movimiento", "warning");
+                                    return;
+                                }
+
+                                taskData.trigger.tipo = 'sensor';
+                                taskData.trigger.sensor = {
+                                    dispositivo: sensorId,
+                                    tipoSensor: 'movimiento',
+                                    condicion: { operador: 'igual', valor: true }
+                                };
+
                                 taskData.acciones[0].parametros = {
-                                    horaApagar: turnOffTime
+                                    rangoInicio: startRange || null,
+                                    rangoFin: stopRange || null,
+                                    duracionSegundos: duracion ? parseInt(duracion) : null
+                                };
+                            }
+                            // Opción 3: Por sensor de gas
+                            else if (opcionSeleccionada === "Encender al sobrepasar los niveles de gas regulares") {
+                                const sensorId = document.getElementById("dropdownGasButton").dataset.sensorId;
+                                const duracion = document.getElementById("seconds").value;
+
+                                if (!sensorId) {
+                                    swal("Campo vacío", "Favor de seleccionar un sensor de gas", "warning");
+                                    return;
+                                }
+
+                                taskData.trigger.tipo = 'sensor';
+                                taskData.trigger.sensor = {
+                                    dispositivo: sensorId,
+                                    tipoSensor: 'gas',
+                                    condicion: { operador: 'mayor', valor: 800 } // Umbral de gas
+                                };
+
+                                taskData.acciones[0].parametros = {
+                                    duracionSegundos: duracion ? parseInt(duracion) : null
                                 };
                             }
 

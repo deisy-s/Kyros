@@ -11,6 +11,26 @@ const DeviceSchema = new mongoose.Schema({
         required: [true, 'Por favor especifique el tipo de dispositivo'],
         enum: ['actuador', 'camara', 'gas', 'humedad', 'luz', 'movimiento', 'temperatura']
     },
+    // Subtipo para actuadores (luz, ventilador, alarma)
+    subtipo: {
+        type: String,
+        enum: ['luz', 'ventilador', 'alarma', null],
+        default: null,
+        validate: {
+            validator: function(value) {
+                // Si el tipo es actuador, el subtipo es opcional pero debe ser válido si existe
+                if (this.tipo === 'actuador' && value && !['luz', 'ventilador', 'alarma'].includes(value)) {
+                    return false;
+                }
+                // Si el tipo NO es actuador, el subtipo debe ser null
+                if (this.tipo !== 'actuador' && value !== null) {
+                    return false;
+                }
+                return true;
+            },
+            message: 'Subtipo inválido para el tipo de dispositivo especificado'
+        }
+    },
     habitacion: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'Room',

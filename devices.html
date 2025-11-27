@@ -160,17 +160,45 @@
         // Mapeo de iconos por tipo de dispositivo
         const deviceIcons = {
             'luz': 'images/Lightbulb.png',
+            'ventilador': 'images/Sensor.png',
+            'alarma': 'images/Flame.png',
             'humedad': 'images/Humidity.png',
             'gas': 'images/Flame.png',
             'sensor': 'images/Sensor.png',
             'movimiento': 'images/Person.png',
             'temperatura': 'images/Thermometer.png',
+            'actuador': 'images/Sensor.png',
             'cerradura': 'images/Lightbulb.png',
             'default': 'images/Sensor.png'
         };
 
-        function getIconForDevice(tipo) {
+        function getIconForDevice(tipo, subtipo) {
+            // Si es actuador y tiene subtipo, usar el icono del subtipo
+            if (tipo === 'actuador' && subtipo) {
+                return deviceIcons[subtipo.toLowerCase()] || deviceIcons['default'];
+            }
             return deviceIcons[tipo.toLowerCase()] || deviceIcons['default'];
+        }
+
+        function getDisplayName(tipo, subtipo) {
+            // Si es actuador y tiene subtipo, mostrar subtipo en lugar de "actuador"
+            if (tipo === 'actuador') {
+                if (subtipo) {
+                    return subtipo.charAt(0).toUpperCase() + subtipo.slice(1);
+                }
+                return 'Actuador'; // Actuador genérico sin subtipo
+            }
+
+            // Para sensores, agregar "Sensor de" al nombre
+            const sensorTypes = {
+                'gas': 'Sensor de Gas',
+                'humedad': 'Sensor de Humedad',
+                'luz': 'Sensor de Luz',
+                'movimiento': 'Sensor de Movimiento',
+                'temperatura': 'Sensor de Temperatura'
+            };
+
+            return sensorTypes[tipo] || tipo.charAt(0).toUpperCase() + tipo.slice(1);
         }
 
         function navigateToDevice(deviceId, deviceName) {
@@ -205,16 +233,17 @@
                     deviceDiv.className = 'row';
                     deviceDiv.id = 'device-section';
                     deviceDiv.style.cursor = 'pointer';
-                    
+
                     const statusText = device.estado ? 'Encendido' : 'Apagado';
+                    const displayName = getDisplayName(device.tipo, device.subtipo);
 
                     deviceDiv.innerHTML = `
                         <div class="col-lg-1 order-lg-1 order-1 col-sm-6" id="rdiv">
-                            <img src="${getIconForDevice(device.tipo)}">
+                            <img src="${getIconForDevice(device.tipo, device.subtipo)}">
                         </div>
                         <div class="text col-lg-9 order-lg-2 order-3 col-sm-12" id="rdiv-text">
                             <h2 id="deviceName">${device.nombre}</h2>
-                            <p id="deviceInfo">${device.tipo} - ${statusText}</p>
+                            <p id="deviceInfo">${displayName} - ${statusText}</p>
                         </div>
                         <div class="col-lg-2 d-flex justify-content-end order-lg-3 order-2 col-sm-6">
                             <img src="images/Edit.png" id="edit">

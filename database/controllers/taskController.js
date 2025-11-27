@@ -24,8 +24,8 @@ exports.getTasks = async (req, res, next) => {
         }
 
         const tasks = await Task.find(query)
-            .populate('acciones.dispositivo', 'nombre tipo habitacion')
-            .populate('condiciones.dispositivo', 'nombre tipo')
+            .populate('acciones.dispositivo', 'nombre tipo subtipo habitacion')
+            .populate('condiciones.dispositivo', 'nombre tipo subtipo')
             .sort('-createdAt');
 
         res.status(200).json({
@@ -48,8 +48,8 @@ exports.getTasks = async (req, res, next) => {
 exports.getTask = async (req, res, next) => {
     try {
         const task = await Task.findById(req.params.id)
-            .populate('acciones.dispositivo', 'nombre tipo habitacion')
-            .populate('condiciones.dispositivo', 'nombre tipo');
+            .populate('acciones.dispositivo', 'nombre tipo subtipo habitacion')
+            .populate('condiciones.dispositivo', 'nombre tipo subtipo');
 
         if (!task) {
             return res.status(404).json({
