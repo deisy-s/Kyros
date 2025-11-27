@@ -2,12 +2,17 @@ require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
 const path = require('path');
+const session = require('express-session');
+const passport = require('passport');
 
 // Importar configuración de DB
 const connectDB = require('./config/database');
 
 // Importar middleware
 const errorHandler = require('./middleware/errorHandler');
+
+// Configurar Passport
+require('./config/passport')(passport);
 
 // Importar rutas
 const authRoutes = require('./routes/auth');
@@ -38,6 +43,21 @@ app.use(cors({
 // Carga directa del parser JSON:
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+
+// Configurar sesiones para Passport
+app.use(session({
+    secret: process.env.SESSION_SECRET || 'kyros-secret-key-change-in-production',
+    resave: false,
+    saveUninitialized: false,
+    cookie: {
+        secure: process.env.NODE_ENV === 'production', // Solo HTTPS en producción
+        maxAge: 24 * 60 * 60 * 1000 // 24 horas
+    }
+}));
+
+// Inicializar Passport
+app.use(passport.initialize());
+app.use(passport.session());
 
 // Logging en desarrollo
 if (process.env.NODE_ENV === 'development') {
