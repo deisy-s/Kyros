@@ -68,7 +68,7 @@
             <h1 class="heading" id="taskName"></h1>
         </div>
         <div class="row">
-            <div class="col-lg-5" id="leftCol-taskinfo">
+            <div class="col-lg-5 col-md-6 col-sm-12" id="leftCol-taskinfo">
                 <h3>Nombre de tarea</h3>
                 <input type="text" id="name-input" name="taskName">
                 <h3>Dispositivo</h3>
@@ -88,10 +88,8 @@
                         <li><a class="dropdown-item" href="#">Cargando...</a></li>
                     </ul>
                 </div>
-                <button class="button-save mt-2">Guardar</button>
-                <button class="button-delete mt-3">Eliminar</button>
             </div>
-            <div class="col-lg-5" id="rightCol-taskinfo">
+            <div class="col-lg-5 col-md-6 col-sm-12" id="rightCol-taskinfo">
                 <div class="fan" style="display: none;">
                     <!-- Selector de condición de encendido -->
                     <h3>Condición de encendido</h3>
@@ -288,6 +286,16 @@
                         </div>
                     </div>
                 </div>
+            </div>
+        </div>
+        <div class="row" id="btn-row">
+            <div class="col-5" id="taskinfo-btn">
+                <button class="button-save">Guardar</button>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-5" id="taskinfo-btn">
+                <button class="button-delete mt-3">Eliminar</button>
             </div>
         </div>
     </div>
