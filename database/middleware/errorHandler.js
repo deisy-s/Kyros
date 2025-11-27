@@ -16,9 +16,21 @@ const errorHandler = (err, req, res, next) => {
     // Error de Mongoose - Duplicado (email, etc.)
     if (err.code === 11000) {
         const field = Object.keys(err.keyPattern)[0];
+        let message = `El ${field} ya está registrado`;
+
+        // Mensaje personalizado para email
+        if (field === 'email') {
+            message = 'El correo electrónico ya está registrado. Por favor inicia sesión o usa otro correo.';
+        }
+
+        // Mensaje personalizado para googleId
+        if (field === 'googleId') {
+            message = 'Este correo ya está registrado con Google. Por favor inicia sesión con Google.';
+        }
+
         return res.status(409).json({
             success: false,
-            message: `El ${field} ya está registrado`
+            message: message
         });
     }
 

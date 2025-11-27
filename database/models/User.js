@@ -21,9 +21,38 @@ const UserSchema = new mongoose.Schema({
     },
     password: {
         type: String,
-        required: [true, 'Por favor ingrese una contraseña'],
+        required: function() {
+            // Solo requerir password si no es usuario de Google
+            return this.authProvider === 'local';
+        },
         minlength: [6, 'La contraseña debe tener al menos 6 caracteres'],
-        select: false // No devolver password por defecto en queries
+        select: false, // No devolver password por defecto en queries
+        validate: {
+            validator: function(password) {
+                // Solo validar si es usuario local y la contraseña no está hasheada
+                if (this.authProvider !== 'local' || !password) return true;
+
+                // Si ya está hasheada (empieza con $2a$ o $2b$), no validar
+                if (password.startsWith('$2a$') || password.startsWith('$2b$')) return true;
+
+                // Validar formato: al menos 1 mayúscula, 1 minúscula, 1 número
+                const hasUpperCase = /[A-Z]/.test(password);
+                const hasLowerCase = /[a-z]/.test(password);
+                const hasNumber = /[0-9]/.test(password);
+
+                return hasUpperCase && hasLowerCase && hasNumber;
+            },
+            message: 'La contraseña debe contener al menos una mayúscula, una minúscula y un número'
+        }
+    },
+    googleId: {
+        type: String,
+        sparse: true // Permite múltiples documentos sin googleId
+    },
+    authProvider: {
+        type: String,
+        enum: ['local', 'google'],
+        default: 'local'
     },
     tipo: {
         type: String,
@@ -63,8 +92,8 @@ const UserSchema = new mongoose.Schema({
 
 // Middleware para hashear password antes de guardar
 UserSchema.pre('save', async function(next) {
-    // Solo hashear si el password fue modificado
-    if (!this.isModified('password')) {
+    // Solo hashear si el password fue modificado y existe
+    if (!this.isModified('password') || !this.password) {
         return next();
     }
 

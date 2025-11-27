@@ -210,8 +210,22 @@
             const roomName = roomNameInput.value.trim();
             const ipESP32 = ipInput.value.trim();
 
+            // Validar nombre de habitación
             if (!roomName) {
-                swal("Error", "Favor de ingresar el nombre de la habitación", "warning");
+                swal("Campo vacío", "Favor de ingresar el nombre de la habitación", "warning");
+                return;
+            }
+
+            // Validar IP
+            if (!ipESP32) {
+                swal("Campo vacío", "Favor de ingresar la IP del ESP32", "warning");
+                return;
+            }
+
+            // Validar formato de IP (IPv4)
+            const ipRegex = /^(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$/;
+            if (!ipRegex.test(ipESP32)) {
+                swal("Formato inválido", "La IP debe tener el formato correcto (ej: 192.168.1.100)", "warning");
                 return;
             }
 
@@ -220,8 +234,8 @@
                     method: 'PUT',
                     body: JSON.stringify({
                         nombre: roomName,
-                        ip: ipESP32 || '',
-                        descripcion: ipESP32 ? `IP: ${ipESP32}` : ''
+                        ip: ipESP32,
+                        descripcion: `IP: ${ipESP32}`
                     })
                 });
 
@@ -256,17 +270,65 @@
             }
 
             try {
+                // Primer intento sin cascade
                 const response = await fetchWithAuth(`${API_URL}/rooms/${roomId}`, {
                     method: 'DELETE'
                 });
 
                 const data = await response.json();
 
-                if (response.ok) {
-                    swal({title:"Habitación eliminada exitosamente", icon:"success",});
+                // Si requiere confirmación (tiene dispositivos)
+                if (response.status === 409 && data.requiresConfirmation) {
+                    // Construir mensaje con lista de dispositivos
+                    let mensaje = `Esta habitación tiene:\n\n`;
+                    mensaje += `📦 ${data.data.dispositivos.length} dispositivo(s):\n`;
+                    data.data.dispositivos.forEach(d => {
+                        mensaje += `   • ${d.nombre} (${d.tipo})\n`;
+                    });
+
+                    if (data.data.automatizaciones.length > 0) {
+                        mensaje += `\n⚡ ${data.data.automatizaciones.length} automatización(es):\n`;
+                        data.data.automatizaciones.forEach(a => {
+                            mensaje += `   • ${a.nombre}\n`;
+                        });
+                    }
+
+                    mensaje += `\n¿Desea eliminar TODO?`;
+
+                    const confirmCascade = await swal({
+                        title: "¡Atención!",
+                        text: mensaje,
+                        icon: "warning",
+                        buttons: ["Cancelar", "Sí, eliminar todo"],
+                        dangerMode: true,
+                    });
+
+                    if (!confirmCascade) {
+                        return;
+                    }
+
+                    // Segundo intento con cascade
+                    const cascadeResponse = await fetchWithAuth(`${API_URL}/rooms/${roomId}?cascade=true`, {
+                        method: 'DELETE'
+                    });
+
+                    const cascadeData = await cascadeResponse.json();
+
+                    if (cascadeResponse.ok) {
+                        await swal({
+                            title: "Habitación eliminada",
+                            text: `Se eliminaron ${cascadeData.data.dispositivosEliminados} dispositivo(s)`,
+                            icon: "success"
+                        });
+                        window.location.href = 'rooms.html';
+                    } else {
+                        swal("Error", cascadeData.message || "Error al eliminar", "error");
+                    }
+                } else if (response.ok) {
+                    await swal({title:"Habitación eliminada exitosamente", icon:"success",});
                     window.location.href = 'rooms.html';
                 } else {
-                    swal("Error", "Error al eliminar la habitación", "error");
+                    swal("Error", data.message || "Error al eliminar la habitación", "error");
                 }
             } catch (error) {
                 console.error('Error:', error);

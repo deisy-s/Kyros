@@ -1,5 +1,7 @@
 const Room = require('../models/Room');
 const Device = require('../models/Device');
+const Automatize = require('../models/Automatize');
+const DeviceData = require('../models/DeviceData');
 
 // @desc    Obtener todas las habitaciones del usuario
 // @route   GET /api/rooms
@@ -114,10 +116,12 @@ exports.updateRoom = async (req, res, next) => {
 
 // @desc    Eliminar habitación
 // @route   DELETE /api/rooms/:id
+// @query   cascade=true para eliminar con todos los dispositivos y automatizaciones
 // @access  Private
 exports.deleteRoom = async (req, res, next) => {
     try {
         const room = await Room.findById(req.params.id);
+        const { cascade } = req.query;
 
         if (!room) {
             return res.status(404).json({
@@ -134,22 +138,61 @@ exports.deleteRoom = async (req, res, next) => {
             });
         }
 
-        // Verificar si hay dispositivos asignados
-        const devicesCount = await Device.countDocuments({ habitacion: req.params.id });
+        // Obtener dispositivos de la habitación
+        const devices = await Device.find({ habitacion: req.params.id });
+        const deviceIds = devices.map(d => d._id);
 
-        if (devicesCount > 0) {
-            return res.status(400).json({
+        // Si hay dispositivos y NO se pidió cascade, retornar info para confirmación
+        if (devices.length > 0 && cascade !== 'true') {
+            // Buscar automatizaciones que usen estos dispositivos
+            const automatizaciones = await Automatize.find({
+                $or: [
+                    { 'acciones.dispositivo': { $in: deviceIds } },
+                    { 'trigger.sensor.dispositivo': { $in: deviceIds } },
+                    { 'trigger.dispositivoEstado.dispositivo': { $in: deviceIds } },
+                    { 'condiciones.dispositivo': { $in: deviceIds } }
+                ]
+            }).select('nombre');
+
+            return res.status(409).json({
                 success: false,
-                message: `No se puede eliminar. Hay ${devicesCount} dispositivo(s) asignado(s) a esta habitación`
+                requiresConfirmation: true,
+                message: `Esta habitación tiene ${devices.length} dispositivo(s)`,
+                data: {
+                    dispositivos: devices.map(d => ({ _id: d._id, nombre: d.nombre, tipo: d.tipo })),
+                    automatizaciones: automatizaciones.map(a => ({ _id: a._id, nombre: a.nombre }))
+                }
             });
         }
 
+        // Si cascade=true o no hay dispositivos, proceder con eliminación
+        if (devices.length > 0) {
+            // Eliminar automatizaciones que usen estos dispositivos
+            await Automatize.deleteMany({
+                $or: [
+                    { 'acciones.dispositivo': { $in: deviceIds } },
+                    { 'trigger.sensor.dispositivo': { $in: deviceIds } },
+                    { 'trigger.dispositivoEstado.dispositivo': { $in: deviceIds } },
+                    { 'condiciones.dispositivo': { $in: deviceIds } }
+                ]
+            });
+
+            // Eliminar datos históricos de los dispositivos
+            await DeviceData.deleteMany({ dispositivo: { $in: deviceIds } });
+
+            // Eliminar los dispositivos
+            await Device.deleteMany({ habitacion: req.params.id });
+        }
+
+        // Eliminar la habitación
         await room.deleteOne();
 
         res.status(200).json({
             success: true,
             message: 'Habitación eliminada exitosamente',
-            data: {}
+            data: {
+                dispositivosEliminados: devices.length
+            }
         });
     } catch (error) {
         next(error);

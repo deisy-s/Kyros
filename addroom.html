@@ -147,8 +147,22 @@
             const roomName = roomNameInput.value.trim();
             const ipESP32 = ipInput.value.trim();
 
+            // Validar nombre de habitación
             if (!roomName) {
                 swal("Campo vacío", "Favor de ingresar el nombre de la habitación", "warning");
+                return;
+            }
+
+            // Validar IP
+            if (!ipESP32) {
+                swal("Campo vacío", "Favor de ingresar la IP del ESP32", "warning");
+                return;
+            }
+
+            // Validar formato de IP (IPv4)
+            const ipRegex = /^(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$/;
+            if (!ipRegex.test(ipESP32)) {
+                swal("Formato inválido", "La IP debe tener el formato correcto (ej: 192.168.1.100)", "warning");
                 return;
             }
 
@@ -157,8 +171,8 @@
                     method: 'POST',
                     body: JSON.stringify({
                         nombre: roomName,
-                        ip: ipESP32 || '',
-                        descripcion: ipESP32 ? `IP: ${ipESP32}` : ''
+                        ip: ipESP32,
+                        descripcion: `IP: ${ipESP32}`
                     })
                 });
 

@@ -92,6 +92,13 @@ exports.createCamera = async (req, res, next) => {
         // Agregar usuario a req.body
         req.body.usuario = req.user.id;
 
+        // Forzar estado inicial de la cámara
+        if (!req.body.estado) {
+            req.body.estado = {};
+        }
+        req.body.estado.activa = true;      // Siempre iniciar activa
+        req.body.estado.conectada = true;   // Siempre iniciar conectada
+
         const camera = await Camera.create(req.body);
 
         res.status(201).json({

@@ -149,6 +149,26 @@
                     const isConnected = camera.estado.conectada;
                     const streamUrl = camera.streaming.urlPrincipal;
 
+                    // Detectar si el stream se puede mostrar en navegador
+                    // Detectar automáticamente basándose en la URL si es posible
+                    const streamType = camera.streaming.tipo.toLowerCase();
+                    const streamUrlLower = streamUrl.toLowerCase();
+
+                    // Detección inteligente: si la URL contiene 'mjpeg' o 'mjpg', tratarlo como MJPEG
+                    const isMjpegUrl = streamUrlLower.includes('mjpeg') || streamUrlLower.includes('mjpg');
+                    const isHttpUrl = streamUrlLower.startsWith('http://') || streamUrlLower.startsWith('https://');
+                    const isRtspUrl = streamUrlLower.startsWith('rtsp://');
+
+                    // Puede mostrarse en navegador si:
+                    // 1. El tipo es mjpeg/http O
+                    // 2. La URL indica que es MJPEG (aunque el tipo diga rtsp) O
+                    // 3. Es HTTP pero no RTSP
+                    const canShowInBrowser =
+                        streamType === 'mjpeg' ||
+                        streamType === 'http' ||
+                        isMjpegUrl ||
+                        (isHttpUrl && !isRtspUrl && streamType !== 'rtsp');
+
                     cameraDiv.innerHTML = `
                         <div class="row">
                             <h3 class="col-8">${camera.nombre} - ${roomName}</h3>
@@ -157,13 +177,25 @@
                                 <img class="col-2" src="images/Close.png" alt="" onclick="deleteCam('${camera._id}', '${camera.nombre}')">
                             </div>
                         </div>
-                        <div class="cam-view" style="background-color: #1a1a1a; min-height: 300px; display: flex; align-items: center; justify-content: center; border-radius: 8px;">
+                        <div class="cam-view" style="background-color: #1a1a1a; min-height: 300px; display: flex; align-items: center; justify-content: center; border-radius: 8px; overflow: hidden;">
                             ${isConnected ?
-                                `<div style="color: #888; text-align: center;">
-                                    <p style="font-size: 14px; margin-bottom: 10px;">Streaming no disponible en navegador</p>
-                                    <p style="font-size: 12px;">URL: ${streamUrl}</p>
-                                    <button class="btn btn-sm btn-primary mt-2" onclick="window.open('${streamUrl}', '_blank')">Abrir en reproductor externo</button>
-                                </div>`
+                                (canShowInBrowser ?
+                                    `<img src="${streamUrl}"
+                                          style="width: 100%; height: auto; max-height: 400px; object-fit: contain;"
+                                          onerror="this.style.display='none'; this.nextElementSibling.style.display='block';"
+                                          alt="Stream de cámara">
+                                     <div style="color: #888; text-align: center; display: none;">
+                                        <p style="font-size: 14px; margin-bottom: 10px;">Error al cargar el stream</p>
+                                        <p style="font-size: 12px;">URL: ${streamUrl}</p>
+                                        <button class="btn btn-sm btn-primary mt-2" onclick="window.open('${streamUrl}', '_blank')">Abrir en reproductor externo</button>
+                                     </div>`
+                                    :
+                                    `<div style="color: #888; text-align: center;">
+                                        <p style="font-size: 14px; margin-bottom: 10px;">Streaming RTSP no disponible en navegador</p>
+                                        <p style="font-size: 12px;">URL: ${streamUrl}</p>
+                                        <button class="btn btn-sm btn-primary mt-2" onclick="window.open('${streamUrl}', '_blank')">Abrir en VLC</button>
+                                    </div>`
+                                )
                                 :
                                 `<div style="color: #ff4444; font-size: 24px; font-weight: bold;">
                                     NO SIGNAL

@@ -97,10 +97,10 @@
                 </div>
             </div>
             <div class="col-lg-4">
-                <h5>Tareas</h5>
-                <div class="tasks d-flex justify-content-between">
+                <!-- Toggle encendido/apagado - visible para dispositivos que lo soporten -->
+                <div id="toggle-section" class="tasks d-flex justify-content-between" style="display: none;">
                     <div class="text">
-                        <h6 id="taskname">Tarea 1</h6>
+                        <h6 id="taskname">Cargando...</h6>
                     </div>
 
                     <label class="switch">
@@ -109,13 +109,17 @@
                     </label>
                 </div>
 
-                <div class="addtask d-flex justify-content-between" onclick="sendTaskInfo()">
-                    <div class="text">
-                        <h6>Agregar tarea</h6>
-                    </div>
-                    
-                    <div class="add-image">
-                        <img src="images/Copy-2--Streamline-Flex.png">
+                <!-- Sección de tareas - solo visible para actuadores -->
+                <div id="tasks-section" style="display: none;">
+                    <h5>Tareas</h5>
+                    <div class="addtask d-flex justify-content-between" onclick="sendTaskInfo()">
+                        <div class="text">
+                            <h6>Agregar tarea</h6>
+                        </div>
+
+                        <div class="add-image">
+                            <img src="images/Copy-2--Streamline-Flex.png">
+                        </div>
                     </div>
                 </div>
             </div>
@@ -211,7 +215,7 @@
                 const data = await response.json();
                 deviceData = data.data;
 
-                setupInterfaceByType(deviceData.tipo);
+                setupInterfaceByType(deviceData.tipo, deviceData.subtipo);
                 updateToggleState(deviceData.estado);
                 await fetchHistoricalData();
 
@@ -232,32 +236,52 @@
         }
 
         // --- 2. CONFIGURACIÓN DE INTERFAZ ---
-        function setupInterfaceByType(tipo) {
-            const toggleContainer = document.querySelector('.tasks');
+        function setupInterfaceByType(tipo, subtipo) {
+            const toggleSection = document.getElementById('toggle-section');
+            const tasksSection = document.getElementById('tasks-section');
             const chartContainer = document.getElementById('chart-container');
             const historyContainer = document.getElementById('history-container');
-            const addTaskBtn = document.querySelector('.addtask');
 
             const tipoNorm = tipo ? tipo.toLowerCase() : '';
+            const subtipoNorm = subtipo ? subtipo.toLowerCase() : '';
 
-            toggleContainer.style.display = 'none';
-            addTaskBtn.style.display = 'none';
-            chartContainer.style.display = 'none';
-            historyContainer.style.display = 'none';
+            // Ocultar todo por defecto
+            toggleSection.style.setProperty('display', 'none', 'important');
+            tasksSection.style.setProperty('display', 'none', 'important');
+            chartContainer.style.setProperty('display', 'none', 'important');
+            historyContainer.style.setProperty('display', 'none', 'important');
 
-            // Actuadores
-            if (['actuador', 'luces', 'foco', 'ventilador'].includes(tipoNorm)) {
-                toggleContainer.style.display = 'flex';
-                addTaskBtn.style.display = 'block';
-                chartContainer.style.display = 'block'; 
+            console.log('🔍 Tipo de dispositivo:', tipoNorm, 'Subtipo:', subtipoNorm);
+
+            // Actuadores - toggle, sección tareas y gráfica/historial según subtipo
+            if (tipoNorm === 'actuador') {
+                toggleSection.style.setProperty('display', 'flex', 'important');
+                tasksSection.style.setProperty('display', 'block', 'important');
+
+                // Alarmas muestran historial, otros muestran gráfica
+                if (subtipoNorm === 'alarma') {
+                    historyContainer.style.setProperty('display', 'block', 'important');
+                    console.log('✅ Es actuador (alarma) - mostrando toggle, tareas e historial');
+                } else {
+                    chartContainer.style.setProperty('display', 'block', 'important');
+                    console.log('✅ Es actuador - mostrando toggle, tareas y gráfica');
+                }
             }
-            // Eventos (Alarmas)
-            else if (['alarma', 'movimiento', 'pir', 'luz', 'ldr'].includes(tipoNorm)) {
-                historyContainer.style.display = 'block';
+            // Dispositivos con toggle pero SIN tareas (luces, focos, ventiladores)
+            else if (['luces', 'foco', 'ventilador', 'luz'].includes(tipoNorm)) {
+                toggleSection.style.setProperty('display', 'flex', 'important');
+                chartContainer.style.setProperty('display', 'block', 'important');
+                console.log('ℹ️ Dispositivo con toggle - SIN tareas');
             }
-            // Sensores
+            // Eventos (Alarmas, movimiento, etc.) - solo historial
+            else if (['alarma', 'movimiento', 'pir', 'ldr'].includes(tipoNorm)) {
+                historyContainer.style.setProperty('display', 'block', 'important');
+                console.log('ℹ️ Es sensor de eventos - mostrando historial');
+            }
+            // Sensores (temperatura, humedad, gas, etc.) - solo gráfica
             else {
-                chartContainer.style.display = 'block';
+                chartContainer.style.setProperty('display', 'block', 'important');
+                console.log('ℹ️ Es sensor - mostrando gráfica');
             }
         }
 
@@ -269,12 +293,20 @@
                 if (response.ok) {
                     const result = await response.json();
                     historicalData = result.data || [];
+                    console.log('📊 Datos históricos cargados:', historicalData.length, 'registros');
+                    if (historicalData.length > 0) {
+                        console.log('📊 Primera lectura:', historicalData[0]);
+                        console.log('📊 Última lectura:', historicalData[historicalData.length - 1]);
+                    }
                 } else {
+                    console.warn('⚠️ No se pudieron cargar los datos:', response.status);
                     historicalData = [];
                 }
                 renderDataView();
             } catch (error) {
-                console.error('Error fetching data:', error);
+                console.error('❌ Error fetching data:', error);
+                historicalData = [];
+                renderDataView();
             }
         }
 
@@ -288,17 +320,33 @@
 
         function renderDataView() {
             const tipo = deviceData.tipo.toLowerCase();
+            const subtipo = deviceData.subtipo ? deviceData.subtipo.toLowerCase() : '';
+            console.log('🎨 Renderizando vista para tipo:', tipo, 'subtipo:', subtipo);
+            console.log('📁 Total datos históricos:', historicalData.length);
+
             // Datos filtrados para la gráfica (Zoom actual)
             const filteredData = filterDataByTime(historicalData, currentTimeRange);
+            console.log('🔍 Datos filtrados (rango ' + currentTimeRange + '):', filteredData.length);
 
-            if (['alarma', 'movimiento', 'pir', 'luz', 'ldr'].includes(tipo)) {
-                renderHistoryList(filteredData, tipo);
-            } 
-            else if (['actuador', 'luces', 'foco', 'ventilador'].includes(tipo)) {
-                // PASAMOS AMBOS: 'filteredData' para la gráfica, 'historicalData' para la vida útil
-                renderUsageChart(filteredData, tipo, historicalData); 
+            // Actuadores con subtipo alarma → historial
+            if (tipo === 'actuador' && subtipo === 'alarma') {
+                console.log('→ Renderizando historial de eventos (actuador alarma)');
+                renderHistoryList(filteredData, 'alarma');
             }
+            // Actuadores (luz, ventilador o sin subtipo) → gráfica de uso
+            else if (tipo === 'actuador' || ['luces', 'foco', 'ventilador'].includes(tipo)) {
+                console.log('→ Renderizando gráfica de uso');
+                // PASAMOS AMBOS: 'filteredData' para la gráfica, 'historicalData' para la vida útil
+                renderUsageChart(filteredData, tipo, historicalData);
+            }
+            // Sensores de eventos → historial
+            else if (['alarma', 'movimiento', 'pir', 'luz', 'ldr'].includes(tipo)) {
+                console.log('→ Renderizando historial de eventos');
+                renderHistoryList(filteredData, tipo);
+            }
+            // Sensores de medición → gráfica de línea
             else {
+                console.log('→ Renderizando gráfica de línea (sensor)');
                 renderLineChart(filteredData, tipo);
             }
         }
@@ -312,13 +360,93 @@
             return data.filter(item => new Date(item.timestamp) >= timeLimit);
         }
 
+        // --- 4.5 MOSTRAR ÚLTIMA LECTURA ---
+        function showLastReadingInfo() {
+            // Buscar el contenedor existente o crearlo
+            let infoDiv = document.getElementById('last-reading-info');
+
+            if (!historicalData || historicalData.length === 0) {
+                // Si no hay datos, ocultar el div si existe
+                if (infoDiv) infoDiv.style.display = 'none';
+                return;
+            }
+
+            // Encontrar el registro más reciente
+            const sortedData = [...historicalData].sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+            const lastReading = sortedData[0];
+            const lastDate = new Date(lastReading.timestamp);
+
+            // Formatear fecha
+            const dateStr = lastDate.toLocaleDateString('es-MX', {
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric'
+            });
+            const timeStr = lastDate.toLocaleTimeString('es-MX', {
+                hour: '2-digit',
+                minute: '2-digit'
+            });
+
+            // Calcular tiempo transcurrido
+            const now = new Date();
+            const diffMs = now - lastDate;
+            const diffMins = Math.floor(diffMs / 60000);
+            const diffHours = Math.floor(diffMins / 60);
+            const diffDays = Math.floor(diffHours / 24);
+
+            let timeAgo = '';
+            if (diffMins < 1) timeAgo = 'Hace menos de un minuto';
+            else if (diffMins < 60) timeAgo = `Hace ${diffMins} minuto${diffMins > 1 ? 's' : ''}`;
+            else if (diffHours < 24) timeAgo = `Hace ${diffHours} hora${diffHours > 1 ? 's' : ''}`;
+            else timeAgo = `Hace ${diffDays} día${diffDays > 1 ? 's' : ''}`;
+
+            // Crear o actualizar el div
+            if (!infoDiv) {
+                infoDiv = document.createElement('div');
+                infoDiv.id = 'last-reading-info';
+                infoDiv.className = 'alert alert-info d-flex justify-content-between align-items-center mb-3';
+
+                const chartContainer = document.getElementById('chart-container');
+                chartContainer.insertBefore(infoDiv, chartContainer.firstChild);
+            }
+
+            infoDiv.style.display = 'flex';
+            infoDiv.innerHTML = `
+                <div>
+                    <strong>📊 Última lectura:</strong> ${dateStr} a las ${timeStr}
+                </div>
+                <small class="text-muted">${timeAgo}</small>
+            `;
+        }
+
         // --- 5. HISTORIAL ---
         function renderHistoryList(data, tipo) {
             const list = document.getElementById('history-list');
             if(!list) return;
+
+            // Mostrar información de última lectura
+            showLastReadingInfo();
+
             list.innerHTML = '';
+            const hasAnyData = historicalData && historicalData.length > 0;
+
             if (data.length === 0) {
-                list.innerHTML = '<div class="list-group-item text-center text-muted">No hay eventos recientes</div>';
+                if (!hasAnyData) {
+                    list.innerHTML = `
+                        <div class="list-group-item text-center">
+                            <div class="spinner-border text-primary spinner-border-sm mb-2" role="status"></div>
+                            <p class="text-muted mb-0">Esperando eventos...</p>
+                        </div>
+                    `;
+                } else {
+                    list.innerHTML = `
+                        <div class="list-group-item text-center">
+                            <div style="font-size: 2rem; margin-bottom: 10px;">ℹ️</div>
+                            <p class="text-muted mb-0 mt-2">No hay eventos en este rango de tiempo</p>
+                            <small class="text-muted">Selecciona otro rango para ver el historial</small>
+                        </div>
+                    `;
+                }
                 return;
             }
             const sortedData = data.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
@@ -348,12 +476,23 @@
 
         // --- 6. GRÁFICA DE USO (Focos, Ventiladores) - CORREGIDA ---
         function renderUsageChart(dataFiltered, tipo, dataTotal) {
+            console.log('📊 renderUsageChart llamado');
+            console.log('📊 dataFiltered:', dataFiltered.length);
+            console.log('📊 dataTotal:', dataTotal.length);
+
             const overlay = document.getElementById('chart-overlay');
             const ctx = document.getElementById('myChart');
             if (myChart) myChart.destroy();
 
-            // Si no hay datos, mostrar placeholder con overlay
-            if (!dataTotal || dataTotal.length === 0) {
+            // Verificar si hay datos históricos en absoluto
+            const hasAnyData = historicalData && historicalData.length > 0;
+            console.log('✅ hasAnyData (actuador):', hasAnyData);
+
+            // Mostrar información de última lectura
+            showLastReadingInfo();
+
+            // Si no hay datos en el rango actual, mostrar placeholder
+            if (!dataFiltered || dataFiltered.length === 0) {
                 const statsDiv = document.getElementById('usage-stats');
                 if(statsDiv) statsDiv.remove();
 
@@ -378,7 +517,25 @@
                         plugins: { title: { display: true, text: 'Uso por Hora' }, legend: { display: false } }
                     }
                 });
-                overlay.style.display = 'flex';
+
+                // Solo mostrar "Esperando datos..." si NO hay ningún dato histórico
+                if (!hasAnyData) {
+                    overlay.innerHTML = `
+                        <div class="spinner-border text-primary mb-2" role="status"></div>
+                        <span class="text-muted">Esperando datos del dispositivo...</span>
+                    `;
+                    overlay.style.display = 'flex';
+                } else {
+                    // Hay datos históricos pero no en este rango
+                    overlay.innerHTML = `
+                        <div class="text-center">
+                            <div style="font-size: 2.5rem; margin-bottom: 10px;">ℹ️</div>
+                            <p class="text-muted mb-0 mt-2">No hay datos de uso en este rango</p>
+                            <small class="text-muted">Selecciona otro rango para ver el historial</small>
+                        </div>
+                    `;
+                    overlay.style.display = 'flex';
+                }
                 return;
             }
 
@@ -548,6 +705,9 @@
 
         // --- 7. SENSORES RANGO ---
         function renderLineChart(data, tipo) {
+            console.log('📈 renderLineChart llamado con:', data.length, 'datos filtrados');
+            console.log('📈 historicalData global tiene:', historicalData.length, 'registros');
+
             const statsDiv = document.getElementById('usage-stats');
             if(statsDiv) statsDiv.remove();
             const ctx = document.getElementById('myChart');
@@ -560,7 +720,16 @@
             else if (tipo.includes('hum')) { color = 'rgba(54, 162, 235, 1)'; title = 'Humedad (%)'; }
             else if (tipo.includes('gas')) { color = 'rgba(255, 206, 86, 1)'; title = 'Gas (ppm)'; }
 
+            // Verificar si hay datos históricos en absoluto (sin filtrar)
+            const hasAnyData = historicalData && historicalData.length > 0;
+            console.log('✅ hasAnyData:', hasAnyData);
+
+            // Mostrar información de última lectura
+            showLastReadingInfo();
+
             if (!data || data.length === 0) {
+                console.log('⚠️ No hay datos filtrados, mostrando placeholder');
+
                 // Datos placeholder para la gráfica de fondo
                 const placeholderLabels = ['00:00', '04:00', '08:00', '12:00', '16:00', '20:00', '24:00'];
                 const placeholderValues = [22, 24, 26, 28, 27, 25, 23];
@@ -576,9 +745,31 @@
                     },
                     options: { responsive: true, scales: { y: { beginAtZero: true } } }
                 });
-                overlay.style.display = 'flex';
+
+                // Solo mostrar "Esperando datos..." si NO hay ningún dato histórico
+                if (!hasAnyData) {
+                    console.log('🔄 No hay datos históricos - mostrando spinner');
+                    overlay.innerHTML = `
+                        <div class="spinner-border text-primary mb-2" role="status"></div>
+                        <span class="text-muted">Esperando datos del sensor...</span>
+                    `;
+                    overlay.style.display = 'flex';
+                } else {
+                    console.log('ℹ️ Hay datos históricos pero no en este rango - mostrando mensaje');
+                    // Hay datos históricos pero no en este rango
+                    overlay.innerHTML = `
+                        <div class="text-center">
+                            <div style="font-size: 2.5rem; margin-bottom: 10px;">ℹ️</div>
+                            <p class="text-muted mb-0 mt-2">No hay datos en este rango de tiempo</p>
+                            <small class="text-muted">Selecciona otro rango o espera nuevas lecturas</small>
+                        </div>
+                    `;
+                    overlay.style.display = 'flex';
+                }
                 return;
             }
+
+            console.log('✅ Hay datos para mostrar, renderizando gráfica real');
 
             // Ocultar overlay cuando hay datos
             overlay.style.display = 'none';

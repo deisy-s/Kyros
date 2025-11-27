@@ -7,6 +7,8 @@ exports.register = async (req, res, next) => {
     try {
         const { nombre, email, password, tipo } = req.body;
 
+        console.log('[REGISTER] Intento de registro:', { nombre, email });
+
         // Validar campos requeridos
         if (!nombre || !email || !password) {
             return res.status(400).json({
@@ -17,7 +19,17 @@ exports.register = async (req, res, next) => {
 
         // Verificar si el usuario ya existe
         const existingUser = await Usuario.findOne({ email });
+        console.log('[REGISTER] Usuario existente?', existingUser ? 'Sí' : 'No');
+
         if (existingUser) {
+            // Verificar si está registrado con Google
+            console.log('[REGISTER] AuthProvider:', existingUser.authProvider);
+            if (existingUser.authProvider === 'google') {
+                return res.status(409).json({
+                    success: false,
+                    message: 'Este correo ya está registrado con Google. Por favor inicia sesión con Google.'
+                });
+            }
             return res.status(409).json({
                 success: false,
                 message: 'El correo electrónico ya está registrado'
@@ -25,12 +37,14 @@ exports.register = async (req, res, next) => {
         }
 
         // Crear usuario
+        console.log('[REGISTER] Creando nuevo usuario...');
         const usuario = await Usuario.create({
             nombre,
             email,
             password,
             tipo: tipo || 'estudiante'
         });
+        console.log('[REGISTER] Usuario creado exitosamente:', usuario._id);
 
         // Generar token
         const token = usuario.getSignedJwtToken();

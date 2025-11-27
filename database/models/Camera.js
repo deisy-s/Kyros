@@ -33,15 +33,15 @@ const CameraSchema = new mongoose.Schema({
         },
         tipo: {
             type: String,
-            enum: ['rtsp', 'http', 'mjpeg', 'hls'],
             default: 'rtsp'
+            // Sin restricción enum - acepta cualquier tipo de streaming
         }
     },
     // Estado de la cámara
     estado: {
         activa: {
             type: Boolean,
-            default: false
+            default: true  // ← Cambiado a true para que inicie activa
         },
         grabando: {
             type: Boolean,
@@ -53,7 +53,7 @@ const CameraSchema = new mongoose.Schema({
         },
         conectada: {
             type: Boolean,
-            default: false
+            default: true
         }
     },
     // Configuración
