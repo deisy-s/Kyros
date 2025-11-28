@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Test Registro - KYROS</title>
+</head>
+<body>
+    <h1>Test de Registro</h1>
+
+    <form id="testForm">
+        <label>Nombre:</label><br>
+        <input type="text" id="nombre" value="Test User"><br><br>
+
+        <label>Email:</label><br>
+        <input type="email" id="email" value="supertest9999@outlook.com"><br><br>
+
+        <label>Contraseña:</label><br>
+        <input type="password" id="password" value="123456"><br><br>
+
+        <button type="submit">Registrar</button>
+    </form>
+
+    <div id="resultado" style="margin-top: 20px; padding: 10px; border: 1px solid #ccc;"></div>
+
+    <script>
+        const API_URL = 'http://localhost:3000/api';
+
+        document.getElementById('testForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const nombre = document.getElementById('nombre').value;
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+
+            const resultado = document.getElementById('resultado');
+            resultado.innerHTML = '<p>Enviando...</p>';
+
+            try {
+                console.log('Enviando:', { nombre, email, password });
+
+                const response = await fetch(`${API_URL}/auth/register`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        nombre: nombre,
+                        email: email,
+                        password: password
+                    })
+                });
+
+                const data = await response.json();
+
+                console.log('Respuesta:', data);
+                console.log('Status:', response.status);
+
+                if (response.ok) {
+                    resultado.innerHTML = `
+                        <h3 style="color: green;">✅ ÉXITO</h3>
+                        <pre>${JSON.stringify(data, null, 2)}</pre>
+                    `;
+                } else {
+                    resultado.innerHTML = `
+                        <h3 style="color: red;">❌ ERROR ${response.status}</h3>
+                        <p><strong>Mensaje:</strong> ${data.message}</p>
+                        <pre>${JSON.stringify(data, null, 2)}</pre>
+                    `;
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                resultado.innerHTML = `
+                    <h3 style="color: red;">❌ ERROR DE RED</h3>
+                    <p>${error.message}</p>
+                `;
+            }
+        });
+    </script>
+</body>
+</html>

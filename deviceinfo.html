@@ -179,7 +179,8 @@
         // --- VARIABLES GLOBALES ---
         let myChart = null;
         let deviceData = null;
-        let historicalData = [];
+        let historicalData = []; // Datos completos para vida útil
+        let aggregatedData = []; // Datos agregados para gráficas
         let currentTimeRange = '24h'; 
 
         // --- UTILIDADES URL ---
@@ -288,24 +289,42 @@
         // --- 3. OBTENER DATOS ---
         async function fetchHistoricalData() {
             try {
-                // Pedimos un límite alto para tener buen cálculo de vida útil
-                const response = await fetchWithAuth(`${API_URL}/devices/${deviceId}/data?limit=2000`);
-                if (response.ok) {
-                    const result = await response.json();
-                    historicalData = result.data || [];
-                    console.log('📊 Datos históricos cargados:', historicalData.length, 'registros');
-                    if (historicalData.length > 0) {
-                        console.log('📊 Primera lectura:', historicalData[0]);
-                        console.log('📊 Última lectura:', historicalData[historicalData.length - 1]);
+                // Petición 1: Datos completos para vida útil (solo para actuadores)
+                const tipo = deviceData.tipo.toLowerCase();
+                if (tipo === 'actuador' || ['luces', 'foco', 'ventilador'].includes(tipo)) {
+                    const responseAll = await fetchWithAuth(`${API_URL}/devices/${deviceId}/data?limit=2000`);
+                    if (responseAll.ok) {
+                        const resultAll = await responseAll.json();
+                        historicalData = resultAll.data || [];
+                        console.log('📊 Datos completos cargados para vida útil:', historicalData.length, 'registros');
+                    }
+                }
+
+                // Petición 2: Datos agregados para gráficas
+                const responseAgg = await fetchWithAuth(`${API_URL}/devices/${deviceId}/data?aggregate=${currentTimeRange}`);
+                if (responseAgg.ok) {
+                    const resultAgg = await responseAgg.json();
+                    aggregatedData = resultAgg.data || [];
+                    console.log(`📊 Datos agregados (${currentTimeRange}) cargados:`, aggregatedData.length, 'puntos');
+                    if (aggregatedData.length > 0) {
+                        console.log('📊 Primer punto:', aggregatedData[0]);
+                        console.log('📊 Último punto:', aggregatedData[aggregatedData.length - 1]);
                     }
                 } else {
-                    console.warn('⚠️ No se pudieron cargar los datos:', response.status);
-                    historicalData = [];
+                    console.warn('⚠️ No se pudieron cargar datos agregados:', responseAgg.status);
+                    aggregatedData = [];
                 }
+
+                // Para dispositivos no actuadores, usar datos agregados también como históricos
+                if (!historicalData || historicalData.length === 0) {
+                    historicalData = aggregatedData;
+                }
+
                 renderDataView();
             } catch (error) {
                 console.error('❌ Error fetching data:', error);
                 historicalData = [];
+                aggregatedData = [];
                 renderDataView();
             }
         }
@@ -315,7 +334,8 @@
             currentTimeRange = range;
             document.querySelectorAll('.btn-group .btn').forEach(btn => btn.classList.remove('active'));
             document.getElementById(`btn-${range}`)?.classList.add('active');
-            renderDataView();
+            // Recargar datos agregados con el nuevo rango
+            fetchHistoricalData();
         }
 
         function renderDataView() {
@@ -323,31 +343,34 @@
             const subtipo = deviceData.subtipo ? deviceData.subtipo.toLowerCase() : '';
             console.log('🎨 Renderizando vista para tipo:', tipo, 'subtipo:', subtipo);
             console.log('📁 Total datos históricos:', historicalData.length);
+            console.log('📊 Datos agregados:', aggregatedData.length);
 
-            // Datos filtrados para la gráfica (Zoom actual)
-            const filteredData = filterDataByTime(historicalData, currentTimeRange);
-            console.log('🔍 Datos filtrados (rango ' + currentTimeRange + '):', filteredData.length);
+            // Usar datos agregados para las gráficas (ya vienen filtrados por el backend)
+            const dataForChart = aggregatedData;
+            console.log('🔍 Datos para gráfica:', dataForChart.length);
 
             // Actuadores con subtipo alarma → historial
             if (tipo === 'actuador' && subtipo === 'alarma') {
                 console.log('→ Renderizando historial de eventos (actuador alarma)');
-                renderHistoryList(filteredData, 'alarma');
+                // Usar aggregatedData porque ya vienen filtrados del backend
+                renderHistoryList(aggregatedData, 'alarma');
             }
             // Actuadores (luz, ventilador o sin subtipo) → gráfica de uso
             else if (tipo === 'actuador' || ['luces', 'foco', 'ventilador'].includes(tipo)) {
                 console.log('→ Renderizando gráfica de uso');
-                // PASAMOS AMBOS: 'filteredData' para la gráfica, 'historicalData' para la vida útil
-                renderUsageChart(filteredData, tipo, historicalData);
+                // PASAMOS datos agregados para gráfica, históricos completos para vida útil
+                renderUsageChart(dataForChart, tipo, historicalData);
             }
-            // Sensores de eventos → historial
+            // Sensores de eventos → historial (movimiento, luz, etc.)
             else if (['alarma', 'movimiento', 'pir', 'luz', 'ldr'].includes(tipo)) {
-                console.log('→ Renderizando historial de eventos');
-                renderHistoryList(filteredData, tipo);
+                console.log('→ Renderizando historial de eventos (sensor)');
+                // Usar aggregatedData porque ya vienen filtrados del backend
+                renderHistoryList(aggregatedData, tipo);
             }
-            // Sensores de medición → gráfica de línea
+            // Sensores de medición → gráfica de línea (USAR DATOS AGREGADOS)
             else {
-                console.log('→ Renderizando gráfica de línea (sensor)');
-                renderLineChart(filteredData, tipo);
+                console.log('→ Renderizando gráfica de línea (sensor) con datos agregados');
+                renderLineChart(dataForChart, tipo);
             }
         }
 
@@ -449,14 +472,33 @@
                 }
                 return;
             }
-            const sortedData = data.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
-            sortedData.forEach(item => {
-                const date = new Date(item.timestamp);
-                const dateStr = date.toLocaleDateString() + ' ' + date.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
-                let message = `Valor: ${item.valor}`;
-                let cssClass = 'event-info';
-                const valStr = String(item.valor).toUpperCase();
+
+            // Los datos ya vienen consolidados desde el backend con timestamp y timestampEnd
+            data.forEach(range => {
+                const startDate = new Date(range.timestamp);
+                const endDate = new Date(range.timestampEnd || range.timestamp);
+
+                // Formatear fechas y horas
+                const dateStr = startDate.toLocaleDateString('es-MX', {
+                    year: 'numeric',
+                    month: 'short',
+                    day: 'numeric'
+                });
+                const startTimeStr = startDate.toLocaleTimeString('es-MX', {
+                    hour: '2-digit',
+                    minute: '2-digit'
+                });
+                const endTimeStr = endDate.toLocaleTimeString('es-MX', {
+                    hour: '2-digit',
+                    minute: '2-digit'
+                });
+
+                // Determinar mensaje y estilo según el tipo de dispositivo
+                const valStr = String(range.valor).toUpperCase();
                 const isOn = (valStr === 'ON' || valStr === 'ENCENDIDO' || valStr === '1' || valStr === 'TRUE' || valStr === 'ACTIVADA');
+
+                let message = `Valor: ${range.valor}`;
+                let cssClass = 'event-info';
 
                 if (['movimiento', 'pir'].includes(tipo)) {
                     message = isOn ? '‼️ Movimiento Detectado' : 'Fin de movimiento';
@@ -465,12 +507,32 @@
                     message = isOn ? '🚨 Alarma Disparada' : 'Alarma Silenciada';
                     cssClass = isOn ? 'event-alert' : 'event-success';
                 } else if (['luz', 'ldr'].includes(tipo)) {
-                    const esOscuro = (item.valor == 0);
+                    const esOscuro = !isOn;
                     message = esOscuro ? '🌙 Oscuridad Detectada' : '☀️ Luz Detectada';
                     cssClass = esOscuro ? 'event-info' : 'event-success';
                 }
-                const origen = item.metadata?.origen ? `<span class="badge bg-secondary ms-2">${item.metadata.origen}</span>` : '';
-                list.innerHTML += `<div class="list-group-item ${cssClass}"><div class="d-flex w-100 justify-content-between align-items-center"><div><h6 class="mb-0">${message}</h6>${origen}</div><small class="text-muted ms-2">${dateStr}</small></div></div>`;
+
+                // Crear el rango de tiempo
+                const timeRange = startTimeStr === endTimeStr
+                    ? startTimeStr
+                    : `${startTimeStr} - ${endTimeStr}`;
+
+                const origen = range.metadata?.origen ? `<span class="badge bg-secondary ms-2">${range.metadata.origen}</span>` : '';
+
+                list.innerHTML += `
+                    <div class="list-group-item ${cssClass}">
+                        <div class="d-flex w-100 justify-content-between align-items-center">
+                            <div>
+                                <h6 class="mb-0">${message}</h6>
+                                ${origen}
+                            </div>
+                            <div class="text-end ms-2">
+                                <small class="text-muted d-block">${dateStr}</small>
+                                <small class="text-muted"><strong>${timeRange}</strong></small>
+                            </div>
+                        </div>
+                    </div>
+                `;
             });
         }
 
@@ -703,10 +765,9 @@
             return totalMs / 1000 / 60; 
         }
 
-        // --- 7. SENSORES RANGO ---
+        // --- 7. SENSORES RANGO (OPTIMIZADO CON DATOS AGREGADOS) ---
         function renderLineChart(data, tipo) {
-            console.log('📈 renderLineChart llamado con:', data.length, 'datos filtrados');
-            console.log('📈 historicalData global tiene:', historicalData.length, 'registros');
+            console.log('📈 renderLineChart llamado con:', data.length, 'datos agregados');
 
             const statsDiv = document.getElementById('usage-stats');
             if(statsDiv) statsDiv.remove();
@@ -720,15 +781,15 @@
             else if (tipo.includes('hum')) { color = 'rgba(54, 162, 235, 1)'; title = 'Humedad (%)'; }
             else if (tipo.includes('gas')) { color = 'rgba(255, 206, 86, 1)'; title = 'Gas (ppm)'; }
 
-            // Verificar si hay datos históricos en absoluto (sin filtrar)
-            const hasAnyData = historicalData && historicalData.length > 0;
-            console.log('✅ hasAnyData:', hasAnyData);
+            // Verificar si hay datos agregados
+            const hasAnyData = aggregatedData && aggregatedData.length > 0;
+            console.log('✅ hasAnyData (agregados):', hasAnyData);
 
             // Mostrar información de última lectura
             showLastReadingInfo();
 
             if (!data || data.length === 0) {
-                console.log('⚠️ No hay datos filtrados, mostrando placeholder');
+                console.log('⚠️ No hay datos agregados, mostrando placeholder');
 
                 // Datos placeholder para la gráfica de fondo
                 const placeholderLabels = ['00:00', '04:00', '08:00', '12:00', '16:00', '20:00', '24:00'];
@@ -746,17 +807,16 @@
                     options: { responsive: true, scales: { y: { beginAtZero: true } } }
                 });
 
-                // Solo mostrar "Esperando datos..." si NO hay ningún dato histórico
+                // Solo mostrar "Esperando datos..." si NO hay ningún dato
                 if (!hasAnyData) {
-                    console.log('🔄 No hay datos históricos - mostrando spinner');
+                    console.log('🔄 No hay datos - mostrando spinner');
                     overlay.innerHTML = `
                         <div class="spinner-border text-primary mb-2" role="status"></div>
                         <span class="text-muted">Esperando datos del sensor...</span>
                     `;
                     overlay.style.display = 'flex';
                 } else {
-                    console.log('ℹ️ Hay datos históricos pero no en este rango - mostrando mensaje');
-                    // Hay datos históricos pero no en este rango
+                    console.log('ℹ️ Hay datos pero no en este rango - mostrando mensaje');
                     overlay.innerHTML = `
                         <div class="text-center">
                             <div style="font-size: 2.5rem; margin-bottom: 10px;">ℹ️</div>
@@ -769,28 +829,74 @@
                 return;
             }
 
-            console.log('✅ Hay datos para mostrar, renderizando gráfica real');
+            console.log('✅ Hay datos agregados para mostrar, renderizando gráfica optimizada');
 
             // Ocultar overlay cuando hay datos
             overlay.style.display = 'none';
 
+            // Los datos ya vienen ordenados del backend
             const sortedData = data.sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
+
+            // Formatear etiquetas según el rango
             const labels = sortedData.map(item => {
                 const d = new Date(item.timestamp);
-                return currentTimeRange === '24h' ? d.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}) : d.toLocaleDateString();
+                if (currentTimeRange === '24h') {
+                    return d.toLocaleTimeString([], {hour:'2-digit', minute:'00'});
+                } else {
+                    return d.toLocaleDateString('es-MX', {month: 'short', day: 'numeric'});
+                }
             });
-            const values = sortedData.map(item => item.valor);
+
+            // Usar el promedio calculado por el backend
+            const values = sortedData.map(item => item.avg || item.valor);
 
             myChart = new Chart(ctx, {
                 type: 'line',
                 data: {
                     labels: labels,
                     datasets: [{
-                        label: title, data: values, borderColor: color, backgroundColor: color.replace('1)', '0.1)'),
-                        borderWidth: 2, fill: true, tension: 0.4
+                        label: title,
+                        data: values,
+                        borderColor: color,
+                        backgroundColor: color.replace('1)', '0.1)'),
+                        borderWidth: 2,
+                        fill: true,
+                        tension: 0.4,
+                        pointRadius: 3,
+                        pointHoverRadius: 5
                     }]
                 },
-                options: { responsive: true, scales: { y: { beginAtZero: true } } }
+                options: {
+                    responsive: true,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            title: {
+                                display: true,
+                                text: title
+                            }
+                        },
+                        x: {
+                            title: {
+                                display: true,
+                                text: currentTimeRange === '24h' ? 'Hora' : 'Fecha'
+                            }
+                        }
+                    },
+                    plugins: {
+                        tooltip: {
+                            callbacks: {
+                                afterLabel: function(context) {
+                                    const item = sortedData[context.dataIndex];
+                                    if (item.count > 1) {
+                                        return `Promedio de ${item.count} lecturas`;
+                                    }
+                                    return '';
+                                }
+                            }
+                        }
+                    }
+                }
             });
         }
 

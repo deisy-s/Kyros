@@ -103,9 +103,9 @@ Copy `database/.env.example` to `database/.env` and configure:
 
 **MongoDB Collections** (7 total):
 1. `users` - User accounts with authentication
-2. `rooms` - Smart home rooms
-3. `devices` - IoT devices (8 types: luz, termostato, cerradura, sensor, camara, enchufe, ventilador, otro)
-4. `devices_data` - Time-series telemetry data
+2. `rooms` - Smart home rooms (includes `ip` field for ESP32 connection)
+3. `devices` - IoT devices (7 types: actuador, camara, gas, humedad, luz, movimiento, temperatura)
+4. `devices_data` - Time-series telemetry data (includes `metadata.origen` for tracking source)
 5. `cameras` - Security camera configurations
 6. `tasks` - Scheduled automation tasks
 7. `automatize` - Automation rules/conditions
@@ -119,8 +119,13 @@ Copy `database/.env.example` to `database/.env` and configure:
 **Current State**:
 - Uses vanilla JavaScript (no framework)
 - Bootstrap 5.3.8 for UI components
-- **Frontend NOT fully integrated with backend API** - most pages use mock/hardcoded data
-- JWT token handling needs to be implemented on client-side
+- Chart.js 4.5.0 for data visualization
+- SweetAlert for modals/notifications
+
+**Auth Utilities** (`js/auth.js`):
+- `requireAuth()` - Protects pages, redirects to login if no session
+- `fetchWithAuth(url, options)` - Makes requests with JWT token in header
+- `getAuthToken()` / `setAuthToken()` - Token management in localStorage
 
 ### API Authentication
 
@@ -153,11 +158,13 @@ These routes are defined in `database/routes/esp.js` and use `espController.js`.
 - Schema fields mix Spanish (`nombre`, `habitacion`) and English (`email`, `password`)
 - Error responses follow format: `{ success: false, message: "...", errors: [...] }`
 
-### Known Integration Gaps
-1. Frontend pages currently use mock data instead of API calls
-2. JWT token storage/management not implemented on client-side
-3. Frontend forms need to be wired to POST/PUT endpoints
-4. Authentication flow not connected between login.html and backend
+### Current Integration Status
+- ✅ JWT token storage implemented (`js/auth.js` with `localStorage`)
+- ✅ `fetchWithAuth()` utility for authenticated API calls
+- ✅ Authentication flow connected (login → JWT → protected pages)
+- ✅ Device control wired to API (toggle, historical data)
+- ✅ Task/automation forms connected to backend
+- ⚠️ Some pages may still have mock data remnants
 
 ## API Endpoints Summary
 
@@ -238,111 +245,74 @@ next(error); // Caught by errorHandler middleware
 
 ## Recent Updates (Noviembre 2025)
 
+### Visualización Avanzada de Dispositivos
+
+Se implementó un sistema completo de visualización en `deviceinfo.html`:
+
+**Gráficas con Chart.js 4.5.0**:
+- Selector de rango temporal: 24H / Semana / Mes
+- Gráfica de barras para actuadores/focos mostrando minutos de uso por hora/día
+- Gráfica de líneas para sensores (temperatura, humedad)
+- Historial de eventos para sensores de movimiento, alarmas, luz
+
+**Vida Útil del Dispositivo**:
+- Barra de progreso mostrando porcentaje de vida útil restante
+- Cálculo basado en horas totales de uso (ej: focos = 15,000 hrs, ventiladores = 20,000 hrs)
+- Colores dinámicos: verde (>50%), amarillo (10-50%), rojo (<10%)
+
+**Archivos modificados**:
+- `deviceinfo.html` - Lógica de renderizado de gráficas y cálculo de vida útil
+- `database/controllers/deviceController.js` - Endpoint mejorado para datos históricos
+
+### ESP32 Integration - Motor de Reglas
+
+**Control bidireccional ESP32 ↔ Backend**:
+- `toggleDevice()` en `deviceController.js` ahora envía comandos HTTP al ESP32 usando la IP de la habitación
+- URL de comando: `http://{room.ip}/control?dispositivo={id}&comando={on|off}`
+
+**ESP32 Controller mejorado** (`espController.js`):
+- `GET /api/esp/esp-config/:habitacionId` - Envía configuración completa al ESP32 (dispositivos + reglas activas)
+- `POST /api/esp/report-data/:habitacionId` - Recibe datos de sensores y ejecuta automatizaciones
+- Mapeo de operadores para condiciones: `mayor` → `>`, `menor` → `<`, etc.
+- Manejo seguro de habitaciones sin dispositivos configurados
+
+**Estructura de configuración ESP32**:
+```json
+{
+  "id": "room_id",
+  "nombre": "Sala",
+  "ip": "192.168.1.100",
+  "dispositivos": [
+    { "id": "...", "nombre": "Foco", "pin": 5, "tipo": "luz" }
+  ],
+  "automatizaciones": [
+    {
+      "id": "...",
+      "condicion": { "dispositivo_id": "...", "operador": ">", "valor": 30 },
+      "accion": { "dispositivo_id": "...", "comando": "ON" }
+    }
+  ]
+}
+```
+
 ### Task Automation - Formularios Completados
 
-Se completó la implementación de formularios de tareas para todos los tipos de dispositivos soportados:
-
-#### Backend Changes
-- **`database/models/Device.js`**: Actualizado enum de tipos para incluir: `actuador`, `camara`, `gas`, `humedad`, `luz`, `movimiento`, `temperatura`
-
-#### Frontend Pages Modified
-
-**1. addtask.html** - Crear tarea desde dispositivo específico
-- Agregado formulario completo para `actuador` con campos de encendido y apagado
-- Implementada función `actuadorClick()` para validar y continuar
-- Mejorada lógica de guardado usando `selectedDeviceType` en lugar de visibilidad de formularios
-- Labels dinámicos: "Activar a la(s)" para movimiento/gas, "Sonar a la(s)" para alarmas reales
-- Soporte completo para: luz, temperatura, humedad, movimiento, gas, actuador
-
-**2. newtask.html** - Crear tarea desde sección de automatización
-- Agregado formulario de `actuador` (líneas 308-338)
-- Agregados botones "Continuar" faltantes para alarm y actuador
-- Implementadas funciones `alarmClick()` y `actuadorClick()`
-- Labels dinámicos para movimiento/gas vs alarmas
-- Actualizada lógica de guardado para todos los tipos de dispositivos
-
-**3. taskinfo.html** - Editar tarea existente
-- Formulario de actuador ya existía
-- Carga correcta de datos para todos los tipos
-- Labels dinámicos implementados
-
-**4. cameraedit.html** - NUEVA PÁGINA
-- Página para editar cámaras de seguridad
-- Campos: nombre de cámara, URL de streaming
-- Botones: Guardar cambios, Eliminar cámara
-- Ruta: `cameraedit.html?cameraId=<id>`
-
-**5. security.html**
-- Agregadas funciones `editCam()` y `deleteCam()`
-- Botones de editar/eliminar en cada cámara (líneas 156-158)
-- Redirección a cameraedit.html con parámetros
-
-**6. style.css**
-- Agregado `#cameraNameInput` al selector de inputs (línea 560)
-
-#### Tipos de Dispositivos Soportados
-
-| Tipo | Formulario | Campos | Validación |
-|------|-----------|--------|------------|
-| **Luz** | start-light/stop-light | Hora encender/apagar, sensores de luz | Al menos hora O sensor |
-| **Temperatura** | start-fan/stop-fan | Hora/temp encender, hora/temp apagar | Al menos hora O temp |
-| **Humedad** | start-fan/stop-fan | Hora/temp encender, hora/temp apagar | Al menos hora O temp |
-| **Movimiento** | alarm | Hora de activación | Requerida |
-| **Gas** | alarm | Hora de activación | Requerida |
-| **Actuador** | actuador | Hora encender (req), hora apagar (opt) | Hora encender requerida |
-
-#### Testing Locations
-
-Para verificar la funcionalidad completa:
-
-1. **Crear tarea desde dispositivo**:
-   - Navegar a: Habitaciones → [Habitación] → [Dispositivo] → Botón "Agregar tarea"
-   - Archivo: `addtask.html?roomId=<id>&roomname=<name>&deviceId=<id>&devicename=<name>`
-
-2. **Crear tarea desde automatización**:
-   - Navegar a: Automatización → Botón "Agregar tarea"
-   - Archivo: `newtask.html`
-
-3. **Editar tarea existente**:
-   - Navegar a: Automatización → [Tarea existente]
-   - Archivo: `taskinfo.html?taskId=<id>`
-
-4. **Editar cámara**:
-   - Navegar a: Seguridad → Ícono de editar en cámara
-   - Archivo: `cameraedit.html?cameraId=<id>`
-
-#### Key Implementation Details
-
-**Form Display Logic**:
+**Device Types Enum** (`database/models/Device.js`):
 ```javascript
-// Se usa selectedDeviceType en lugar de comprobar visibilidad de divs
-if (selectedDeviceType === 'actuador') {
-    // Mostrar formulario de actuador
-}
+enum: ['actuador', 'camara', 'gas', 'humedad', 'luz', 'movimiento', 'temperatura']
 ```
 
-**Dynamic Labels**:
-```javascript
-if (selectedDeviceType === 'movimiento' || selectedDeviceType === 'gas') {
-    alarmLabel.textContent = 'Activar a la(s)';
-} else {
-    alarmLabel.textContent = 'Sonar a la(s)';
-}
-```
+**Formularios por tipo de dispositivo**:
 
-**Save Data Structure**:
-```javascript
-const taskData = {
-    nombre: taskName,
-    activa: true,
-    trigger: {
-        tipo: 'horario',
-        horario: { dias: [0,1,2,3,4,5,6], hora: turnOnTime }
-    },
-    acciones: [{
-        dispositivo: deviceId,
-        accion: 'encender',
-        parametros: { /* específicos del tipo */ }
-    }]
-};
-```
+| Tipo | Campos | Validación |
+|------|--------|------------|
+| **Luz** | Hora encender/apagar, sensores de luz | Al menos hora O sensor |
+| **Temperatura/Humedad** | Hora/temp encender, hora/temp apagar | Al menos hora O temp |
+| **Movimiento/Gas** | Hora de activación (label: "Activar a la(s)") | Requerida |
+| **Actuador** | Hora encender (req), hora apagar (opt) | Hora encender requerida |
+
+**Páginas de tareas**:
+- `addtask.html` - Crear tarea desde dispositivo específico
+- `newtask.html` - Crear tarea desde automatización
+- `taskinfo.html` - Editar tarea existente
+- `cameraedit.html` - Editar/eliminar cámaras de seguridad (NUEVA)

@@ -1,0 +1,29 @@
+# Dependencias
+node_modules/
+database/node_modules/
+**/node_modules/
+
+# Archivos de entorno
+.env
+.env.local
+.env.*.local
+database/.env
+
+# Configuraciones locales
+.claude/settings.local.json
+
+# Archivos de sistema
+.DS_Store
+Thumbs.db
+*.log
+*.swp
+*.swo
+
+# Carpetas de build
+dist/
+build/
+
+# IDEs
+.vscode/
+.idea/
+*.sublime-*
