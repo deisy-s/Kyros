@@ -227,7 +227,7 @@
                 const data = await response.json();
 
                 if (response.ok) {
-                    await swal("Éxito", "Cámara editada exitosamente", "success");
+                    await swal({title:"Cámara editada exitosamente", icon:"success"});
                     window.location.href = 'security.html';
                 } else {
                     swal("Error", data.error || "Error al actualizar la cámara", "error");

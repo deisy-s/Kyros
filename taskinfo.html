@@ -1101,7 +1101,7 @@
             const taskName = taskNameInput.value.trim();
 
             if (!taskName) {
-                swal("Campo vacío", "Favor de ingresar el nombre de la tarea", "warning");
+                swal("Campo vacío", "Favor de ingresar un nombre", "warning");
                 return;
             }
 
@@ -1138,7 +1138,7 @@
                     const opcionSeleccionada = document.getElementById('dropdownOption5Button').textContent;
 
                     if (!opcionSeleccionada || opcionSeleccionada === 'Seleccionar opción') {
-                        swal("Campo vacío", "Favor de seleccionar una opción para encender", "warning");
+                        await swal("Campo vacío", "Favor de seleccionar una opción para encender", "warning");
                         return;
                     }
 
@@ -1147,7 +1147,7 @@
                         const turnOffTime = document.getElementById('turnOffTimeAlarmInfo').value;
 
                         if (!turnOnTime) {
-                            swal("Campo vacío", "Favor de ingresar la hora de encendido", "warning");
+                            await swal("Campo vacío", "Favor de ingresar la hora de encendido", "warning");
                             return;
                         }
 
@@ -1157,7 +1157,7 @@
 
                     } else if (opcionSeleccionada === 'Encender al detectar movimiento') {
                         if (!selectedMovementSensorId) {
-                            swal("Campo vacío", "Favor de seleccionar un sensor de movimiento", "warning");
+                            await swal("Campo vacío", "Favor de seleccionar un sensor de movimiento", "warning");
                             return;
                         }
 
@@ -1178,7 +1178,7 @@
 
                     } else if (opcionSeleccionada === 'Encender al sobrepasar los niveles de gas regulares') {
                         if (!selectedGasSensorId) {
-                            swal("Campo vacío", "Favor de seleccionar un sensor de gas", "warning");
+                            await swal("Campo vacío", "Favor de seleccionar un sensor de gas", "warning");
                             return;
                         }
 
@@ -1210,7 +1210,7 @@
                         const turnOnTime = turnOnTimeInput?.value;
 
                         if (!turnOnTime) {
-                            swal("Campo vacío", "Favor de ingresar la hora de encendido", "warning");
+                            await swal("Campo vacío", "Favor de ingresar la hora de encendido", "warning");
                             return;
                         }
 
@@ -1219,7 +1219,7 @@
                         console.log('✅ LUZ - Guardando hora de encendido:', turnOnTime);
                     } else if (opcionEncendido === 'Encender cuando no hay luz (sensor)') {
                         if (!selectedLightSensorId) {
-                            swal("Campo vacío", "Favor de seleccionar un sensor de luz", "warning");
+                            await swal("Campo vacío", "Favor de seleccionar un sensor de luz", "warning");
                             return;
                         }
 
@@ -1233,7 +1233,7 @@
                         };
                         console.log('✅ LUZ - Guardando trigger por sensor de luz:', selectedLightSensorId, '(umbral: 2000 - lógica inversa)');
                     } else {
-                        swal("Campo vacío", "Favor de seleccionar una condición de encendido", "warning");
+                        await swal("Campo vacío", "Favor de seleccionar una condición de encendido", "warning");
                         return;
                     }
 
@@ -1243,7 +1243,7 @@
                         const turnOffTime = turnOffTimeInput?.value;
 
                         if (!turnOffTime) {
-                            swal("Campo vacío", "Favor de ingresar la hora de apagado", "warning");
+                            await swal("Campo vacío", "Favor de ingresar la hora de apagado", "warning");
                             return;
                         }
 
@@ -1272,7 +1272,7 @@
                         const turnOnTime = turnOnTimeInput?.value;
 
                         if (!turnOnTime) {
-                            swal("Campo vacío", "Favor de ingresar la hora de encendido", "warning");
+                            await swal("Campo vacío", "Favor de ingresar la hora de encendido", "warning");
                             return;
                         }
 
@@ -1284,12 +1284,12 @@
                         const turnOnTemp = turnOnTempInput?.value;
 
                         if (!turnOnTemp) {
-                            swal("Campo vacío", "Favor de ingresar la temperatura de encendido", "warning");
+                            await swal("Campo vacío", "Favor de ingresar la temperatura de encendido", "warning");
                             return;
                         }
 
                         if (!selectedTempSensorId) {
-                            swal("Campo vacío", "Favor de seleccionar un sensor de temperatura", "warning");
+                            await swal("Campo vacío", "Favor de seleccionar un sensor de temperatura", "warning");
                             return;
                         }
 
@@ -1303,7 +1303,7 @@
                         };
                         console.log('✅ VENTILADOR - Guardando trigger por sensor de temperatura:', selectedTempSensorId, turnOnTemp + '°C');
                     } else {
-                        swal("Campo vacío", "Favor de seleccionar una condición de encendido", "warning");
+                        await swal("Campo vacío", "Favor de seleccionar una condición de encendido", "warning");
                         return;
                     }
 
@@ -1313,7 +1313,7 @@
                         const turnOffTime = turnOffTimeInput?.value;
 
                         if (!turnOffTime) {
-                            swal("Campo vacío", "Favor de ingresar la hora de apagado", "warning");
+                            await swal("Campo vacío", "Favor de ingresar la hora de apagado", "warning");
                             return;
                         }
 
@@ -1325,7 +1325,7 @@
                         const turnOffTemp = turnOffTempInput?.value;
 
                         if (!turnOffTemp) {
-                            swal("Campo vacío", "Favor de ingresar la temperatura de apagado", "warning");
+                            await swal("Campo vacío", "Favor de ingresar la temperatura de apagado", "warning");
                             return;
                         }
 
@@ -1353,11 +1353,11 @@
                     await swal({title:"Automatización actualizada exitosamente", icon:"success",});
                     window.location.href = 'automatize.html';
                 } else {
-                    swal("Error", "Error al actualizar la automatización", "error");
+                    await swal("Error", "Error al actualizar la automatización", "error");
                 }
             } catch (error) {
                 console.error('Error:', error);
-                swal("Error", "Error al conectar con el servidor", "error");
+                await swal("Error", "Error al conectar con el servidor", "error");
             }
         });
 
@@ -1366,7 +1366,7 @@
             e.preventDefault();
 
             if (!taskId) {
-                swal("Error", "No se puede eliminar una automatización que no existe", "error");
+                await swal("Error", "No se puede eliminar una automatización que no existe", "error");
                 return;
             }
 
@@ -1393,11 +1393,11 @@
                     await swal({title:"Automatización eliminada exitosamente", icon:"success",});
                     window.location.href = 'automatize.html';
                 } else {
-                    swal("Error", "Error al eliminar la automatización", "error");
+                    await swal("Error", "Error al eliminar la automatización", "error");
                 }
             } catch (error) {
                 console.error('Error:', error);
-                swal("Error", "Error al conectad al servidor", "error");
+                await swal("Error", "Error al conectad al servidor", "error");
             }
         });
 

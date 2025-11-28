@@ -1157,11 +1157,11 @@
                                 window.location.href = 'automatize.html';
                             }, 1500);
                         } else {
-                            swal("Error", data.message || "Error al crear la tarea", "error");
+                            await swal("Error", "Error al crear la automatización", "error");
                         }
                     } catch (error) {
                         console.error('Error:', error);
-                        swal("Error", "Error al conectar con el servidor", "error");
+                        await swal("Error", "Error al conectar con el servidor", "error");
                     }
                 });
             }

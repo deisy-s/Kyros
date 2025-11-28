@@ -265,12 +265,12 @@
             }
 
             if (!deviceName) {
-                swal("Campo vacío", "Favor de ingresar el nombre del dispositivo", "error");
+                swal("Campo vacío", "Favor de ingresar el nombre del dispositivo", "warning");
                 return;
             }
 
             if (!pin || pin < 0) {
-                alert('Por favor ingrese un número de pin válido');
+                swal("Campo vacío", "Favor de ingresar un número de pin válido", "warning");
                 return;
             }
 
@@ -326,7 +326,7 @@
                 const data = await response.json();
 
                 if (response.ok) {
-                    swal({title:"Dispositivo eliminado exitosamente", icon:"success",});
+                    await swal({title:"Dispositivo eliminado exitosamente", icon:"success",});
                     window.location.href = `devices.html?roomId=${roomId}&roomname=${roomname}`;
                 } else {
                     swal("Error", "Error al eliminar el dispositivo", "error");

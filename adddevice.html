@@ -233,7 +233,6 @@
             const deviceName = deviceNameInput.value.trim();
 
             if (!selectedDeviceType) {
-                alert('Por favor seleccione el tipo de dispositivo');
                 swal("Campo vacío", "Favor de seleccionar el tipo de dispositivo", "warning");
                 saveButton.disabled=false;
                 return;
@@ -254,7 +253,7 @@
                     return;
                 }
             }
-
+            
             try {
                 // Si es cámara, usar endpoint de cámaras
                 if (selectedDeviceType === 'camara') {

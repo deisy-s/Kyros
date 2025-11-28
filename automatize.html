@@ -189,6 +189,7 @@
                 }
             } catch (error) {
                 console.error('Error al cargar automatizaciones:', error);
+                await swal("Error", "Error al cargar automatizaciones", "error");
             }
         }
 
@@ -204,14 +205,14 @@
                 if (response.ok) {
                     console.log(`Automatización ${isActive ? 'activada' : 'desactivada'}`);
                 } else {
-                    alert(data.message || 'Error al cambiar estado de la automatización');
+                    await swal("Error", "Error al cambiar estado de la automatización", "error");
                     // Revertir el toggle si falló
                     const checkbox = event.target;
                     checkbox.checked = !isActive;
                 }
             } catch (error) {
                 console.error('Error:', error);
-                alert('Error al conectar con el servidor');
+                await swal("Error", "Error al conectar con el servidor", "error");
                 // Revertir el toggle si falló
                 const checkbox = event.target;
                 checkbox.checked = !isActive;
