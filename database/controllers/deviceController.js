@@ -439,7 +439,8 @@ async function handleAggregatedData(req, res, next) {
             {
                 $match: {
                     dispositivo: new mongoose.Types.ObjectId(deviceId),
-                    timestamp: { $gte: startDate, $lte: endDate }
+                    timestamp: { $gte: startDate, $lte: endDate },
+                    tipo: { $ne: 'estado' } // Excluir registros de estado (Encendido/Apagado) que no son numéricos
                 }
             },
             {
