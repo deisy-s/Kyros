@@ -99,7 +99,7 @@
                         </button>
                         <ul class="dropdown-menu w-100" id="fanOnMenu">
                             <li><a class="dropdown-item fanOnOption" href="#" data-option="time">Encender a una hora establecida</a></li>
-                            <li><a class="dropdown-item fanOnOption" href="#" data-option="temp">Encender a una temperatura específica</a></li>
+                            <li><a class="dropdown-item fanOnOption" href="#" data-option="temp">Encender a cierta temperatura</a></li>
                         </ul>
                     </div>
                     <!-- Opción: Por hora -->
@@ -134,7 +134,7 @@
                         <ul class="dropdown-menu w-100" id="fanOffMenu">
                             <li><a class="dropdown-item fanOffOption" href="#" data-option="none">Sin apagado automático</a></li>
                             <li><a class="dropdown-item fanOffOption" href="#" data-option="time">Apagar a una hora establecida</a></li>
-                            <li><a class="dropdown-item fanOffOption" href="#" data-option="temp">Apagar a una temperatura específica</a></li>
+                            <li><a class="dropdown-item fanOffOption" href="#" data-option="temp">Apagar a cierta temperatura</a></li>
                         </ul>
                     </div>
                     <!-- Opción apagado: Por hora -->
@@ -1002,7 +1002,7 @@
                             // Si hay trigger por sensor de temperatura
                             if (auto.trigger.tipo === 'sensor' && auto.trigger.sensor?.tipoSensor === 'temperatura') {
                                 if (dropdownFanOnButton) {
-                                    dropdownFanOnButton.textContent = 'Encender a una temperatura específica';
+                                    dropdownFanOnButton.textContent = 'Encender a cierta temperatura';
                                 }
 
                                 // Cargar datos del sensor de temperatura
@@ -1022,7 +1022,7 @@
 
                                 if (fanTempOnInfo) {
                                     fanTempOnInfo.style.display = 'block';
-                                    console.log('Mostrando: Encender a una temperatura específica');
+                                    console.log('Mostrando: Encender a cierta temperatura');
                                 }
                             }
                             // Si hay hora en el trigger, usar hora para encendido
@@ -1049,7 +1049,7 @@
                             // Si hay temperatura de apagado en parámetros
                             if (parametros && parametros.temperaturaApagar) {
                                 if (dropdownFanOffButton) {
-                                    dropdownFanOffButton.textContent = 'Apagar a una temperatura específica';
+                                    dropdownFanOffButton.textContent = 'Apagar a cierta temperatura';
                                 }
                                 const turnOffTempInput = fanTempOffInfo?.querySelector('input[type="number"]');
                                 if (turnOffTempInput) {
@@ -1279,7 +1279,7 @@
                         taskData.trigger.tipo = 'horario';
                         taskData.trigger.horario.hora = turnOnTime;
                         console.log('✅ VENTILADOR - Guardando hora de encendido:', turnOnTime);
-                    } else if (opcionEncendido === 'Encender a una temperatura específica') {
+                    } else if (opcionEncendido === 'Encender a cierta temperatura') {
                         const turnOnTempInput = document.querySelector('#fanTempOnInfo input[type="number"]');
                         const turnOnTemp = turnOnTempInput?.value;
 

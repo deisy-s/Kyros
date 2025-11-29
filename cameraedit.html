@@ -264,7 +264,7 @@
                 const data = await response.json();
 
                 if (response.ok) {
-                    swal({title:"Cámara eliminada exitosamente", icon:"success",});
+                    await swal({title:"Cámara eliminada exitosamente", icon:"success",});
                     window.location.href = 'security.html';
                 } else {
                     swal("Error", data.error || "Error al eliminar la cámara", "error");
