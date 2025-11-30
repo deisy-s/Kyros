@@ -521,11 +521,16 @@ input::-webkit-inner-spin-button {
 
 #main-container-help .head-section{
     padding: 12px 80px 6px 10px;
+    border-radius: 10px;
     cursor: pointer;
 }
 
 #main-container-help .head-section:hover{
     background: #ededed;
+}
+
+#main-container-help .head-section h6{
+    color: #043f9e;
 }
 
 #main-container-help .col-lg-8{
@@ -534,6 +539,11 @@ input::-webkit-inner-spin-button {
 
 #main-container-help .help-info{
     margin-left: 10px;
+}
+
+#main-container-help .help-info h4{
+    font-weight: bold;
+    color: #043f9e;
 }
 
 /* Sign up section */
