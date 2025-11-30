@@ -953,6 +953,10 @@
                                     dias: [0, 1, 2, 3, 4, 5, 6],
                                     hora: turnOnTime
                                 };
+                                // ✅ Agregar horaFin si existe hora de apagado
+                                if (turnOffTime) {
+                                    taskData.trigger.horario.horaFin = turnOffTime;
+                                }
                             }
 
                             // Agregar parámetros
@@ -985,6 +989,10 @@
                                     dias: [0, 1, 2, 3, 4, 5, 6],
                                     hora: turnOnTimeLight
                                 };
+                                // ✅ Agregar horaFin si existe hora de apagado
+                                if (turnOffTimeLight) {
+                                    taskData.trigger.horario.horaFin = turnOffTimeLight;
+                                }
                             }
 
                             // Agregar parámetros
@@ -1051,6 +1059,7 @@
                                 };
 
                                 if (turnOffTime) {
+                                    taskData.trigger.horario.horaFin = turnOffTime; // ✅ Agregar horaFin para cálculo de duración
                                     taskData.acciones[0].parametros = { horaApagar: turnOffTime };
                                 }
                             }

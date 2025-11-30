@@ -1153,7 +1153,10 @@
 
                         taskData.trigger.tipo = 'horario';
                         taskData.trigger.horario.hora = turnOnTime;
-                        if (turnOffTime) taskData.acciones[0].parametros = { horaApagar: turnOffTime };
+                        if (turnOffTime) {
+                            taskData.trigger.horario.horaFin = turnOffTime; // ✅ Agregar horaFin para cálculo de duración
+                            taskData.acciones[0].parametros = { horaApagar: turnOffTime };
+                        }
 
                     } else if (opcionSeleccionada === 'Encender al detectar movimiento') {
                         if (!selectedMovementSensorId) {
@@ -1247,6 +1250,11 @@
                             return;
                         }
 
+                        // ✅ Agregar horaFin si el trigger es por horario
+                        if (taskData.trigger.tipo === 'horario' && taskData.trigger.horario) {
+                            taskData.trigger.horario.horaFin = turnOffTime;
+                        }
+
                         taskData.acciones[0].parametros = taskData.acciones[0].parametros || {};
                         taskData.acciones[0].parametros.horaApagar = turnOffTime;
                         console.log('✅ LUZ - Guardando hora de apagado:', turnOffTime);
@@ -1315,6 +1323,11 @@
                         if (!turnOffTime) {
                             await swal("Campo vacío", "Favor de ingresar la hora de apagado", "warning");
                             return;
+                        }
+
+                        // ✅ Agregar horaFin si el trigger es por horario
+                        if (taskData.trigger.tipo === 'horario' && taskData.trigger.horario) {
+                            taskData.trigger.horario.horaFin = turnOffTime;
                         }
 
                         taskData.acciones[0].parametros = taskData.acciones[0].parametros || {};
