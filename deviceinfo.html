@@ -676,7 +676,7 @@
                 let cssClass = 'event-info';
 
                 if (['movimiento', 'pir'].includes(tipo)) {
-                    message = isOn ? '‼️ Movimiento Detectado' : 'Fin de movimiento';
+                    message = isOn ? '‼️ Movimiento Detectado' : 'Sin movimiento';
                     cssClass = isOn ? 'event-alert' : 'event-info';
                 } else if (tipo === 'alarma') {
                     message = isOn ? '🚨 Alarma Disparada' : 'Alarma Silenciada';
