@@ -66,22 +66,97 @@
             <h1 class="heading">Centro de ayuda</h1>
         </div>
         <div class="row">
-            <div class="col-lg-3">
-                <div class="head-section" onclick="show1()">
-                    <h6>Agregar habitación</h6>
+            <div class="col-lg-3" id="help">
+                <div class="head-section" onclick="showDiv('1')">
+                    <h6>Inicio de sesión</h6>
                 </div>
-                <div class="head-section" onclick="show2()">
-                    <h6>Agregar dispositivo</h6>
+                <div class="head-section" onclick="showDiv('2')">
+                    <h6>Registro de cuenta</h6>
+                </div>
+                <div class="head-section" onclick="showDiv('3')">
+                    <h6>Habitaciones</h6>
+                </div>
+                <div class="head-section" onclick="showDiv('4')">
+                    <h6>Dispositivos</h6>
+                </div>
+                <div class="head-section" onclick="showDiv('5')">
+                    <h6>Seguridad</h6>
+                </div>
+                <div class="head-section" onclick="showDiv('6')">
+                    <h6>Automatización</h6>
                 </div>
             </div>
             <div class="col-lg-8">
-                <div class="help-info" id="div1">
-                    <h4>Agregar habitación</h4>
-                    <p>Lorem ipsum dolor sit amet consectetur adipisicing elit. Ipsa dolor laboriosam culpa veritatis blanditiis, consequatur adipisci sit. Asperiores laudantium saepe quisquam aperiam molestiae beatae, et, eos architecto eligendi aspernatur ex? Dolor necessitatibus cumque ex aut nulla tempore, consequuntur ullam inventore quis excepturi commodi quae autem praesentium temporibus atque blanditiis. Placeat ducimus, eum delectus cupiditate optio obcaecati omnis distinctio aspernatur explicabo, molestias dolore temporibus! Rem, in hic excepturi itaque vel distinctio reprehenderit, ut delectus omnis eum magnam expedita dolorum quas eligendi?</p>
+                <div class="help-info" id="1">
+                    <h4>Inicio de sesión</h4>
+                    <p>Se deben ingresar los datos de su cuenta o seleccionar una cuenta de Google para iniciar sesión. No se puede acceder a las secciones Habitaciones, Seguridad y Automatización sin iniciar sesión. Si usted como usuario no tiene una cuenta, deberá dar clic sobre el vínculo “Unirse aquí” para redireccionarse a la página para crear una cuenta nueva.</p>
+                    <h4>Inicio por credenciales</h4>
+                    <p>En caso de ya contar con una cuenta, deben ingresar el correo electrónico y contraseña de su cuenta, y luego dar clic sobre el botón “Iniciar sesión” para iniciar su sesión.</p>
+                    <h4>Inicio por Google</h4>
+                    <p>En el caso de seleccionar el botón con el ícono de Google se puede iniciar sesión por medio de su cuenta de Google. Se debe ingresar su cuenta y dar permisos a KYROS para acceder a su nombre y correo electrónico.</p>
                 </div>
-                <div class="help-info" id="div2" style="display: none;">
+                <div class="help-info" id="2" style="display: none;">
+                    <h4>Registro de cuenta</h4>
+                    <p>Si usted no cuenta con una cuenta en KYROS, pueden crear una cuenta nueva desde la pantalla de registro. No se puede acceder a las secciones Habitaciones, Seguridad y Automatización sin tener una cuenta. Si usted como usuario ya tiene una cuenta, deberá dar clic sobre el vínculo “Iniciar sesión” para redireccionarse a la página para iniciar sesión.</p>
+                    <h4>Registro por credenciales</h4>
+                    <p>Para crear una cuenta, se requiere ingresar su nombre, un correo electrónico válido y una contraseña válida, la cual debe contener como mínimo 6 caracteres, 1 letra mayúscula, 1 letra minúscula y 1 número.</p>
+                    <h4>Registro por Google</h4>
+                    <p>En caso de desear registrarse por medio de su cuenta de Google, deberá dar clic sobre el botón con el ícono de Google. Se debe ingresar su cuenta y dar permisos a KYROS para acceder a su nombre y correo electrónico.</p>
+                </div>
+                <div class="help-info" id="3" style="display: none;">
+                    <h4>Habitaciones</h4>
+                    <p>En la pestaña Habitaciones, se muestran todas las habitaciones con las que cuenta un usuario. En caso de no haber agregado una habitación, se muestra un mensaje que indica esto. Para agregar una habitación, se da clic sobre el botón que dice "Agregar habitación" para redireccionar a la pantalla correcta. Se puede editar la información de la habitación desde el ícono gris que se encuentra al lado derecho de la habitación, al dar clic sobre este se muestra otra pantalla donde puede editar y/o eliminar la habitación. Para ver los dispositivos de una habitación, se da clic sobre la sección gris de la habitación o el nombre de esta.</p>    
+                    <h4>Agregar habitación</h4>
+                    <p>Para agregar una habitación, se ingresa el nombre de la habitación y la dirección IP del microcontrolador ESP32. La dirección IP debe cumplir con el formato 0.0.0.0 para ser válida.</p>    
+                    <h4>Editar habitación</h4>
+                    <p>Al ingresar a la sección de edición de habitaciónes, se muestra la información actual de la habitación. Los campos de nombre de la habitación y dirección IP de esta se pueden modificar y guardar los cambios al dar clic sobre el botón "Guardar".</p>    
+                    <h4>Eliminar habitación</h4>
+                    <p>Al ingresar a la sección de edición de habitaciones, se puede eliminar la habitación. Al dar clic sobre el botón "Eliminar", se puede cancelar el proceso al dar clic sobre "Cancel" o confirmar la elección al dar clic sobre "Ok".</p>
+                </div>
+                <div class="help-info" id="4" style="display: none;">
+                    <h4>Dispositivos</h4>
+                    <p>Al dar clic sobre la habitación, se muestran los dispositivos que un usuario ha agregado a la habitación seleccionada. En caso de no haber agregado un dispositivo, se muestra un mensaje que indica esto. Para agregar un dispositivo, se da clic sobre el botón que dice "Agregar dispositivo" para redireccionar a la pantalla correcta. Se puede editar la información del dispositivo desde el ícono gris que se encuentra al lado derecho del dispositivo, al dar clic sobre este se muestra otra pantalla donde puede editar y/o eliminar el dispositivo. Para ver las lecturas, historial o estatus de un dispositivo, se da clic sobre la sección gris del dispositivo o el nombre de este.</p>    
                     <h4>Agregar dispositivo</h4>
-                    <p>Lorem ipsum dolor sit amet consectetur, adipisicing elit. Tenetur aspernatur quisquam sit at unde doloribus et, amet consequuntur consectetur magnam? Ea pariatur itaque omnis saepe vitae unde non sunt blanditiis?</p>
+                    <p>Para agregar un dispositivo, se debe seleccionar el tipo de dispositivo que se desea agregar, ya se aun actuador, cámara o sensor. También se debe agregar un nombre del dispositivo y el pin de conexión del ESP32 al cual se conecta el sensor.</p>    
+                    <h4>Editar dispositivo</h4>
+                    <p>Al ingresar a la sección de edición de dispositivos, se muestra la información actual del dispositivo. Los campos de tipo de dispositivo, nombre de dispositivo y pin de conexión de este se pueden modificar y guardar los cambios al dar clic sobre el botón "Guardar".</p>    
+                    <h4>Eliminar dispositivo</h4>
+                    <p>Al ingresar a la sección de edición de dispositivos, se puede eliminar el dispositivo. Al dar clic sobre el botón "Eliminar", se puede cancelar el proceso al dar clic sobre "Cancel" o confirmar la elección al dar clic sobre "Ok".</p>
+                    <h4>Información de dispositivos</h4>
+                    <p>Al ingresar al dispositivo, se puede visualizar la información que ha obtenido este, mostrando dicha información de manera distinta de acuerdo al tipo de dispositivo.</p>
+                    <h4>Sensores</h4>
+                    <p>Los sensores muestran solamente las lecturas que se han realizado. Si el sensor es un sensor de temperatura, gas o humedad, pueden visualizar una gráfica con la información obtenida. En el caso que el sensor sea de luz o movimiento, se muestra un historial las lecturas realizadas.</p>
+                    <h4>Actuadores</h4>
+                    <p>Los actuadores muestran su vida útil restante, una gráfica con su uso diario y al lado derecho permite activar y desactivar el actuador, además de crear una automatización nueva para el dispositivo en el cual se encuentra.</p>
+                </div>
+                <div class="help-info" id="5" style="display: none;">
+                    <h4>Seguridad</h4>
+                    <p>En la pestaña de Seguridad, se pueden visualizar las cámaras y el video de lo que están grabando en el momento. Desde aquí, se pueden editar y eliminar también las cámaras, además de activar y visualizar el video de la cámara en tiempo real.</p>
+                    <h4>Agregar cámara</h4>
+                    <p>Para agregar una cámara, se debe acceder al "Agregar dispositivos" de una habitación. Al seleccionar el tipo de dispositivo, se debe seleccionar el tipo "Cámara", agregar un nombre y una url de conexión. Al guardar una cámara, esta no aparece en la sección de dispositivos de una habitación, sino en la sección de Seguridad.</p>
+                    <h4>Editar cámara</h4>
+                    <p>La edición de información de una cámara se realiza desde la pestaña Seguridad, al dar clic sobre el botón gris que se encuentra en la esquina superior derecha de la cámara. Esta página muestra la información actual de la cámara y permite modificar el nombre y url de conexión de la cámara.</p>
+                    <h4>Eliminar cámara</h4>
+                    <p>Es posible eliminar una cámara desde dos páginas de KYROS, una es la página Seguridad, al dar clic sobre el botón rojo que se encuentra en la esquina superior derecha, y la otra manera es al entrar a la edición de información de una cámara, al dar clic sobre el botón "Eliminar" que se encuentra allí. Al seleccionar la opción para eliminar una cámara, se puede cancelar el proceso al dar clic sobre "Cancel" o confirmar su elección al dar clic sobre el botón "Ok".</p>
+                    <h4>Activar cámara</h4>
+                    <p>Al activar la cámara, se comienza a transmitir el video de la cámara. En caso de desactivar esta, se detiene el video.</p>
+                </div>
+                <div class="help-info" id="6" style="display: none;">
+                    <h4>Automatización</h4>
+                    <p>Las automatizaciones permiten que se realicen tareas sin requerir que uno lo realice de manera manual y constante. En KYROS, se pueden automatizar los actuadores para realizar un trabajo al detectar un cambio o al llegar a una hora establecida. En esta sección, se pueden agregar automatizaciones nuevas al dar clic sobre el botón "Agregar tarea", activar y desactivar automatizaciones existentes por medio del toggle que se encuentra a lado derecho de la automatización y editar y eliminar automatizaciones al dar clic sobre la automatización ya creada.</p>
+                    <h4>Agregar automatización</h4>
+                    <p>Al entrar a la sección para agregar una automatización nueva, se solicita la información paso por paso: <br> 
+                        1. Se ingresa el nombre de la automatización y da clic sobre "Continuar". <br>
+                        2. Se seleccina el actuador que realizará la automatización y da clic sobre "Continuar". <br>
+                        3. Se selecciona la opción de encendido, un parámetro en caso de serlo necesario (temperatura, hora, sensor necesario) y da clic sobre "Continuar". <br>
+                        &nbsp;&nbsp;&nbsp;&nbsp; 3.1 En caso que el actuador seleccionado sea una alarma, el proceso se finaliza en este punto al seleccionar la opción de encendido y dar clic sobre "Guardar". <br>
+                        4. Se selecciona la opción de apagado, un parámetro en caso de serlo necesario (temperatura, hora, sensor necesario) y da clic sobre "Guardar".
+                    </p>
+                    <h4>Editar automatización</h4>
+                    <p>Al entrar a la sección de edición de la automatización, se pueden visualizar los datos actuales de esta y modificar los valores necesarios, los cuales se almacenan al dar clic sobre "Guardar".</p>
+                    <h4>Eliminar automatización</h4>
+                    <p>Al entrar a la sección de edición de una automatización, se puede eliminar esta al dar clic sobre el botón "Eliminar". Esto muestra un mensaje de confirmación, el cual puede cancelar el proceso al seleccionar "Cancel" o eliminar la automatización al seleccionar "Ok".</p>
+
                 </div>
             </div>
         </div>
@@ -128,21 +203,11 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js" integrity="sha384-FKyoEForCGlyvwx9Hj09JcYn3nv7wiPVlz7YYwJrWVcXK/BmnVDxM+D2scQbITxI" crossorigin="anonymous"></script>
 
     <script>
-        function show1(){
-            var x = document.getElementById("div1");
-            var y = document.getElementById("div2");
-            if (x.style.display === "none") {
-                x.style.display = "block";
-                y.style.display = "none";
-            }
-        }
-        function show2(){
-            var x = document.getElementById("div1");
-            var y = document.getElementById("div2");
-            if (y.style.display === "none") {
-                y.style.display = "block";
-                x.style.display = "none";
-            }
+        function showDiv(divId){
+            const divs = document.querySelectorAll('.help-info');
+            divs.forEach((div) => {
+                div.style.display = div.id === divId ? 'block' : 'none';
+            });
         }
     </script>
 </body>
