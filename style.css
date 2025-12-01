@@ -987,6 +987,10 @@ input::-webkit-inner-spin-button {
     margin-right: 20px;
 }
 
+#tempOn, #tempOff{
+    margin-top: -50px;
+}
+
 #h3-r, .h3-r{
     margin-right: 10px;
 }

@@ -120,9 +120,33 @@
                         </div>
                         <br>
                         <div class="d-flex" id="tempOn" style="display: none !important;">
-                            <h3>Encender cuando llegue a</h3>
-                            <input type="number" id="turnOnTemp">
-                            <h3 class="degree">°C</h3>
+                            <div class="row">
+                                <div>
+                                    <h3 class="mt-3">Seleccionar sensor de temperatura</h3>
+                                    <div class="dropdown">
+                                        <button
+                                            class="btn btn-primary dropdown-toggle"
+                                            data-bs-toggle="dropdown"
+                                            type="button"
+                                            id="dropdownTempOnButton"
+                                            data-mdb-dropdown-init
+                                            data-mdb-ripple-init
+                                            aria-expanded="false"
+                                        >
+                                        </button>
+                                        <ul class="dropdown-menu w-150" id="TempOnMenu" aria-labelledby="dropdownTempOnButton">
+                                            <!-- Sensores de temperatura cargados dinámicamente -->
+                                            <li><a class="dropdown-item optionTempOn" href="#">Nombre</a></li>
+                                            <li><a class="dropdown-item optionTempOn" href="#">Nombre2</a></li>
+                                        </ul>
+                                    </div>
+                                </div>
+                                <div class="d-flex">
+                                    <h3>Encender cuando llegue a</h3>
+                                    <input type="number" id="turnOnTemp">
+                                    <h3 class="degree">°C</h3>
+                                </div>
+                            </div>
                         </div>
                         <br>
                         <button id="task-button" onclick="startFanClick()">Continuar</button>
@@ -166,9 +190,33 @@
                         </div>
                         <br>
                         <div class="d-flex" id="tempOff" style="display: none !important;">
-                            <h3>Apagar a cuando llegue a</h3>
-                            <input type="number" id="turnOffTemp">
-                            <h3 class="degree">°C</h3>
+                            <div class="row">
+                                <div>
+                                    <h3 class="mt-3">Seleccionar sensor de temperatura</h3>
+                                    <div class="dropdown">
+                                        <button
+                                            class="btn btn-primary dropdown-toggle"
+                                            data-bs-toggle="dropdown"
+                                            type="button"
+                                            id="dropdownTempOffButton"
+                                            data-mdb-dropdown-init
+                                            data-mdb-ripple-init
+                                            aria-expanded="false"
+                                        >
+                                        </button>
+                                        <ul class="dropdown-menu w-150" id="TempOffMenu" aria-labelledby="dropdownTempOffButton">
+                                            <!-- Sensores de temperatura cargados dinámicamente -->
+                                            <li><a class="dropdown-item optionTempOff" href="#">Nombre</a></li>
+                                            <li><a class="dropdown-item optionTempOff" href="#">Nombre 3</a></li>
+                                        </ul>
+                                    </div>
+                                </div>
+                                <div class="d-flex">
+                                    <h3>Apagar cuando llegue a</h3>
+                                    <input type="number" id="turnOffTemp">
+                                    <h3 class="degree">°C</h3>
+                                </div>
+                            </div>
                         </div>
                         <br>
                     </div>
@@ -675,6 +723,7 @@
                     temp.classList.remove('d-flex');
                     temp.style.display="none";
                     document.getElementById("turnOnTemp").value = ""; // Asegurar que se limpie el input que no está en uso
+                    document.getElementById("dropdownTempOnButton").textContent = "";
                 } else {
                     time.classList.remove('d-flex');
                     time.style.display="none";
@@ -702,6 +751,7 @@
                     temp.classList.remove('d-flex');
                     temp.style.display="none";
                     document.getElementById("turnOffTemp").value = ""; // Asegurar que se limpie el input que no está en uso
+                    document.getElementById("dropdownTempOffButton").textContent = "";
                 } else {
                     time.classList.remove('d-flex');
                     time.style.display="none";
@@ -817,6 +867,28 @@
             });
         });
 
+        // Dropdown de opciones para seleccionar sensor de temp (encender)
+        const tempOnMovement = document.querySelectorAll('#TempOnMenu .optionTempOn');
+
+        tempOnMovement.forEach(item => {
+            item.addEventListener('click', (e) => {
+                e.preventDefault();
+                const dropdownButton = document.querySelector('#dropdownTempOnButton');
+                dropdownButton.textContent = item.textContent;
+            });
+        });
+
+        // Dropdown de opciones para seleccionar sensor de temp (apagar)
+        const tempOffMovement = document.querySelectorAll('#TempOffMenu .optionTempOff');
+
+        tempOffMovement.forEach(item => {
+            item.addEventListener('click', (e) => {
+                e.preventDefault();
+                const dropdownButton = document.querySelector('#dropdownTempOffButton');
+                dropdownButton.textContent = item.textContent;
+            });
+        });
+
         function nameClick(){
             let n = document.getElementById("name-input").value;
             if(n.trim()!==""){
@@ -881,7 +953,8 @@
         function startFanClick(){
             let time = document.getElementById("turnOnTime").value;
             let temp = document.getElementById("turnOnTemp").value;
-            if((time.trim()!=="" && temp.trim()==="") || (temp.trim()!=="" && time.trim()==="")){
+            let sensor = document.getElementById("dropdownTempOnButton").textContent;
+            if((time.trim()!=="" && temp.trim()==="" && sensor.trim()==="") || (temp.trim()!=="" && temp.trim()!=="" && time.trim()==="")){
                 let startdiv = document.getElementById("start-fan");
                 let stopdiv = document.getElementById("stop-fan");
                 let save = document.getElementById("btn-div");
