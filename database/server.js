@@ -26,19 +26,20 @@ const espRoutes = require('./routes/esp');
 const app = express();
 
 // Conectar a MongoDB
-connectDB();
+connectDB(); // Llamada simple, como la tenías antes
+
 app.use((req, res, next) => {
     if (req.method === 'GET') {
         delete req.headers['content-type'];
     }
     next();
 });
+
 // Middleware
 app.use(cors({
     origin: process.env.CORS_ORIGIN || '*',
     credentials: true
 }));
-
 
 // Carga directa del parser JSON:
 app.use(express.json());
@@ -50,8 +51,8 @@ app.use(session({
     resave: false,
     saveUninitialized: false,
     cookie: {
-        secure: process.env.NODE_ENV === 'production', // Solo HTTPS en producción
-        maxAge: 24 * 60 * 60 * 1000 // 24 horas
+        secure: process.env.NODE_ENV === 'production',
+        maxAge: 24 * 60 * 60 * 1000
     }
 }));
 
@@ -67,6 +68,11 @@ if (process.env.NODE_ENV === 'development') {
     });
 }
 
+// --- RUTA DE SALUD (NECESARIA PARA RENDER) ---
+app.get('/saludz', (req, res) => {
+    res.status(200).send('OK');
+});
+
 // Montar rutas de API
 app.use('/api/auth', authRoutes);
 app.use('/api/rooms', roomRoutes);
@@ -74,7 +80,7 @@ app.use('/api/devices', deviceRoutes);
 app.use('/api/cameras', cameraRoutes);
 app.use('/api/tasks', taskRoutes);
 app.use('/api/automatize', automatizeRoutes);
-app.use('/api/esp', espRoutes); // Ruta pública para ESP32
+app.use('/api/esp', espRoutes);
 
 // Ruta de prueba
 app.get('/api/health', (req, res) => {
@@ -85,8 +91,9 @@ app.get('/api/health', (req, res) => {
     });
 });
 
-// Servir archivos estáticos del frontend
-const frontendDir = path.join(__dirname, '..');
+// --- AQUÍ ESTÁ EL CAMBIO IMPORTANTE ---
+// Apuntamos a la carpeta 'public' que está adentro de 'database'
+const frontendDir = path.join(__dirname, 'public'); 
 app.use(express.static(frontendDir));
 
 // Ruta principal - servir index.html
@@ -118,7 +125,7 @@ htmlRoutes.forEach(route => {
     });
 });
 
-// Middleware de manejo de errores (debe ir al final)
+// Middleware de manejo de errores
 app.use(errorHandler);
 
 // Manejar rutas no encontradas
@@ -134,8 +141,7 @@ const PORT = process.env.PORT || 3000;
 const server = app.listen(PORT, () => {
     console.log('='.repeat(50));
     console.log(`[KYROS] Servidor iniciado en modo ${process.env.NODE_ENV || 'development'}`);
-    console.log(`[Express] Escuchando en http://localhost:${PORT}`);
-    console.log(`[API] Disponible en http://localhost:${PORT}/api`);
+    console.log(`[Express] Escuchando en puerto ${PORT}`);
     console.log('='.repeat(50));
 });
 
