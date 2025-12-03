@@ -18,8 +18,8 @@ async function generateTestData() {
         await mongoose.connect(process.env.MONGODB_URI);
         console.log('✅ Conectado a MongoDB');
 
-        const Device = require('./database/models/Device');
-        const DeviceData = require('./database/models/DeviceData');
+        const Device = require('../models/Device');
+        const DeviceData = require('../models/DeviceData');
 
         // Verificar que el dispositivo existe
         const device = await Device.findById(deviceId);
