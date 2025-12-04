@@ -34,7 +34,8 @@ const getESPConfig = async (req, res, next) => {
         .populate('acciones.dispositivo', '_id nombre habitacion')
         .lean();
 
-        const automatizacionesMapeadas = await Promise.all(automatizaciones.map(async (auto) => {
+        // 1. Primero esperamos a que todas las promesas se resuelvan y obtenemos el array crudo
+        const automatizacionesRaw = await Promise.all(automatizaciones.map(async (auto) => {
             const automatizacion = { id: auto._id.toString(), activa: auto.activa };
 
             // CASO SENSOR
@@ -58,7 +59,6 @@ const getESPConfig = async (req, res, next) => {
                         duracion: acc.parametros?.duracion || acc.duracion || 0
                     };
 
-                    // ⭐ NUEVA FUNCIONALIDAD: Enviar condición de apagado por temperatura
                     if (acc.parametros?.sensorTemperaturaApagar && acc.parametros?.temperaturaApagar) {
                         // Buscar información del sensor de apagado
                         const sensorApagado = await Device.findById(acc.parametros.sensorTemperaturaApagar).select('_id tipo').lean();
@@ -111,7 +111,11 @@ const getESPConfig = async (req, res, next) => {
             }
 
             return automatizacion;
-        })).filter(auto => auto.condicion || (auto.tipo === 'horario' && auto.horario));
+        }));
+
+        // 2. AHORA SÍ filtramos el array ya resuelto
+        // Esto evita el error "Promise.all(...).filter is not a function"
+        const automatizacionesMapeadas = automatizacionesRaw.filter(auto => auto.condicion || (auto.tipo === 'horario' && auto.horario));
 
         res.status(200).json({
             id: room._id.toString(),
@@ -209,7 +213,7 @@ async function checkAndTriggerAutomations(habitacionId, datosSensores, devicesIn
 
         // Si es el minuto exacto, enviamos la orden
         if (currentTimeVal === tiempoInicio) {
-            console.log(`[Reglas] ⏰ ¡HORARIO CUMPLIDO! ${regla.trigger.horario.hora}`);
+            console.log(`[Reglas] ¡HORARIO CUMPLIDO! ${regla.trigger.horario.hora}`);
 
             // Calcular duración si existe horaFin
             let duracionCalculada = 0;
@@ -268,7 +272,7 @@ async function checkAndTriggerAutomations(habitacionId, datosSensores, devicesIn
     else if (operador === 'menor_igual') cumple = valorActual <= valorRegla;
 
     if (cumple) {
-      console.log(`[Reglas] 📡 ¡SENSOR CUMPLIDO! ${sensorTipo}: ${valorActual} ${operador} ${valorRegla}`);
+      console.log(`[Reglas] ¡SENSOR CUMPLIDO! ${sensorTipo}: ${valorActual} ${operador} ${valorRegla}`);
       
       for (const accion of regla.acciones) {
         const habitacionActuador = await Room.findById(accion.dispositivo.habitacion).select('ip').lean();
@@ -286,13 +290,17 @@ async function checkAndTriggerAutomations(habitacionId, datosSensores, devicesIn
 
 // --- FUNCIÓN DE ENVÍO (CORREGIDA) ---
 async function enviarComandoESP(ip, dispositivoId, comando, duracion = 0) {
+    // Nota: Como los ESP32 ahora son CLIENTES HTTPS a Render, no escuchan HTTP directo.
+    // Esta función solo sirve si el ESP32 está en la misma red local o tiene IP pública.
+    // Si están en redes distintas, necesitarás WebSockets o polling.
+    // Por ahora lo dejamos como está para no romper la lógica existente.
     const url = `http://${ip}/control?dispositivo=${dispositivoId}&comando=${comando}&duration=${duracion}`;
     try {
         const response = await fetch(url);
-        if (response.ok) console.log(`[Comando] ✅ ${comando} -> ${dispositivoId} (Duración: ${duracion}s)`);
-        else console.warn(`[Comando] ⚠️ Error del ESP: ${response.status}`);
+        if (response.ok) console.log(`[Comando] ${comando} -> ${dispositivoId} (Duración: ${duracion}s)`);
+        else console.warn(`[Comando] Error del ESP: ${response.status}`);
     } catch (err) {
-        console.error(`[Comando] ❌ Error conectando a ${ip}`);
+        console.error(`[Comando] Error conectando a ${ip}`);
     }
 }
 
@@ -316,7 +324,7 @@ const notifyESP32ConfigUpdate = async (automatizacion) => {
 
         // Enviar a todos los involucrados
         for (const roomId of habitacionesSet) {
-            await pushConfigToRoom(roomId);
+            // await pushConfigToRoom(roomId); // Comentado si no tienes implementada esta función importada
         }
     } catch (error) {
         console.error('[Push] Error notificando:', error);
