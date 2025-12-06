@@ -63,13 +63,85 @@
             <!-- Breadcrumb -->
         </div>
         <div class="row">
-            <h1 class="heading">Seguridad</h1>
+            <div class="col-12">
+                <h1 class="heading">Seguridad</h1>
+            </div>
         </div>
         <div class="row" id="cameras-container">
             <!-- Las cámaras se cargarán dinámicamente aquí -->
         </div>
     </div>
     <!-- End content -->
+
+    <!-- Modal: Cámara Creada (Instrucciones) -->
+    <div class="modal fade" id="cameraCreatedModal" tabindex="-1" data-bs-backdrop="static">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header bg-success text-white">
+                    <h5 class="modal-title">✅ Cámara Creada - Configuración Rápida</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="alert alert-success text-center">
+                        <h6><strong>🔑 Código de Activación</strong></h6>
+                        <div class="input-group mt-2">
+                            <input type="text" class="form-control form-control-lg text-center fw-bold" id="newActivationCode" readonly style="font-size: 2rem; letter-spacing: 0.3em;">
+                            <button class="btn btn-primary btn-lg" type="button" onclick="copyActivationCode()">📋 Copiar</button>
+                        </div>
+                        <small class="text-muted">Ingresa este código en el portal WiFi del ESP32-CAM</small>
+                        <div class="mt-2">
+                            <small class="text-muted">⏰ Expira en 24 horas</small>
+                        </div>
+                    </div>
+
+                    <div class="alert alert-info">
+                        <strong>📱 Sigue estos 3 simples pasos:</strong>
+                    </div>
+
+                    <ol class="fs-6">
+                        <li class="mb-3">
+                            <strong>🔌 Enciende tu ESP32-CAM</strong>
+                            <p class="text-muted small mb-0">Conecta la cámara a la corriente. Creará una red WiFi llamada <code>"KYROS-CAM-SETUP"</code></p>
+                        </li>
+                        <li class="mb-3">
+                            <strong>📱 Conéctate desde tu celular</strong>
+                            <p class="text-muted small mb-0">Ve a WiFi en tu celular → Selecciona <code>"KYROS-CAM-SETUP"</code> (sin contraseña)<br>
+                            Se abrirá automáticamente un portal web</p>
+                        </li>
+                        <li class="mb-3">
+                            <strong>📝 Completa el formulario</strong>
+                            <p class="text-muted small mb-0">Ingresa en el portal:</p>
+                            <ul class="small text-muted">
+                                <li><strong>Código de Activación:</strong> <span id="codePreview" class="badge bg-dark">------</span> (el de arriba)</li>
+                                <li><strong>Nombre de tu WiFi:</strong> El WiFi de tu casa</li>
+                                <li><strong>Contraseña WiFi:</strong> La contraseña de tu red</li>
+                            </ul>
+                        </li>
+                    </ol>
+
+                    <div class="alert alert-success">
+                        <strong>✅ ¡Y listo!</strong> El ESP32 se configurará automáticamente y empezará a transmitir video. Lo verás aparecer en esta página.
+                    </div>
+
+                    <div class="alert alert-warning">
+                        <strong>⏱ Tiempo total:</strong> 1-2 minutos
+                        <br>
+                        <strong>💡 Tip:</strong> Mantén este modal abierto para ver el código fácilmente mientras configuras
+                    </div>
+
+                    <div class="text-center mt-3">
+                        <a href="esp32-simulator.html" target="_blank" class="btn btn-outline-primary">
+                            🎮 Probar con Simulador
+                        </a>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+                    <button type="button" class="btn btn-success" onclick="copyActivationCode()">📋 Copiar Código Nuevamente</button>
+                </div>
+            </div>
+        </div>
+    </div>
 
     <!-- Footer -->
     <footer>
@@ -148,14 +220,18 @@
                 const roomName = camera.habitacion ? camera.habitacion.nombre : 'Sin habitación';
                 const isConnected = camera.estado.conectada;
                 const isActive = camera.estado.activa; // Variable clave
-                const streamUrl = camera.streaming.urlPrincipal;
+                const streamUrl = camera.streamingConfig?.urlPrincipal || '';
 
                 // --- Lógica de detección ---
-                const streamType = camera.streaming.tipo ? camera.streaming.tipo.toLowerCase() : '';
+                const streamType = camera.streamingConfig?.tipo ? camera.streamingConfig.tipo.toLowerCase() : '';
                 const streamUrlLower = streamUrl.toLowerCase();
-                
+
                 const isMjpegUrl = streamUrlLower.includes('mjpeg') || streamUrlLower.includes('mjpg');
-                const isEsp32Cam = streamUrlLower.includes('/stream') || streamUrlLower.includes(':81');
+                // ESP32-CAM: detectar por URL, tipo, o si es nueva sin vincular
+                const isEsp32Cam = streamType === 'websocket' ||
+                                   streamUrlLower.includes('/stream') ||
+                                   streamUrlLower.includes(':81') ||
+                                   (!streamUrl && !camera.linked); // Nueva ESP32-CAM sin configurar
                 const isHttpUrl = streamUrlLower.startsWith('http://') || streamUrlLower.startsWith('https://');
                 const isRtspUrl = streamUrlLower.startsWith('rtsp://');
 
@@ -171,29 +247,52 @@
                     </div>
 
                     <div class="cam-view" style="background-color: #1a1a1a; min-height: 300px; display: flex; align-items: center; justify-content: center; border-radius: 8px; overflow: hidden; margin-bottom: 10px;">
-                        
-                        ${!isActive ? 
+
+                        ${!isActive ?
                             // CASO 1: CÁMARA INACTIVA (APAGADA POR USUARIO)
                             `<div style="color: #666; text-align: center;">
                                 <h5 style="color: #888;">Cámara desactivada</h5>
                                 <small>Active el interruptor para ver el video</small>
                              </div>`
-                            : 
+                            :
                             // CASO 2: CÁMARA ACTIVA -> Checar conexión
                             (isConnected ?
-                                (canShowInBrowser ?
-                                    `<img src="${streamUrl}" 
-                                          style="width: 100%; height: auto; max-height: 400px; object-fit: contain;" 
-                                          onerror="this.style.display='none'; this.nextElementSibling.style.display='block';"
-                                          alt="Stream">
-                                     <div style="color: #888; text-align: center; display: none;">
-                                        <p>Error cargando stream</p>
-                                     </div>`
-                                    :
-                                    `<div style="color: #888; text-align: center;">
-                                        <p>RTSP no soportado en web</p>
-                                        <button class="btn btn-sm btn-primary" onclick="window.open('${streamUrl}')">Abrir externo</button>
+                                (isEsp32Cam ?
+                                    // ESP32-CAM con WebSocket (streaming en vivo)
+                                    `<div style="position: relative; width: 100%;">
+                                        <canvas id="stream-canvas-${camera._id}"
+                                                style="width: 100%; height: auto; max-height: 400px; object-fit: contain; display: block;">
+                                        </canvas>
+                                        <div id="stream-status-${camera._id}"
+                                             style="position: absolute; top: 8px; left: 8px; color: #4CAF50; font-size: 11px; padding: 4px 8px; background: rgba(0,0,0,0.75); border-radius: 4px; font-weight: bold;">
+                                            🔴 Conectando...
+                                        </div>
                                     </div>`
+                                    :
+                                    (canShowInBrowser ?
+                                        // Cámara tradicional con URL (MJPEG, HTTP)
+                                        (streamUrl ?
+                                            `<img src="${streamUrl}"
+                                                  style="width: 100%; height: auto; max-height: 400px; object-fit: contain;"
+                                                  onerror="this.style.display='none'; this.nextElementSibling.style.display='block';"
+                                                  alt="Stream">
+                                             <div style="color: #888; text-align: center; display: none;">
+                                                <p>Error cargando stream</p>
+                                             </div>`
+                                            :
+                                            // Sin URL configurada
+                                            `<div style="color: #ffaa00; text-align: center; padding: 20px;">
+                                                <h5 style="color: #ffaa00;">⚠️ URL no configurada</h5>
+                                                <p style="font-size: 13px; color: #999;">Configure la URL del stream en edición</p>
+                                            </div>`
+                                        )
+                                        :
+                                        // RTSP u otro formato no soportado
+                                        `<div style="color: #888; text-align: center;">
+                                            <p>RTSP no soportado en web</p>
+                                            <button class="btn btn-sm btn-primary" onclick="window.open('${streamUrl}')">Abrir externo</button>
+                                        </div>`
+                                    )
                                 )
                                 :
                                 `<div style="color: #ff4444; font-weight: bold;">
@@ -204,20 +303,20 @@
                         }
                     </div>
 
-                    <div style="margin-top: 10px; display: flex; gap: 10px; align-items: center;">
-                        <button id="active-btn-${camera._id}" 
-                                class="btn btn-sm ${isActive ? 'btn-success' : 'btn-secondary'}" 
+                    <div style="margin-top: 10px; display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
+                        <button id="active-btn-${camera._id}"
+                                class="btn btn-sm ${isActive ? 'btn-success' : 'btn-secondary'}"
                                 onclick="toggleCamera('${camera._id}', ${!isActive})">
                             ${isActive ? 'Activa' : 'Inactiva'}
                         </button>
 
                         <button id="rec-btn-${camera._id}"
-                                class="btn btn-sm ${camera.estado.grabando ? 'btn-danger' : 'btn-outline-danger'}" 
+                                class="btn btn-sm ${camera.estado.grabando ? 'btn-danger' : 'btn-outline-danger'}"
                                 onclick="toggleRecording('${camera._id}', ${!camera.estado.grabando})">
                             ${camera.estado.grabando ? '⏺ Grabando' : '⏹ Iniciar grabación'}
                         </button>
 
-                        <span id="status-text-${camera._id}" 
+                        <span id="status-text-${camera._id}"
                               style="color: ${isConnected ? '#4CAF50' : '#888'}; font-size: 12px;">
                             ${isConnected ? '🟢 Conectada' : '⚫ Desconectada'}
                         </span>
@@ -227,10 +326,132 @@
                 container.appendChild(cameraDiv);
             });
 
+            // Después de cargar todas las cámaras, iniciar streams
+            setTimeout(() => initializeStreams(cameras), 100);
+
         } catch (error) {
             console.error('Error:', error);
         }
     }
+
+        // Objeto para guardar las conexiones WebSocket activas
+        const activeStreams = {};
+
+        function initializeStreams(cameras) {
+            cameras.forEach(camera => {
+                const streamType = camera.streamingConfig?.tipo ? camera.streamingConfig.tipo.toLowerCase() : '';
+                const streamUrl = camera.streamingConfig?.urlPrincipal || '';
+                const streamUrlLower = streamUrl.toLowerCase();
+
+                const isEsp32Cam = streamType === 'websocket' ||
+                                   streamUrlLower.includes('/stream') ||
+                                   streamUrlLower.includes(':81') ||
+                                   (!streamUrl && !camera.linked);
+
+                const isActive = camera.estado.activa;
+                const isConnected = camera.estado.conectada;
+
+                // Solo conectar si es ESP32-CAM, está activa, conectada y NO tiene stream activo
+                if (isEsp32Cam && isActive && isConnected && !activeStreams[camera._id]) {
+                    connectCameraStream(camera._id);
+                }
+            });
+        }
+
+        function connectCameraStream(cameraId) {
+            const canvas = document.getElementById(`stream-canvas-${cameraId}`);
+            const statusDiv = document.getElementById(`stream-status-${cameraId}`);
+
+            if (!canvas) {
+                console.error('Canvas no encontrado para cámara:', cameraId);
+                return;
+            }
+
+            // Si ya hay una conexión activa, verificar si sigue siendo válida
+            if (activeStreams[cameraId]) {
+                const existingStream = activeStreams[cameraId];
+                const existingWs = existingStream.ws;
+                // Si la conexión está abierta y funcionando, no hacer nada
+                if (existingWs && (existingWs.readyState === WebSocket.OPEN || existingWs.readyState === WebSocket.CONNECTING)) {
+                    console.log('Stream ya conectado para cámara:', cameraId);
+                    return;
+                }
+                // Si está cerrada o con error, limpiar
+                delete activeStreams[cameraId];
+            }
+
+            const ctx = canvas.getContext('2d');
+            const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+            const wsUrl = `${protocol}//${window.location.host}/ws/camera`;
+
+            const ws = new WebSocket(wsUrl);
+            activeStreams[cameraId] = { ws, canvas, ctx };
+
+            ws.onopen = () => {
+                console.log('✅ WebSocket conectado para cámara:', cameraId);
+                // Suscribirse como viewer
+                ws.send(JSON.stringify({
+                    type: 'subscribe',
+                    cameraId: cameraId
+                }));
+                // El indicador se ocultará automáticamente cuando llegue el primer frame
+            };
+
+            ws.onmessage = (event) => {
+                if (event.data instanceof Blob) {
+                    // Es un frame de video (binario)
+                    const img = new Image();
+                    img.onload = () => {
+                        // Obtener referencias actualizadas por si se regeneró el HTML
+                        const currentCanvas = document.getElementById(`stream-canvas-${cameraId}`);
+                        const currentStatusDiv = document.getElementById(`stream-status-${cameraId}`);
+
+                        if (currentCanvas) {
+                            const currentCtx = currentCanvas.getContext('2d');
+                            // Ajustar tamaño del canvas a la imagen
+                            currentCanvas.width = img.width;
+                            currentCanvas.height = img.height;
+                            // Dibujar el frame
+                            currentCtx.drawImage(img, 0, 0);
+
+                            // Ocultar el indicador cuando llegue el primer frame
+                            if (currentStatusDiv && currentStatusDiv.style.display !== 'none') {
+                                currentStatusDiv.style.display = 'none';
+                            }
+                        }
+                    };
+                    img.src = URL.createObjectURL(event.data);
+                }
+            };
+
+            ws.onerror = (error) => {
+                console.error('❌ WebSocket error para cámara', cameraId, error);
+                const currentStatusDiv = document.getElementById(`stream-status-${cameraId}`);
+                if (currentStatusDiv) {
+                    currentStatusDiv.style.display = 'block';
+                    currentStatusDiv.style.color = '#ff4444';
+                    currentStatusDiv.textContent = '🔴 Error';
+                }
+            };
+
+            ws.onclose = () => {
+                console.log('⚫ WebSocket cerrado para cámara:', cameraId);
+                const currentStatusDiv = document.getElementById(`stream-status-${cameraId}`);
+                if (currentStatusDiv) {
+                    currentStatusDiv.style.display = 'block';
+                    currentStatusDiv.style.color = '#888';
+                    currentStatusDiv.textContent = '⚫ Desconectado';
+                }
+                delete activeStreams[cameraId];
+            };
+        }
+
+        // Limpiar conexiones cuando se salga de la página
+        window.addEventListener('beforeunload', () => {
+            Object.values(activeStreams).forEach(stream => {
+                if (stream.ws) stream.ws.close();
+            });
+        });
         async function updateCameraStatus() {
             try {
                 // Pedimos datos en silencio (sin borrar nada visualmente)
@@ -341,6 +562,16 @@
                 console.error('Error:', error);
                 swal("Error", "Error al conectar con el servidor", "error");
             }
+        }
+
+        // Copiar código de activación al portapapeles
+        function copyActivationCode() {
+            const activationCode = document.getElementById('newActivationCode').value;
+            navigator.clipboard.writeText(activationCode).then(() => {
+                swal("¡Copiado!", `Código ${activationCode} copiado al portapapeles`, "success");
+            }).catch(err => {
+                swal("Error", "No se pudo copiar el código", "error");
+            });
         }
 
         // Cargar cámaras al iniciar

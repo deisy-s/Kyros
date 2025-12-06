@@ -316,3 +316,64 @@ enum: ['actuador', 'camara', 'gas', 'humedad', 'luz', 'movimiento', 'temperatura
 - `newtask.html` - Crear tarea desde automatización
 - `taskinfo.html` - Editar tarea existente
 - `cameraedit.html` - Editar/eliminar cámaras de seguridad (NUEVA)
+
+### ESP32-CAM Integration - Diciembre 2025
+
+**Sistema de configuración simplificado con Captive Portal**:
+
+Se implementó un flujo completo para vincular cámaras ESP32-CAM sin QR codes, usando captive portal:
+
+**Frontend - security.html**:
+- Botón "+ Agregar Cámara" para crear nuevas cámaras ESP32-CAM
+- Modal de creación muestra ID de cámara con botón de copiar
+- Modal de instrucciones paso a paso para configurar ESP32
+- Detección automática de tipo de cámara:
+  - Tradicional (RTSP/MJPEG): por URL y tipo
+  - ESP32-CAM: por tipo 'websocket', URL con '/stream', o sin URL si no está vinculada
+- Mensajes diferenciados por estado:
+  - "📡 Esperando vinculación ESP32-CAM" para cámaras sin configurar
+  - Enlace al simulador para pruebas
+  - "RTSP no soportado en web" solo para cámaras RTSP tradicionales
+
+**Backend - espController.js**:
+- `POST /api/esp/camera-link` - Vincula ESP32-CAM con cámara en base de datos
+  - Parámetros: cameraId, serialNumber (MAC), wifiSsid, wifiPassword
+  - Actualiza campos: serialNumber, linked, wifiConfig
+  - Endpoint público (sin JWT) para permitir acceso desde ESP32
+
+**Simulador de Hardware - esp32-simulator.html**:
+- Interfaz web que simula el captive portal del ESP32
+- Diseño estilo iPhone con barra de estado
+- Formulario de 3 campos: ID de Cámara, WiFi SSID, WiFi Password
+- Hace llamadas reales al endpoint `/api/esp/camera-link`
+- Consola de logs estilo Serial Monitor
+- Generación de MAC address aleatorias
+- Útil para testing sin hardware físico
+
+**Modelo Camera.js**:
+- Campo `streamingConfig.tipo`: 'websocket' | 'rtsp' | 'mjpeg'
+- Campo `streamingConfig.urlPrincipal`: URL del stream (opcional para ESP32-CAM)
+- Campo `linked`: indica si el ESP32 está vinculado
+- Campo `serialNumber`: MAC address del ESP32
+- Campo `wifiConfig`: {ssid, password, configured}
+
+**Flujo de usuario final** (documentado en `FLUJO_USUARIO_FINAL.md`):
+1. Usuario crea cámara en security.html
+2. Sistema muestra modal con ID de cámara y botón copiar
+3. Usuario enciende ESP32-CAM (crea red "KYROS-CAM-SETUP")
+4. Usuario se conecta desde celular a la red del ESP32
+5. Captive portal se abre automáticamente con formulario
+6. Usuario pega ID + ingresa su WiFi de casa
+7. ESP32 se vincula automáticamente con backend
+
+**Archivos clave**:
+- `database/public/security.html` - UI principal de cámaras (líneas 255-330)
+- `database/controllers/espController.js` - Lógica de vinculación (líneas 398-469)
+- `database/public/esp32-simulator.html` - Simulador completo
+- `FLUJO_USUARIO_FINAL.md` - Documentación del flujo
+
+**Estado actual**:
+- ✅ Backend endpoint funcional
+- ✅ Frontend con modales y detección de tipos
+- ✅ Simulador completo y probado
+- ⏳ Pendiente: Integrar código Arduino del compañero de equipo

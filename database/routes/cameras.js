@@ -9,7 +9,8 @@ const {
     deleteCamera,
     toggleCamera,
     toggleRecording,
-    updateConnectionStatus
+    updateConnectionStatus,
+    getStreamStatus
 } = require('../controllers/cameraController');
 
 const { protect } = require('../middleware/auth');
@@ -22,14 +23,16 @@ router.route('/')
     .get(getCameras)
     .post(createCamera);
 
+// Rutas específicas (antes de /:id para evitar conflictos)
+router.get('/:id/stream-status', getStreamStatus);
+router.put('/:id/toggle', toggleCamera);
+router.put('/:id/recording', toggleRecording);
+router.put('/:id/status', updateConnectionStatus);
+
+// Rutas genéricas con :id
 router.route('/:id')
     .get(getCamera)
     .put(updateCamera)
     .delete(deleteCamera);
-
-// Rutas de control
-router.put('/:id/toggle', toggleCamera);
-router.put('/:id/recording', toggleRecording);
-router.put('/:id/status', updateConnectionStatus);
 
 module.exports = router;

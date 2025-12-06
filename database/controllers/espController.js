@@ -2,6 +2,7 @@ const Room = require('../models/Room');
 const Device = require('../models/Device');
 const Automatize = require('../models/Automatize');
 const DeviceData = require('../models/DeviceData');
+const Camera = require('../models/Camera');
 const fetch = require('node-fetch');
 
 // --------------------------------------------------------------------------
@@ -323,8 +324,252 @@ const notifyESP32ConfigUpdate = async (automatizacion) => {
     }
 };
 
+// --------------------------------------------------------------------------
+// 4. ENDPOINT DE SETUP INICIAL PARA ESP32-CAM (Sin autenticación)
+// --------------------------------------------------------------------------
+const getCameraSetup = async (req, res, next) => {
+    try {
+        const { cameraId } = req.params;
+
+        // Importar el modelo Camera
+        const Camera = require('../models/Camera');
+
+        // Buscar cámara por ID
+        const camera = await Camera.findById(cameraId)
+            .select('_id nombre wifiConfig')
+            .lean();
+
+        if (!camera) {
+            return res.status(404).json({
+                success: false,
+                message: 'Cámara no encontrada'
+            });
+        }
+
+        // Verificar que tenga configuración WiFi
+        if (!camera.wifiConfig || !camera.wifiConfig.ssid) {
+            return res.status(400).json({
+                success: false,
+                message: 'Esta cámara no tiene configuración WiFi. Configure el WiFi en la interfaz web.'
+            });
+        }
+
+        // Obtener IP del servidor (puede ser del header o configuración)
+        const serverIP = req.headers.host ? req.headers.host.split(':')[0] : 'localhost';
+
+        // Marcar como configurada y actualizar timestamp
+        await Camera.findByIdAndUpdate(cameraId, {
+            'wifiConfig.configured': true,
+            'wifiConfig.lastConfigDownload': new Date()
+        });
+
+        // Retornar configuración
+        res.status(200).json({
+            success: true,
+            data: {
+                cameraId: camera._id.toString(),
+                cameraName: camera.nombre,
+                wifi: {
+                    ssid: camera.wifiConfig.ssid,
+                    password: camera.wifiConfig.password
+                },
+                server: {
+                    host: serverIP,
+                    port: 3000,
+                    wsPath: '/ws/camera'
+                }
+            }
+        });
+
+        console.log(`[Setup] ✅ ESP32-CAM "${camera.nombre}" descargó configuración`);
+
+    } catch (error) {
+        console.error('[Setup] Error:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Error al obtener configuración',
+            error: error.message
+        });
+    }
+};
+
+// --------------------------------------------------------------------------
+// 5. ENDPOINT DE VINCULACIÓN POR SERIAL/MAC (Opción B: QR Code)
+// --------------------------------------------------------------------------
+const linkCameraBySerial = async (req, res, next) => {
+    try {
+        const { cameraId, serialNumber, wifiSsid, wifiPassword } = req.body;
+
+        // Validar campos requeridos
+        if (!cameraId || !serialNumber || !wifiSsid || !wifiPassword) {
+            return res.status(400).json({
+                success: false,
+                message: 'Se requieren: cameraId, serialNumber, wifiSsid, wifiPassword'
+            });
+        }
+
+        // Importar el modelo Camera
+        const Camera = require('../models/Camera');
+
+        // Buscar cámara por ID específico
+        const camera = await Camera.findById(cameraId);
+
+        if (!camera) {
+            return res.status(404).json({
+                success: false,
+                message: 'Cámara no encontrada. Verifica el ID de cámara.'
+            });
+        }
+
+        // Verificar si ya está vinculada
+        if (camera.linked && camera.serialNumber !== serialNumber) {
+            return res.status(400).json({
+                success: false,
+                message: 'Esta cámara ya está vinculada a otro ESP32.'
+            });
+        }
+
+        // Vincular el ESP32 con la cámara
+        camera.serialNumber = serialNumber;
+        camera.linked = true;
+        camera.wifiConfig.ssid = wifiSsid;
+        camera.wifiConfig.password = wifiPassword;
+        camera.wifiConfig.configured = true;
+        camera.wifiConfig.lastConfigDownload = new Date();
+        await camera.save();
+
+        // Obtener IP del servidor
+        const serverIP = req.headers.host ? req.headers.host.split(':')[0] : 'localhost';
+
+        // Retornar configuración completa
+        res.status(200).json({
+            success: true,
+            message: `Vinculado exitosamente con cámara: ${camera.nombre}`,
+            data: {
+                cameraId: camera._id.toString(),
+                cameraName: camera.nombre,
+                server: {
+                    host: serverIP,
+                    port: 3000,
+                    wsPath: '/ws/camera'
+                }
+            }
+        });
+
+        console.log(`[Link] ✅ ESP32 ${serialNumber} vinculado con cámara "${camera.nombre}" (${camera._id})`);
+        console.log(`[Link] WiFi configurado: ${wifiSsid}`);
+
+    } catch (error) {
+        console.error('[Link] Error:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Error al vincular dispositivo',
+            error: error.message
+        });
+    }
+};
+
+// @desc    Validar código de activación (Captive Portal)
+// @route   POST /api/esp/validate-activation-code
+// @access  Public (ESP32 sin autenticar)
+const validateActivationCode = async (req, res) => {
+    try {
+        const { activationCode, macAddress } = req.body;
+
+        console.log(`[Activation] Validando código: ${activationCode} para MAC: ${macAddress}`);
+
+        if (!activationCode || !macAddress) {
+            return res.status(400).json({
+                success: false,
+                message: 'Código de activación y MAC address son requeridos'
+            });
+        }
+
+        // Buscar cámara con este código de activación
+        const camera = await Camera.findOne({
+            activationCode: activationCode.toUpperCase(),
+            activationCodeUsed: false
+        }).populate('habitacion');
+
+        if (!camera) {
+            console.log(`[Activation] ❌ Código inválido o ya usado: ${activationCode}`);
+            return res.status(404).json({
+                success: false,
+                message: 'Código de activación inválido o ya usado'
+            });
+        }
+
+        // Verificar si el código expiró
+        if (camera.activationCodeExpiry && camera.activationCodeExpiry < new Date()) {
+            console.log(`[Activation] ⏰ Código expirado: ${activationCode}`);
+            return res.status(400).json({
+                success: false,
+                message: 'El código de activación ha expirado'
+            });
+        }
+
+        // Marcar código como usado y guardar MAC
+        camera.activationCodeUsed = true;
+        camera.linked = true;
+        camera.serialNumber = macAddress;
+        camera.hardware.mac = macAddress;
+        await camera.save();
+
+        // Obtener URL del servidor de forma inteligente
+        // 1) Si hay SERVER_HOST en env, usarlo (Render)
+        // 2) Si no, detectar del request header (funciona para localhost y Render)
+        let serverHost = process.env.SERVER_HOST;
+        let serverPort = process.env.PORT || 3000;
+
+        if (!serverHost) {
+            // Autodetección desde el request
+            const hostHeader = req.headers.host;
+            if (hostHeader) {
+                const parts = hostHeader.split(':');
+                serverHost = parts[0];
+                if (parts[1]) {
+                    serverPort = parts[1];
+                }
+            } else {
+                // Fallback a IP local
+                serverHost = req.socket.localAddress || 'localhost';
+            }
+        }
+
+        console.log(`[Activation] ✅ Código validado. Cámara "${camera.nombre}" vinculada con ESP32 ${macAddress}`);
+        console.log(`[Activation] 🌐 Servidor detectado: ${serverHost}:${serverPort}`);
+
+        // Devolver configuración completa
+        res.json({
+            success: true,
+            message: 'Código validado correctamente',
+            config: {
+                cameraId: camera._id,
+                cameraName: camera.nombre,
+                roomName: camera.habitacion?.nombre || 'Sin habitación',
+                server: {
+                    host: serverHost,
+                    port: serverPort,
+                    wsPath: '/ws/camera'
+                }
+            }
+        });
+
+    } catch (error) {
+        console.error('[Activation] Error:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Error al validar código',
+            error: error.message
+        });
+    }
+};
+
 module.exports = {
     getESPConfig,
     reportSensorData,
-    notifyESP32ConfigUpdate
+    notifyESP32ConfigUpdate,
+    getCameraSetup,
+    linkCameraBySerial,
+    validateActivationCode
 };

@@ -84,9 +84,6 @@
                     <h3>Nombre de cámara</h3>
                     <input type="text" id="cameraNameInput" name="cameraName" placeholder="Ej: Cámara Entrada">
                     <br>
-                    <h3>URL de conexión (Streaming)</h3>
-                    <input type="text" id="connectionInput" name="connection" placeholder="Ej: rtsp://192.168.1.100/stream">
-                    <br>
                     <button class="button-save">Guardar</button>
                     <br>
                     <button class="button-delete mt-2">Eliminar</button>
@@ -161,7 +158,6 @@
 
         const cameraId = getParameterByName('cameraId');
         const cameraNameInput = document.getElementById('cameraNameInput');
-        const connectionInput = document.getElementById('connectionInput');
         const saveButton = document.querySelector('.button-save');
         const deleteButton = document.querySelector('.button-delete');
 
@@ -180,7 +176,6 @@
                 if (response.ok && data.success) {
                     const camera = data.data;
                     cameraNameInput.value = camera.nombre;
-                    connectionInput.value = camera.streaming.urlPrincipal || '';
                 } else {
                     await swal("Error", "Error al cargar los datos de la cámara", "error");
                     window.location.href = 'security.html';
@@ -198,16 +193,9 @@
             saveButton.disabled = true;
 
             const cameraName = cameraNameInput.value.trim();
-            const connection = connectionInput.value.trim();
 
             if (!cameraName) {
                 swal("Error", "Favor de ingresar el nombre de la cámara", "warning");
-                saveButton.disabled = false;
-                return;
-            }
-
-            if (!connection) {
-                swal("Error", "Favor de ingresar la URL de conexión", "warning");
                 saveButton.disabled = false;
                 return;
             }
@@ -216,11 +204,7 @@
                 const response = await fetchWithAuth(`${API_URL}/cameras/${cameraId}`, {
                     method: 'PUT',
                     body: JSON.stringify({
-                        nombre: cameraName,
-                        streaming: {
-                            urlPrincipal: connection,
-                            tipo: 'rtsp'
-                        }
+                        nombre: cameraName
                     })
                 });
 

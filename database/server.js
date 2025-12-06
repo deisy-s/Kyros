@@ -23,6 +23,9 @@ const taskRoutes = require('./routes/tasks');
 const automatizeRoutes = require('./routes/automatize');
 const espRoutes = require('./routes/esp');
 
+// Importar servicio de WebSocket para streaming de cámaras
+const WebSocketCameraServer = require('./services/websocketServer');
+
 const app = express();
 
 // Conectar a MongoDB
@@ -115,7 +118,8 @@ const htmlRoutes = [
     '/newtask.html',
     '/taskdata.html',
     '/taskinfo.html',
-    '/helpcenter.html'
+    '/helpcenter.html',
+    '/camerastream.html'
 ];
 
 htmlRoutes.forEach(route => {
@@ -144,6 +148,11 @@ const server = app.listen(PORT, () => {
     console.log(`[API] Disponible en http://localhost:${PORT}/api`);
     console.log('='.repeat(50));
 });
+
+// Inicializar WebSocket Server para streaming de cámaras
+const wsServer = new WebSocketCameraServer(server);
+app.set('wsServer', wsServer); // Guardar referencia para usarla en controladores
+console.log('[WebSocket] Sistema de streaming de cámaras inicializado');
 
 // Manejo de errores no capturados
 process.on('unhandledRejection', (err) => {

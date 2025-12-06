@@ -307,3 +307,45 @@ exports.updateConnectionStatus = async (req, res, next) => {
         });
     }
 };
+
+// @desc    Obtener estado de streaming de una cámara
+// @route   GET /api/cameras/:id/stream-status
+// @access  Private
+exports.getStreamStatus = async (req, res, next) => {
+    try {
+        const camera = await Camera.findById(req.params.id);
+
+        if (!camera) {
+            return res.status(404).json({
+                success: false,
+                message: 'Cámara no encontrada'
+            });
+        }
+
+        // Verificar que el usuario es dueño de la cámara
+        if (camera.usuario.toString() !== req.user._id.toString()) {
+            return res.status(403).json({
+                success: false,
+                message: 'No autorizado para ver esta cámara'
+            });
+        }
+
+        // Obtener estado del WebSocket server
+        const wsServer = req.app.get('wsServer');
+        const status = wsServer.getCameraStatus(camera._id.toString());
+
+        res.status(200).json({
+            success: true,
+            data: {
+                cameraId: camera._id,
+                nombre: camera.nombre,
+                wsConnected: status.connected,
+                viewers: status.viewers,
+                lastUpdate: camera.lastStreamUpdate
+            }
+        });
+
+    } catch (error) {
+        next(error);
+    }
+};

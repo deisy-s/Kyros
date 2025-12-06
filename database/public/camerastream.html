@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Streaming en Vivo - KYROS</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+    <style>
+        #videoCanvas {
+            width: 100%;
+            max-width: 800px;
+            height: auto;
+            border: 2px solid #dee2e6;
+            border-radius: 8px;
+            background: #000;
+        }
+        .status-indicator {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            margin-right: 8px;
+        }
+        .status-connected { background-color: #28a745; }
+        .status-disconnected { background-color: #dc3545; }
+        .status-connecting { background-color: #ffc107; animation: blink 1s infinite; }
+        @keyframes blink {
+            0%, 50%, 100% { opacity: 1; }
+            25%, 75% { opacity: 0.5; }
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="rooms.html">KYROS</a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item"><a class="nav-link" href="security.html">← Volver a Cámaras</a></li>
+                    <li class="nav-item"><a class="nav-link" href="index.html" id="logoutBtn">Cerrar Sesión</a></li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container mt-4">
+        <div class="row">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h4 class="mb-0" id="cameraTitle">Cargando...</h4>
+                        <div>
+                            <span class="status-indicator status-connecting" id="statusIndicator"></span>
+                            <span id="statusText">Conectando...</span>
+                        </div>
+                    </div>
+                    <div class="card-body text-center">
+                        <canvas id="videoCanvas" width="640" height="480"></canvas>
+                        <div class="mt-3">
+                            <p class="text-muted mb-1">
+                                <strong>FPS:</strong> <span id="fpsCounter">0</span> |
+                                <strong>Viewers:</strong> <span id="viewerCount">0</span> |
+                                <strong>Latencia:</strong> <span id="latency">-</span>ms
+                            </p>
+                            <p class="text-muted small" id="lastFrameTime">Esperando primer frame...</p>
+                        </div>
+                        <button class="btn btn-danger mt-3" id="stopStreamBtn">Detener Stream</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="js/auth.js"></script>
+    <script>
+        requireAuth(); // Proteger página
+
+        const urlParams = new URLSearchParams(window.location.search);
+        const cameraId = urlParams.get('id');
+
+        if (!cameraId) {
+            alert('ID de cámara no especificado');
+            window.location.href = 'security.html';
+        }
+
+        // Elementos DOM
+        const canvas = document.getElementById('videoCanvas');
+        const ctx = canvas.getContext('2d');
+        const statusIndicator = document.getElementById('statusIndicator');
+        const statusText = document.getElementById('statusText');
+        const fpsCounter = document.getElementById('fpsCounter');
+        const viewerCount = document.getElementById('viewerCount');
+        const latencyDisplay = document.getElementById('latency');
+        const lastFrameTime = document.getElementById('lastFrameTime');
+        const cameraTitle = document.getElementById('cameraTitle');
+
+        // Variables de estado
+        let ws = null;
+        let frameCount = 0;
+        let lastFpsUpdate = Date.now();
+        let lastFrameReceived = null;
+
+        // Conectar al WebSocket
+        function connectWebSocket() {
+            const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+            const wsUrl = `${protocol}//${window.location.host}/ws/camera`;
+
+            ws = new WebSocket(wsUrl);
+
+            ws.onopen = () => {
+                console.log('[WebSocket] Conectado');
+                updateStatus('connecting', 'Suscribiendo...');
+
+                // Suscribirse a la cámara
+                ws.send(JSON.stringify({
+                    type: 'subscribe',
+                    cameraId: cameraId
+                }));
+            };
+
+            ws.onmessage = (event) => {
+                if (event.data instanceof Blob) {
+                    // Es un frame de imagen
+                    handleFrameBlob(event.data);
+                } else {
+                    // Es un mensaje de control JSON
+                    try {
+                        const message = JSON.parse(event.data);
+                        handleControlMessage(message);
+                    } catch (error) {
+                        console.error('[WebSocket] Error parseando mensaje:', error);
+                    }
+                }
+            };
+
+            ws.onerror = (error) => {
+                console.error('[WebSocket] Error:', error);
+                updateStatus('disconnected', 'Error de conexión');
+            };
+
+            ws.onclose = () => {
+                console.log('[WebSocket] Desconectado');
+                updateStatus('disconnected', 'Desconectado');
+
+                // Intentar reconectar después de 3 segundos
+                setTimeout(() => {
+                    if (ws.readyState === WebSocket.CLOSED) {
+                        console.log('[WebSocket] Intentando reconectar...');
+                        connectWebSocket();
+                    }
+                }, 3000);
+            };
+        }
+
+        function handleFrameBlob(blob) {
+            lastFrameReceived = Date.now();
+            frameCount++;
+
+            // Actualizar FPS cada segundo
+            const now = Date.now();
+            if (now - lastFpsUpdate >= 1000) {
+                const fps = Math.round(frameCount / ((now - lastFpsUpdate) / 1000));
+                fpsCounter.textContent = fps;
+                frameCount = 0;
+                lastFpsUpdate = now;
+            }
+
+            // Dibujar frame en canvas
+            const img = new Image();
+            img.onload = () => {
+                // Ajustar canvas al tamaño de la imagen
+                canvas.width = img.width;
+                canvas.height = img.height;
+                ctx.drawImage(img, 0, 0);
+                URL.revokeObjectURL(img.src); // Liberar memoria
+            };
+            img.src = URL.createObjectURL(blob);
+
+            // Actualizar timestamp
+            const timeStr = new Date().toLocaleTimeString('es-MX');
+            lastFrameTime.textContent = `Último frame: ${timeStr}`;
+        }
+
+        function handleControlMessage(message) {
+            switch (message.type) {
+                case 'subscribed':
+                    if (message.success) {
+                        const status = message.esp32Connected ? 'connected' : 'disconnected';
+                        const text = message.esp32Connected ? 'Conectado (esperando frames)' : 'ESP32 desconectado';
+                        updateStatus(status, text);
+                    }
+                    break;
+
+                case 'esp32_disconnected':
+                    updateStatus('disconnected', 'ESP32 desconectado');
+                    break;
+
+                default:
+                    console.log('[WebSocket] Mensaje de control:', message);
+            }
+        }
+
+        function updateStatus(state, text) {
+            statusIndicator.className = `status-indicator status-${state}`;
+            statusText.textContent = text;
+        }
+
+        // Cargar información de la cámara
+        async function loadCameraInfo() {
+            try {
+                const response = await fetchWithAuth(`/api/cameras/${cameraId}`);
+                const data = await response.json();
+
+                if (data.success) {
+                    cameraTitle.textContent = `${data.data.nombre} - Streaming en Vivo`;
+                } else {
+                    throw new Error(data.message);
+                }
+            } catch (error) {
+                console.error('Error cargando cámara:', error);
+                alert('Error al cargar la cámara');
+                window.location.href = 'security.html';
+            }
+        }
+
+        // Botón detener stream
+        document.getElementById('stopStreamBtn').addEventListener('click', () => {
+            if (ws) {
+                ws.close();
+            }
+            window.location.href = 'security.html';
+        });
+
+        // Logout
+        document.getElementById('logoutBtn').addEventListener('click', (e) => {
+            e.preventDefault();
+            localStorage.removeItem('token');
+            window.location.href = 'index.html';
+        });
+
+        // Inicializar
+        loadCameraInfo();
+        connectWebSocket();
+
+        // Calcular latencia periódicamente
+        setInterval(() => {
+            if (lastFrameReceived) {
+                const latency = Date.now() - lastFrameReceived;
+                latencyDisplay.textContent = latency > 5000 ? 'N/A' : latency;
+            }
+        }, 1000);
+    </script>
+</body>
+</html>

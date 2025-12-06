@@ -21,11 +21,11 @@ const CameraSchema = new mongoose.Schema({
         ref: 'Usuario',
         required: [true, 'La cámara debe pertenecer a un usuario']
     },
-    // URLs de streaming
-    streaming: {
+    // URLs de streaming (RTSP/MJPEG tradicional)
+    streamingConfig: {
         urlPrincipal: {
             type: String,
-            required: [true, 'Se requiere la URL principal de streaming']
+            default: ''
         },
         urlSecundaria: {
             type: String,
@@ -33,8 +33,7 @@ const CameraSchema = new mongoose.Schema({
         },
         tipo: {
             type: String,
-            default: 'rtsp'
-            // Sin restricción enum - acepta cualquier tipo de streaming
+            default: 'websocket' // websocket para ESP32-CAM, rtsp/mjpeg para cámaras tradicionales
         }
     },
     // Estado de la cámara
@@ -109,6 +108,76 @@ const CameraSchema = new mongoose.Schema({
             type: String,
             default: ''
         }
+    },
+    // WebSocket streaming (ESP32)
+    streaming: {
+        type: Boolean,
+        default: false,
+        description: 'Indica si la cámara está transmitiendo en vivo'
+    },
+    lastStreamUpdate: {
+        type: Date,
+        default: null,
+        description: 'Última vez que se recibió un frame'
+    },
+    // Configuración WiFi para ESP32 (Opción 2: setup desde web)
+    wifiConfig: {
+        ssid: {
+            type: String,
+            default: '',
+            description: 'Nombre de la red WiFi del hogar'
+        },
+        password: {
+            type: String,
+            default: '',
+            description: 'Contraseña de la red WiFi (encriptada en producción)'
+        },
+        configured: {
+            type: Boolean,
+            default: false,
+            description: 'Indica si el ESP32 ya descargó su configuración'
+        },
+        lastConfigDownload: {
+            type: Date,
+            default: null,
+            description: 'Última vez que el ESP32 descargó configuración'
+        }
+    },
+    // Vinculación por Serial/MAC (Opción B: QR Code)
+    serialNumber: {
+        type: String,
+        default: '',
+        sparse: true,
+        description: 'MAC Address del ESP32 para vinculación'
+    },
+    linked: {
+        type: Boolean,
+        default: false,
+        description: 'Indica si el ESP32 físico ya se vinculó con esta cámara'
+    },
+    // Código de activación para Captive Portal (Opción 1)
+    activationCode: {
+        type: String,
+        unique: true,
+        sparse: true,
+        default: function() {
+            // Generar código aleatorio de 6 caracteres (A-Z, 0-9)
+            return Math.random().toString(36).substring(2, 8).toUpperCase();
+        },
+        description: 'Código de 6 caracteres para vincular ESP32 vía Captive Portal'
+    },
+    activationCodeUsed: {
+        type: Boolean,
+        default: false,
+        description: 'Indica si el código de activación ya fue usado'
+    },
+    activationCodeExpiry: {
+        type: Date,
+        default: function() {
+            // Código expira en 24 horas
+            return new Date(Date.now() + 24 * 60 * 60 * 1000);
+        },
+        description: 'Fecha de expiración del código de activación'
     },
     // Almacenamiento de grabaciones
     almacenamiento: {

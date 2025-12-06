@@ -1,0 +1,464 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>🔧 ESP32-CAM Simulator - KYROS</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: Arial, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 20px;
+    }
+
+    .simulator-label {
+      background: rgba(255, 255, 255, 0.2);
+      backdrop-filter: blur(10px);
+      color: white;
+      padding: 15px 30px;
+      border-radius: 10px;
+      margin-bottom: 20px;
+      text-align: center;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+    }
+
+    .simulator-label h1 {
+      font-size: 24px;
+      font-weight: 600;
+      margin-bottom: 5px;
+    }
+
+    .simulator-label p {
+      font-size: 14px;
+      opacity: 0.9;
+    }
+
+    .phone-frame {
+      width: 100%;
+      max-width: 400px;
+      background: #000;
+      border-radius: 40px;
+      padding: 20px;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+      position: relative;
+    }
+
+    .phone-notch {
+      width: 150px;
+      height: 25px;
+      background: #000;
+      border-radius: 0 0 20px 20px;
+      margin: 0 auto 10px;
+      position: relative;
+    }
+
+    .phone-notch::before {
+      content: '';
+      position: absolute;
+      top: 8px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 60px;
+      height: 5px;
+      background: #333;
+      border-radius: 3px;
+    }
+
+    .phone-screen {
+      background: #f0f0f0;
+      border-radius: 20px;
+      overflow: hidden;
+      box-shadow: inset 0 2px 10px rgba(0, 0, 0, 0.1);
+    }
+
+    .status-bar {
+      background: #000;
+      color: white;
+      padding: 8px 15px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 12px;
+    }
+
+    .wifi-indicator {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+
+    .wifi-icon {
+      font-size: 16px;
+    }
+
+    .container {
+      background: white;
+      padding: 25px;
+      min-height: 600px;
+    }
+
+    h1 {
+      color: #4CAF50;
+      text-align: center;
+      margin: 0 0 10px;
+      font-size: 24px;
+    }
+
+    .info {
+      color: #666;
+      font-size: 12px;
+      text-align: center;
+      margin: 0 0 25px;
+    }
+
+    label {
+      display: block;
+      color: #333;
+      font-weight: 600;
+      margin: 15px 0 5px;
+      font-size: 14px;
+    }
+
+    input {
+      width: 100%;
+      padding: 12px;
+      border: 1px solid #ddd;
+      border-radius: 5px;
+      font-size: 14px;
+    }
+
+    input:focus {
+      outline: none;
+      border-color: #4CAF50;
+      box-shadow: 0 0 0 3px rgba(76, 175, 80, 0.1);
+    }
+
+    .btn {
+      background: #4CAF50;
+      color: white;
+      padding: 15px;
+      border: none;
+      border-radius: 5px;
+      font-size: 16px;
+      cursor: pointer;
+      width: 100%;
+      margin-top: 20px;
+      font-weight: 600;
+      transition: all 0.3s ease;
+    }
+
+    .btn:hover {
+      background: #45a049;
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(76, 175, 80, 0.3);
+    }
+
+    .btn:disabled {
+      background: #ccc;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    .serial {
+      background: #f8f9fa;
+      padding: 10px;
+      border-radius: 5px;
+      font-family: 'Courier New', monospace;
+      font-size: 11px;
+      word-break: break-all;
+      margin: 10px 0;
+      color: #666;
+      text-align: center;
+    }
+
+    .status {
+      display: none;
+      padding: 15px;
+      border-radius: 5px;
+      margin: 15px 0;
+      text-align: center;
+      font-weight: 500;
+    }
+
+    .loading {
+      background: #fff3cd;
+      color: #856404;
+      display: none;
+    }
+
+    .success {
+      background: #d4edda;
+      color: #155724;
+      display: none;
+    }
+
+    .error {
+      background: #f8d7da;
+      color: #721c24;
+      display: none;
+    }
+
+    .simulator-info {
+      background: rgba(255, 255, 255, 0.95);
+      padding: 20px;
+      border-radius: 10px;
+      margin-top: 20px;
+      max-width: 400px;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+    }
+
+    .simulator-info h3 {
+      color: #667eea;
+      margin-bottom: 10px;
+      font-size: 18px;
+    }
+
+    .simulator-info ul {
+      list-style: none;
+      padding: 0;
+    }
+
+    .simulator-info li {
+      padding: 8px 0;
+      color: #333;
+      font-size: 14px;
+      border-bottom: 1px solid #eee;
+    }
+
+    .simulator-info li:last-child {
+      border-bottom: none;
+    }
+
+    .simulator-info strong {
+      color: #667eea;
+      display: inline-block;
+      width: 120px;
+    }
+
+    .console {
+      background: #1e1e1e;
+      color: #00ff00;
+      padding: 15px;
+      border-radius: 5px;
+      font-family: 'Courier New', monospace;
+      font-size: 11px;
+      margin-top: 15px;
+      max-height: 200px;
+      overflow-y: auto;
+      line-height: 1.6;
+    }
+
+    .console-line {
+      margin: 2px 0;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.5; }
+    }
+
+    .loading .btn {
+      animation: pulse 1.5s infinite;
+    }
+  </style>
+</head>
+<body>
+  <div class="simulator-label">
+    <h1>🔧 Simulador ESP32-CAM</h1>
+    <p>Simula el captive portal del ESP32 sin necesidad de hardware</p>
+  </div>
+
+  <div class="phone-frame">
+    <div class="phone-notch"></div>
+    <div class="phone-screen">
+      <div class="status-bar">
+        <div class="wifi-indicator">
+          <span class="wifi-icon">📶</span>
+          <span id="wifiName">KYROS-CAM-SETUP</span>
+        </div>
+        <div>
+          <span id="time">--:--</span>
+        </div>
+      </div>
+
+      <div class="container">
+        <h1>🏠 KYROS Camera Setup</h1>
+        <p class="info">Configura tu cámara ESP32 en 3 pasos</p>
+
+        <form id="setupForm">
+          <label for="cameraId">🆔 ID de Cámara</label>
+          <input type="text" id="cameraId" placeholder="Pega el ID desde el sitio web" required>
+
+          <label for="wifiSsid">📶 Tu WiFi</label>
+          <input type="text" id="wifiSsid" placeholder="Nombre de tu red WiFi" required>
+
+          <label for="wifiPassword">🔒 Contraseña WiFi</label>
+          <input type="password" id="wifiPassword" placeholder="Contraseña de tu WiFi" required>
+
+          <button type="submit" class="btn">✅ Conectar</button>
+        </form>
+
+        <div class="status loading" id="loading">⏳ Conectando con el servidor...</div>
+        <div class="status success" id="success">✅ ¡Conectado! Reiniciando...</div>
+        <div class="status error" id="error">❌ Error. Verifica los datos e intenta de nuevo.</div>
+
+        <p class="info" style="margin-top:20px">
+          ESP32 MAC: <span class="serial" id="macAddress">--:--:--:--:--:--</span>
+        </p>
+
+        <div class="console" id="console"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="simulator-info">
+    <h3>📋 Instrucciones de Prueba</h3>
+    <ul>
+      <li><strong>Paso 1:</strong> Abre <a href="http://localhost:3000/security.html" target="_blank">security.html</a></li>
+      <li><strong>Paso 2:</strong> Crea una nueva cámara</li>
+      <li><strong>Paso 3:</strong> Copia el ID que aparece</li>
+      <li><strong>Paso 4:</strong> Pégalo aquí arriba</li>
+      <li><strong>Paso 5:</strong> Completa WiFi y prueba</li>
+    </ul>
+  </div>
+
+  <script>
+    // Generar MAC address aleatorio realista
+    function generateMAC() {
+      const hexDigits = '0123456789ABCDEF';
+      let mac = '';
+      for (let i = 0; i < 6; i++) {
+        if (i > 0) mac += ':';
+        mac += hexDigits[Math.floor(Math.random() * 16)];
+        mac += hexDigits[Math.floor(Math.random() * 16)];
+      }
+      return mac;
+    }
+
+    const macAddress = generateMAC();
+    document.getElementById('macAddress').textContent = macAddress;
+
+    // Actualizar hora
+    function updateTime() {
+      const now = new Date();
+      const hours = String(now.getHours()).padStart(2, '0');
+      const minutes = String(now.getMinutes()).padStart(2, '0');
+      document.getElementById('time').textContent = `${hours}:${minutes}`;
+    }
+    updateTime();
+    setInterval(updateTime, 1000);
+
+    // Console logger
+    const consoleEl = document.getElementById('console');
+    function log(message, type = 'info') {
+      const line = document.createElement('div');
+      line.className = 'console-line';
+      const timestamp = new Date().toLocaleTimeString();
+      line.textContent = `[${timestamp}] ${message}`;
+      consoleEl.appendChild(line);
+      consoleEl.scrollTop = consoleEl.scrollHeight;
+    }
+
+    // Inicialización
+    log('=== KYROS ESP32-CAM Simulator ===');
+    log(`MAC Address: ${macAddress}`);
+    log('[AP] Red KYROS-CAM-SETUP creada');
+    log('[Portal] Esperando configuración...');
+
+    // Manejar formulario
+    document.getElementById('setupForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+
+      const cameraId = document.getElementById('cameraId').value.trim();
+      const wifiSsid = document.getElementById('wifiSsid').value.trim();
+      const wifiPassword = document.getElementById('wifiPassword').value.trim();
+
+      if (!cameraId || !wifiSsid || !wifiPassword) {
+        log('[Error] Todos los campos son requeridos', 'error');
+        showStatus('error');
+        return;
+      }
+
+      log('[Portal] Datos recibidos del formulario');
+      log(`  Camera ID: ${cameraId}`);
+      log(`  WiFi SSID: ${wifiSsid}`);
+
+      document.getElementById('setupForm').style.display = 'none';
+      showStatus('loading');
+
+      try {
+        log('[Link] Vinculando con servidor backend...');
+
+        const response = await fetch('http://localhost:3000/api/esp/camera-link', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            cameraId: cameraId,
+            serialNumber: macAddress,
+            wifiSsid: wifiSsid,
+            wifiPassword: wifiPassword
+          })
+        });
+
+        const data = await response.json();
+
+        if (response.ok && data.success) {
+          log('[Link] ✅ Vinculado!');
+          log(`[Link] Cámara: ${data.data.cameraName}`);
+          log(`[Link] Servidor: ${data.data.server.host}:${data.data.server.port}`);
+          log('[Portal] ✅ Configuración completa');
+          log('[WiFi] Conectando a ' + wifiSsid + '...');
+
+          showStatus('success');
+
+          setTimeout(() => {
+            log('[WiFi] ✅ Conectado!');
+            log('[Camera] Inicializando...');
+            setTimeout(() => {
+              log('[WebSocket] Conectando al servidor...');
+              log('[Streaming] ✅ Iniciado!');
+              log('');
+              log('🎉 ESP32-CAM configurado correctamente');
+              log('   Puedes verlo en "Ver en Vivo" en security.html');
+            }, 1500);
+          }, 2000);
+
+        } else {
+          throw new Error(data.message || 'Error al vincular');
+        }
+
+      } catch (error) {
+        log(`[Link] ❌ Error: ${error.message}`, 'error');
+        showStatus('error');
+        setTimeout(() => {
+          document.getElementById('setupForm').style.display = 'block';
+          hideAllStatus();
+        }, 3000);
+      }
+    });
+
+    function showStatus(status) {
+      hideAllStatus();
+      document.getElementById(status).style.display = 'block';
+    }
+
+    function hideAllStatus() {
+      document.getElementById('loading').style.display = 'none';
+      document.getElementById('success').style.display = 'none';
+      document.getElementById('error').style.display = 'none';
+    }
+  </script>
+</body>
+</html>
