@@ -106,7 +106,7 @@
                     <input type="number" id="pinInput" name="pin" placeholder="Ej: 17">
                     <div id="cameraInfo" style="display: none;">
                         <div class="alert alert-info">
-                            <strong>📹 ESP32-CAM</strong><br>
+                            <strong>ESP32-CAM</strong><br>
                             Después de guardar, recibirás un código de activación para configurar tu ESP32-CAM vía WiFi.
                         </div>
                     </div>
@@ -126,38 +126,38 @@
         <div class="modal-dialog modal-lg">
             <div class="modal-content">
                 <div class="modal-header bg-success text-white">
-                    <h5 class="modal-title">✅ Cámara Creada - Configuración Rápida</h5>
+                    <h5 class="modal-title">Cámara Creada - Configuración Rápida</h5>
                     <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
                 </div>
                 <div class="modal-body">
                     <div class="alert alert-success text-center">
-                        <h6><strong>🔑 Código de Activación</strong></h6>
+                        <h6><strong>Código de Activación</strong></h6>
                         <div class="input-group mt-2">
                             <input type="text" class="form-control form-control-lg text-center fw-bold" id="newActivationCode" readonly style="font-size: 2rem; letter-spacing: 0.3em;">
-                            <button class="btn btn-primary btn-lg" type="button" onclick="copyActivationCode()">📋 Copiar</button>
+                            <button class="btn btn-primary btn-lg" type="button" onclick="copyActivationCode()">Copiar</button>
                         </div>
                         <small class="text-muted">Ingresa este código en el portal WiFi del ESP32-CAM</small>
                         <div class="mt-2">
-                            <small class="text-muted">⏰ Expira en 24 horas</small>
+                            <small class="text-muted">Expira en 24 horas</small>
                         </div>
                     </div>
 
                     <div class="alert alert-info">
-                        <strong>📱 Sigue estos 3 simples pasos:</strong>
+                        <strong>Sigue estos 3 simples pasos:</strong>
                     </div>
 
                     <ol class="fs-6">
                         <li class="mb-3">
-                            <strong>🔌 Enciende tu ESP32-CAM</strong>
+                            <strong>Enciende tu ESP32-CAM</strong>
                             <p class="text-muted small mb-0">Conecta la cámara a la corriente. Creará una red WiFi llamada <code>"KYROS-CAM-SETUP"</code></p>
                         </li>
                         <li class="mb-3">
-                            <strong>📱 Conéctate desde tu celular</strong>
+                            <strong>Conéctate desde tu celular</strong>
                             <p class="text-muted small mb-0">Ve a WiFi en tu celular → Selecciona <code>"KYROS-CAM-SETUP"</code> (sin contraseña)<br>
                             Se abrirá automáticamente un portal web</p>
                         </li>
                         <li class="mb-3">
-                            <strong>📝 Completa el formulario</strong>
+                            <strong>Completa el formulario</strong>
                             <p class="text-muted small mb-0">Ingresa en el portal:</p>
                             <ul class="small text-muted">
                                 <li><strong>Código de Activación:</strong> <span id="codePreview" class="badge bg-dark">------</span> (el de arriba)</li>
@@ -168,24 +168,24 @@
                     </ol>
 
                     <div class="alert alert-success">
-                        <strong>✅ ¡Y listo!</strong> El ESP32 se configurará automáticamente y empezará a transmitir video. Lo verás aparecer en Seguridad.
+                        <strong>¡Y listo!</strong> El ESP32 se configurará automáticamente y empezará a transmitir video. Lo verás aparecer en Seguridad.
                     </div>
 
                     <div class="alert alert-warning">
-                        <strong>⏱ Tiempo total:</strong> 1-2 minutos
+                        <strong>Tiempo total:</strong> 1-2 minutos
                         <br>
-                        <strong>💡 Tip:</strong> Mantén este modal abierto para ver el código fácilmente mientras configuras
+                        <strong>Tip:</strong> Mantén este modal abierto para ver el código fácilmente mientras configuras
                     </div>
 
                     <div class="text-center mt-3">
                         <a href="esp32-simulator.html" target="_blank" class="btn btn-outline-primary">
-                            🎮 Probar con Simulador
+                            Probar con Simulador
                         </a>
                     </div>
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
-                    <button type="button" class="btn btn-success" onclick="copyActivationCode()">📋 Copiar Código Nuevamente</button>
+                    <button type="button" class="btn btn-success" onclick="copyActivationCode()">Copiar Código Nuevamente</button>
                 </div>
             </div>
         </div>

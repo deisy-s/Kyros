@@ -91,17 +91,17 @@ void setup() {
   EEPROM.begin(EEPROM_SIZE);
 
   // ⚠️ BORRAR CONFIGURACIÓN (DESCOMENTAR SOLO PARA RESETEAR)
-  // Serial.println("🔄 Borrando configuración del EEPROM...");
+  // Serial.println("Borrando configuración del EEPROM...");
   // for (int i = 0; i < EEPROM_SIZE; i++) {
   //   EEPROM.write(i, 0);
   // }
   // EEPROM.commit();
-  // Serial.println("✅ EEPROM borrado. El ESP32 iniciará en modo Captive Portal.");
+  // Serial.println("EEPROM borrado. El ESP32 iniciará en modo Captive Portal.");
   // delay(2000);
 
   // Intentar leer configuración de EEPROM
   if (loadConfigFromEEPROM()) {
-    Serial.println("✓ Configuración encontrada en EEPROM");
+    Serial.println(" Configuración encontrada en EEPROM");
     Serial.printf("  WiFi: %s\n", wifiConfig.ssid);
     Serial.printf("  Cámara: %s\n", wifiConfig.cameraId);
     Serial.printf("  Servidor: %s:%d%s\n", wifiConfig.serverHost, wifiConfig.serverPort, wifiConfig.wsPath);
@@ -286,7 +286,7 @@ void handleRoot() {
     * { margin: 0; padding: 0; box-sizing: border-box; }
     body {
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif;
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      background: linear-gradient(135deg, #667eea 0%, #667eea 100%);
       min-height: 100vh;
       display: flex;
       align-items: center;
@@ -372,7 +372,6 @@ void handleRoot() {
 </head>
 <body>
   <div class="container">
-    <div class="logo">📹</div>
     <h1>KYROS Setup</h1>
     <p class="subtitle">Configura tu ESP32-CAM</p>
 
@@ -382,23 +381,23 @@ void handleRoot() {
 
     <form action="/save" method="POST">
       <div class="form-group">
-        <label>🔑 Código de Activación</label>
+        <label> Código de Activación</label>
         <input type="text" name="code" id="code" placeholder="Ej: AB3XY9" required pattern="[A-Z0-9]{6}" maxlength="6" style="text-transform: uppercase;" autocomplete="off">
       </div>
 
       <div class="form-group">
-        <label>📶 Selecciona tu red WiFi</label>
+        <label>Selecciona tu red WiFi</label>
         <select name="ssid" id="ssid" required>
-          <option value="">🔍 Cargando redes...</option>
+          <option value="">Cargando redes...</option>
         </select>
       </div>
 
       <div class="form-group">
-        <label>🔒 Contraseña WiFi</label>
+        <label>Contraseña WiFi</label>
         <input type="password" name="password" id="password" placeholder="Contraseña de la red" required maxlength="63" autocomplete="current-password">
       </div>
 
-      <button type="submit">✅ Configurar ESP32-CAM</button>
+      <button type="submit">Configurar ESP32-CAM</button>
     </form>
 
     <script>
@@ -406,7 +405,7 @@ void handleRoot() {
       window.addEventListener('load', function() {
         const submitBtn = document.querySelector('button[type="submit"]');
         submitBtn.disabled = true;
-        submitBtn.textContent = '⏳ Escaneando redes...';
+        submitBtn.textContent = 'Escaneando redes...';
 
         fetch('/networks')
           .then(res => res.json())
@@ -417,15 +416,15 @@ void handleRoot() {
             networks.forEach(net => {
               const option = document.createElement('option');
               option.value = net.ssid;
-              const signal = net.rssi > -60 ? '📶' : net.rssi > -70 ? '📶' : '📶';
-              const lock = net.secure ? '🔒' : '🔓';
+              const signal = net.rssi > -60 ? '' : net.rssi > -70 ? '' : '';
+              const lock = net.secure ? '' : '';
               option.textContent = `${signal} ${lock} ${net.ssid}`;
               select.appendChild(option);
             });
 
             // Habilitar botón
             submitBtn.disabled = false;
-            submitBtn.textContent = '✅ Configurar ESP32-CAM';
+            submitBtn.textContent = ' Configurar ESP32-CAM';
 
             // Focus en el código al cargar
             document.getElementById('code').focus();
@@ -433,9 +432,9 @@ void handleRoot() {
           .catch(err => {
             console.error('Error cargando redes:', err);
             const select = document.getElementById('ssid');
-            select.innerHTML = '<option value="">❌ Error al escanear</option>';
+            select.innerHTML = '<option value="">Error al escanear</option>';
             submitBtn.disabled = false;
-            submitBtn.textContent = '✅ Configurar ESP32-CAM';
+            submitBtn.textContent = 'Configurar ESP32-CAM';
           });
 
         // Validar antes de enviar
@@ -446,18 +445,18 @@ void handleRoot() {
 
           if (!code || !ssid || !password) {
             e.preventDefault();
-            alert('⚠️ Por favor completa todos los campos');
+            alert('Por favor completa todos los campos');
             return false;
           }
 
           if (code.length !== 6) {
             e.preventDefault();
-            alert('⚠️ El código debe tener 6 caracteres');
+            alert('El código debe tener 6 caracteres');
             return false;
           }
 
           submitBtn.disabled = true;
-          submitBtn.textContent = '⏳ Configurando...';
+          submitBtn.textContent = 'Configurando...';
         });
       });
     </script>
@@ -495,8 +494,8 @@ void handleSave() {
 
   // Validar que no estén vacíos
   if (activationCode.length() == 0 || ssid.length() == 0 || password.length() == 0) {
-    Serial.println("[Setup] ❌ ERROR: Datos vacíos");
-    server.send(200, "text/html", "<html><body><h1>❌ Error</h1><p>Por favor completa todos los campos.</p><a href='/'>Volver</a></body></html>");
+    Serial.println("[Setup] ERROR: Datos vacíos");
+    server.send(200, "text/html", "<html><body><h1>Error</h1><p>Por favor completa todos los campos.</p><a href='/'>Volver</a></body></html>");
     return;
   }
 
@@ -513,8 +512,8 @@ void handleSave() {
   }
 
   if (WiFi.status() != WL_CONNECTED) {
-    Serial.println("\n[Setup] ❌ ERROR: No se pudo conectar al WiFi");
-    server.send(200, "text/html", "<html><body><h1>❌ Error</h1><p>No se pudo conectar al WiFi. Verifica el nombre y contraseña.</p><a href='/'>Volver</a></body></html>");
+    Serial.println("\n[Setup] ERROR: No se pudo conectar al WiFi");
+    server.send(200, "text/html", "<html><body><h1>Error</h1><p>No se pudo conectar al WiFi. Verifica el nombre y contraseña.</p><a href='/'>Volver</a></body></html>");
     WiFi.mode(WIFI_AP);
     WiFi.softAP("KYROS-CAM-SETUP");
     return;
@@ -554,7 +553,7 @@ void handleSave() {
 
     Serial.println("[Setup] Iniciando conexión HTTP...");
     if (!http.begin(serverUrls[i])) {
-      Serial.println("[Setup] ❌ Error al iniciar HTTPClient");
+      Serial.println("[Setup] Error al iniciar HTTPClient");
       continue;
     }
 
@@ -574,10 +573,10 @@ void handleSave() {
     if (httpCode == HTTP_CODE_OK || httpCode == 200) {
       response = http.getString();
       http.end();
-      Serial.printf("[Setup] ✅ Servidor encontrado: %s\n", serverUrls[i].c_str());
+      Serial.printf("[Setup] Servidor encontrado: %s\n", serverUrls[i].c_str());
       break;
     } else {
-      Serial.printf("[Setup] ❌ Fallo con código %d, intentando siguiente...\n", httpCode);
+      Serial.printf("[Setup] Fallo con código %d, intentando siguiente...\n", httpCode);
       http.end();
     }
   }
@@ -606,21 +605,21 @@ void handleSave() {
 
       saveConfigToEEPROM();
 
-      Serial.println("\n[Setup] ✅ ¡Configuración completada!");
+      Serial.println("\n[Setup] ¡Configuración completada!");
       Serial.println("[Setup] Reiniciando en 5 segundos...");
 
-      server.send(200, "text/html", "<html><body style='font-family: Arial; text-align: center; padding: 50px;'><h1>✅ ¡Éxito!</h1><p>ESP32-CAM configurado correctamente.</p><p>Reiniciando... Verás el video en la web en unos segundos.</p></body></html>");
+      server.send(200, "text/html", "<html><body style='font-family: Arial; text-align: center; padding: 50px;'><h1>¡Éxito!</h1><p>ESP32-CAM configurado correctamente.</p><p>Reiniciando... Verás el video en la web en unos segundos.</p></body></html>");
 
       delay(5000);
       ESP.restart();
 
     } else {
-      Serial.println("[Setup] ❌ Código inválido o expirado");
+      Serial.println("[Setup] Código inválido o expirado");
       Serial.println(response);
-      server.send(200, "text/html", "<html><body><h1>❌ Error</h1><p>Código de activación inválido o ya usado.</p><a href='/'>Volver</a></body></html>");
+      server.send(200, "text/html", "<html><body><h1>Error</h1><p>Código de activación inválido o ya usado.</p><a href='/'>Volver</a></body></html>");
     }
   } else {
-    Serial.printf("[Setup] ❌ Error HTTP: %d\n", httpCode);
+    Serial.printf("[Setup] Error HTTP: %d\n", httpCode);
 
     if (httpCode > 0) {
       // Recibió respuesta del servidor pero con código de error
@@ -632,7 +631,7 @@ void handleSave() {
       Serial.println("[Setup] Verifica que el servidor esté ejecutándose en http://192.168.1.34:3000");
     }
 
-    server.send(200, "text/html", "<html><body><h1>❌ Error</h1><p>No se pudo conectar con el servidor KYROS.</p><a href='/'>Volver</a></body></html>");
+    server.send(200, "text/html", "<html><body><h1>Error</h1><p>No se pudo conectar con el servidor KYROS.</p><a href='/'>Volver</a></body></html>");
   }
 
   http.end();
@@ -655,7 +654,7 @@ void connectToWiFiAndStream() {
   }
 
   if (WiFi.status() != WL_CONNECTED) {
-    Serial.println("\n❌ No se pudo conectar al WiFi");
+    Serial.println("\nNo se pudo conectar al WiFi");
     Serial.println("Borrando configuración y reiniciando...");
 
     // Borrar EEPROM
@@ -708,7 +707,7 @@ void connectToWebSocket() {
     }
 
   } else {
-    Serial.println("❌ Error al conectar WebSocket");
+    Serial.println("Error al conectar WebSocket");
   }
 }
 

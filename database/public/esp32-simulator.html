@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>🔧 ESP32-CAM Simulator - KYROS</title>
+  <title>ESP32-CAM Simulator - KYROS</title>
   <style>
     * {
       margin: 0;
@@ -13,7 +13,7 @@
 
     body {
       font-family: Arial, sans-serif;
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      background: linear-gradient(135deg, #667eea 0%, #667eea 100%);
       min-height: 100vh;
       display: flex;
       flex-direction: column;
@@ -108,7 +108,7 @@
     }
 
     h1 {
-      color: #4CAF50;
+      color: #0651C7;
       text-align: center;
       margin: 0 0 10px;
       font-size: 24px;
@@ -139,12 +139,12 @@
 
     input:focus {
       outline: none;
-      border-color: #4CAF50;
+      border-color: #0651C7;
       box-shadow: 0 0 0 3px rgba(76, 175, 80, 0.1);
     }
 
     .btn {
-      background: #4CAF50;
+      background: #0651C7;
       color: white;
       padding: 15px;
       border: none;
@@ -158,9 +158,9 @@
     }
 
     .btn:hover {
-      background: #45a049;
+      background: #4574be;
       transform: translateY(-2px);
-      box-shadow: 0 4px 12px rgba(76, 175, 80, 0.3);
+      box-shadow: 0 4px 12px rgba(32, 63, 187, 0.3);
     }
 
     .btn:disabled {
@@ -274,7 +274,7 @@
 </head>
 <body>
   <div class="simulator-label">
-    <h1>🔧 Simulador ESP32-CAM</h1>
+    <h1>Simulador ESP32-CAM</h1>
     <p>Simula el captive portal del ESP32 sin necesidad de hardware</p>
   </div>
 
@@ -283,7 +283,7 @@
     <div class="phone-screen">
       <div class="status-bar">
         <div class="wifi-indicator">
-          <span class="wifi-icon">📶</span>
+          <span class="wifi-icon"></span>
           <span id="wifiName">KYROS-CAM-SETUP</span>
         </div>
         <div>
@@ -292,25 +292,25 @@
       </div>
 
       <div class="container">
-        <h1>🏠 KYROS Camera Setup</h1>
+        <h1>KYROS Camera Setup</h1>
         <p class="info">Configura tu cámara ESP32 en 3 pasos</p>
 
         <form id="setupForm">
-          <label for="cameraId">🆔 ID de Cámara</label>
+          <label for="cameraId">ID de Cámara</label>
           <input type="text" id="cameraId" placeholder="Pega el ID desde el sitio web" required>
 
-          <label for="wifiSsid">📶 Tu WiFi</label>
+          <label for="wifiSsid">Tu WiFi</label>
           <input type="text" id="wifiSsid" placeholder="Nombre de tu red WiFi" required>
 
-          <label for="wifiPassword">🔒 Contraseña WiFi</label>
+          <label for="wifiPassword">Contraseña WiFi</label>
           <input type="password" id="wifiPassword" placeholder="Contraseña de tu WiFi" required>
 
-          <button type="submit" class="btn">✅ Conectar</button>
+          <button type="submit" class="btn">Conectar</button>
         </form>
 
-        <div class="status loading" id="loading">⏳ Conectando con el servidor...</div>
-        <div class="status success" id="success">✅ ¡Conectado! Reiniciando...</div>
-        <div class="status error" id="error">❌ Error. Verifica los datos e intenta de nuevo.</div>
+        <div class="status loading" id="loading">Conectando con el servidor...</div>
+        <div class="status success" id="success">¡Conectado! Reiniciando...</div>
+        <div class="status error" id="error">Error. Verifica los datos e intenta de nuevo.</div>
 
         <p class="info" style="margin-top:20px">
           ESP32 MAC: <span class="serial" id="macAddress">--:--:--:--:--:--</span>
@@ -322,7 +322,7 @@
   </div>
 
   <div class="simulator-info">
-    <h3>📋 Instrucciones de Prueba</h3>
+    <h3>Instrucciones de Prueba</h3>
     <ul>
       <li><strong>Paso 1:</strong> Abre <a href="http://localhost:3000/security.html" target="_blank">security.html</a></li>
       <li><strong>Paso 2:</strong> Crea una nueva cámara</li>
@@ -415,22 +415,22 @@
         const data = await response.json();
 
         if (response.ok && data.success) {
-          log('[Link] ✅ Vinculado!');
+          log('[Link] Vinculado!');
           log(`[Link] Cámara: ${data.data.cameraName}`);
           log(`[Link] Servidor: ${data.data.server.host}:${data.data.server.port}`);
-          log('[Portal] ✅ Configuración completa');
+          log('[Portal] Configuración completa');
           log('[WiFi] Conectando a ' + wifiSsid + '...');
 
           showStatus('success');
 
           setTimeout(() => {
-            log('[WiFi] ✅ Conectado!');
+            log('[WiFi] Conectado!');
             log('[Camera] Inicializando...');
             setTimeout(() => {
               log('[WebSocket] Conectando al servidor...');
-              log('[Streaming] ✅ Iniciado!');
+              log('[Streaming] Iniciado!');
               log('');
-              log('🎉 ESP32-CAM configurado correctamente');
+              log('ESP32-CAM configurado correctamente');
               log('   Puedes verlo en "Ver en Vivo" en security.html');
             }, 1500);
           }, 2000);
@@ -440,7 +440,7 @@
         }
 
       } catch (error) {
-        log(`[Link] ❌ Error: ${error.message}`, 'error');
+        log(`[Link] Error: ${error.message}`, 'error');
         showStatus('error');
         setTimeout(() => {
           document.getElementById('setupForm').style.display = 'block';
