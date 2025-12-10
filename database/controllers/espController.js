@@ -112,7 +112,10 @@ const getESPConfig = async (req, res, next) => {
             }
 
             return automatizacion;
-        })).filter(auto => auto.condicion || (auto.tipo === 'horario' && auto.horario));
+        }));
+        const automatizacionesFiltradas = automatizacionesMapeadas.filter(auto => 
+            auto.condicion || (auto.tipo === 'horario' && auto.horario)
+        );
 
         res.status(200).json({
             id: room._id.toString(),
