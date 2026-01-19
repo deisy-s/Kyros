@@ -22,7 +22,7 @@
   puedan automatizar y monitorear el comportamiento que ocurre dentro de sus hogares sin la necesidad de encontrarse allí ellos mismos. Nuestro objetivo es ayudar a las personas
   obtener mayor seguridad y comodidad en sus casas, además de proveer una mayor eficiencia energética.
   <br><br>
-  Los usuarios pueden utilizar el sistema por medio del sitio web (actualmente se encuentra en: https://kyros-app.onrender.com), el cual se conecta a una base de datos remota
+  Los usuarios pueden utilizar el sistema por medio del sitio web, actualmente se encuentra [aquí](https://kyros-app.onrender.com), el cual se conecta a una base de datos remota
   en MongoDB Atlas y a un prototipo de maqueta realizada utilizando dispositivos IoT, donde microcontroladores ESP32 gestionan la información obtenida de sensores y enviada
   a actuadores. La información registrada en o de los microcontroladores se registra directamente en la base de datos, lo cual luego se muestra en el sitio web.
 </p>
