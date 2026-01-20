@@ -17,14 +17,9 @@
 </div>
 
 ## Description
-<p>This repository contains the project KYROS, developed by computer system engineering students of TecNM Campus Guasave during their 7th semester. 
-  KYROS is a home automation system that controls different types of electric devices, such as lights, fans, alarms, and cameras, which makes it possible for users to 
-  automate and monitor behavior within their homes without needing to be there themselves. Our objective is to help people obtain a stronger sense of security and comfort
-  within their own homes, as well as provide better energy efficiency.
-  <br><br>
-  Users can utilize the system via a website (currently found on: https://kyros-app.onrender.com), which connects to a remote database on MongoDB Atlas
-  and the physical circuit prototype created using IoT devices, where ESP32 microcontrollers manage the information obtained from sensors and sent to actuators.
-  The information registered onto or from the microcontrollers is registered directly onto the database, which is then shown on the website.
+<p>This repository contains the project KYROS, developed by computer system engineering students of TecNM Campus Guasave during their 7th semester. KYROS is a home automation system that controls various types of electric devices, such as lights, fans, alarms, and cameras, which makes it possible for users to automate and monitor their homes remotely. Our objective is to help people obtain a stronger sense of security and comfort within their own homes, as well as improve energy efficiency.
+<br><br>
+Users can access the system through the website (currently located at: https://kyros-app.onrender.com), which connects to a remote database on MongoDB Atlas and a prototype built using IoT devices, where ESP32 microcontrollers manage the information obtained from sensors and sent to actuators. The information recorder by the microcontrollers is directly stored on the database, which is then shown on the website.
 </p>
 <img width="1695" height="600" alt="KYROS homepage" src="https://github.com/user-attachments/assets/97bbfe99-7e31-42b4-93c4-8f46790dbd6f" />
 
